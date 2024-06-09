@@ -83,7 +83,6 @@ type consumerCreationCallback func(ctx context.Context, js jetstream.JetStream) 
 
 type jetStreamReader struct {
   connDetails connectionDetails
-  nc          *nats.Conn
   ccc         consumerCreationCallback
   pullOpts    []jetstream.PullMessagesOpt
 

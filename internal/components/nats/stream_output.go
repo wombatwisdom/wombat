@@ -36,7 +36,8 @@ func natsJetStreamOutputConfig() *service.ConfigSpec {
       Description("Determine which (if any) metadata values should be added to messages as headers.").
       Optional()).
     Field(service.NewOutputMaxInFlightField().Default(1024)).
-    Fields(connectionTailFields()...)
+    Fields(connectionTailFields()...).
+    Fields(outputTracingDocs())
 }
 
 func init() {
@@ -51,7 +52,11 @@ func init() {
       if err != nil {
         return nil, 0, err
       }
-      return w, maxInFlight, err
+      spanOutput, err := conf.WrapOutputExtractTracingSpanMapping("wombat_nats_stream", w)
+      if err != nil {
+        return nil, 0, err
+      }
+      return spanOutput, maxInFlight, err
     })
   if err != nil {
     panic(err)
