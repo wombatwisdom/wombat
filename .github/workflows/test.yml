@@ -1,0 +1,67 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '0 0/2 * * *' # Every two hours
+
+jobs:
+  test:
+    if: ${{ github.repository == 'wombatwisdom/wombat' || github.event_name != 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 0
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.21.x
+        check-latest: true
+
+    - name: Setup go-task / task / taskfile
+      uses: rnorton5432/setup-task@v1
+
+    - name: Deps
+      run: task deps && git diff-index --quiet HEAD || { >&2 echo "Stale go.{mod,sum} detected. This can be fixed with 'make deps'."; exit 1; }
+
+#    - name: Docs
+#      run: task docs && git diff-index --quiet HEAD || { >&2 echo "Stale docs detected. This can be fixed with 'make docs'."; exit 1; }
+
+    - name: Test
+      run: task test
+
+  golangci-lint:
+    if: ${{ github.repository == 'wombatwisdom/wombat' || github.event_name != 'schedule' }}
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: 0
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: 1.21.x
+        check-latest: true
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v4
+      with:
+        version: v1.57.1
+        args: --timeout 30m cmd/... internal/... public/...
+
+    # TODO: Remove this after https://github.com/golangci/golangci-lint/issues/3094 is addressed
+    # - name: Get govulncheck
+    #   run: go install golang.org/x/vuln/cmd/govulncheck@latest
+
+    # - name: Run govulncheck
+    #   run: govulncheck ./...
