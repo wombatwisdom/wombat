@@ -1,0 +1,37 @@
+FROM golang:1.21 AS build
+
+ENV CGO_ENABLED=1
+ENV GOOS=linux
+RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin
+
+WORKDIR /go/src/github.com/wombatwisdom/wombat/
+# Update dependencies: On unchanged dependencies, cached layer will be reused
+COPY go.* /go/src/github.com/wombatwisdom/wombat/
+RUN go mod download
+
+RUN apt-get update && apt-get install -y --no-install-recommends libzmq3-dev
+
+# Build
+COPY . /go/src/github.com/wombatwisdom/wombat/
+
+RUN wombat TAGS=x_benthos_extra
+
+# Pack
+FROM debian:latest
+
+LABEL maintainer="Daan Gerits <daan@shono.io>"
+LABEL org.opencontainers.image.source="https://github.com/wombatwisdom/wombat"
+
+WORKDIR /root/
+
+RUN apt-get update && apt-get install -y --no-install-recommends libzmq3-dev
+
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /go/src/github.com/wombatwisdom/wombat/target/bin/wombat .
+COPY resources/docker.yaml /wombat.yaml
+
+EXPOSE 4195
+
+ENTRYPOINT ["./wombat"]
+
+CMD ["-c", "/wombat.yaml"]
