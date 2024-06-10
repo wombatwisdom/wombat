@@ -39,12 +39,14 @@ deterministic message ordering. It is also resilient to consumer deletion.
       Default("all")).
     Field(service.NewStringField("start_time").
       Description("An optional time from which to start message delivery. Only applicable when delivery_policy is set to 'by_start_time'").
+      Optional().
       Advanced()).
     Field(service.NewStringAnnotatedEnumField("replay_policy", map[string]string{
       "original": "messages are sent in the same intervals in which they were stored on stream.",
       "instant":  "messages are sent as fast as possible.",
     }).
       Description("the rate at which messages are sent to the consumer.").
+      Default("original").
       Advanced()).
     Fields(connectionTailFields()...).
     Fields(inputTracingDocs())

@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libzmq3-dev
 # Build
 COPY . /go/src/github.com/wombatwisdom/wombat/
 
-RUN wombat TAGS=x_benthos_extra
+RUN task TAGS=x_benthos_extra
 
 # Pack
 FROM debian:latest
