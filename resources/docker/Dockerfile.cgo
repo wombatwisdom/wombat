@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends libzmq3-dev
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /go/src/github.com/wombatwisdom/wombat/target/bin/wombat .
-COPY resources/docker.yaml /wombat.yaml
+COPY resources/docker/docker.yaml /wombat.yaml
 
 EXPOSE 4195
 
