@@ -4,6 +4,7 @@ import (
   "context"
   "errors"
   "github.com/Jeffail/shutdown"
+  "github.com/google/uuid"
   "github.com/nats-io/nats.go"
   "github.com/nats-io/nats.go/jetstream"
   "github.com/redpanda-data/benthos/v4/public/service"
@@ -93,6 +94,10 @@ type jetStreamReader struct {
   messages jetstream.MessagesContext
 
   shutSig *shutdown.Signaller
+
+  // The pool caller id. This is a unique identifier we will provide when calling methods on the pool. This is used by
+  // the pool to do reference counting and ensure that connections are only closed when they are no longer in use.
+  pcid string
 }
 
 func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resources, ccc consumerCreationCallback) (*jetStreamReader, error) {
@@ -100,6 +105,7 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
     log:     mgr.Logger(),
     shutSig: shutdown.NewSignaller(),
     ccc:     ccc,
+    pcid:    uuid.New().String(),
   }
 
   var err error
@@ -131,12 +137,12 @@ func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
         messages.Drain()
       }
       if nc != nil {
-        nc.Close()
+        _ = pool.Release(j.pcid, j.connDetails)
       }
     }
   }()
 
-  if nc, err = j.connDetails.get(ctx); err != nil {
+  if nc, err = pool.Get(ctx, j.pcid, j.connDetails); err != nil {
     return err
   }
 
@@ -167,7 +173,7 @@ func (j *jetStreamReader) disconnect() {
   }
 
   if j.natsConn != nil {
-    j.natsConn.Close()
+    _ = pool.Release(j.pcid, j.connDetails)
     j.natsConn = nil
   }
 }

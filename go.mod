@@ -5,6 +5,7 @@ go 1.21.0
 require (
 	github.com/Jeffail/shutdown v1.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.35.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/ory/dockertest/v3 v3.10.0
@@ -165,7 +166,6 @@ require (
 	github.com/google/pprof v0.0.0-20230926050212-f7f687d19a98 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect

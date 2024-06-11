@@ -2,6 +2,7 @@ package nats
 
 import (
   "context"
+  "github.com/google/uuid"
   "github.com/redpanda-data/benthos/v4/public/service"
   "sync"
 
@@ -91,12 +92,17 @@ type kvReader struct {
   connMut  sync.Mutex
   natsConn *nats.Conn
   watcher  jetstream.KeyWatcher
+
+  // The pool caller id. This is a unique identifier we will provide when calling methods on the pool. This is used by
+  // the pool to do reference counting and ensure that connections are only closed when they are no longer in use.
+  pcid string
 }
 
 func newKVReader(conf *service.ParsedConfig, mgr *service.Resources) (*kvReader, error) {
   r := &kvReader{
     log:     mgr.Logger(),
     shutSig: shutdown.NewSignaller(),
+    pcid:    uuid.New().String(),
   }
 
   var err error
@@ -141,12 +147,12 @@ func (r *kvReader) Connect(ctx context.Context) (err error) {
         _ = r.watcher.Stop()
       }
       if r.natsConn != nil {
-        r.natsConn.Close()
+        _ = pool.Release(r.pcid, r.connDetails)
       }
     }
   }()
 
-  if r.natsConn, err = r.connDetails.get(ctx); err != nil {
+  if r.natsConn, err = pool.Get(ctx, r.pcid, r.connDetails); err != nil {
     return err
   }
 
@@ -187,7 +193,7 @@ func (r *kvReader) disconnect() {
     r.watcher = nil
   }
   if r.natsConn != nil {
-    r.natsConn.Close()
+    _ = pool.Release(r.pcid, r.connDetails)
     r.natsConn = nil
   }
 }
