@@ -148,11 +148,6 @@ func (r *requestReplyProcessor) connect(ctx context.Context) (err error) {
     }
   }()
 
-  var extraOpts []nats.Option
-  if r.inboxPrefix != "" {
-    extraOpts = append(extraOpts, nats.CustomInboxPrefix(r.inboxPrefix))
-  }
-
   if r.natsConn, err = pool.Get(ctx, r.pcid, r.connDetails); err != nil {
     return err
   }
