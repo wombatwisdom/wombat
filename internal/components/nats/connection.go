@@ -47,10 +47,6 @@ func connectionTailFields() []*service.ConfigField {
 }
 
 type connectionDetails struct {
-  label    string
-  logger   *service.Logger
-  tlsConf  *tls.Config
-  fs       *service.FS
   poolKey  string
   urls     string
   opts     []nats.Option
