@@ -48,7 +48,7 @@ func TestIntegrationNatsKV(t *testing.T) {
   template := `
 output:
   label: kv_output
-  wombat_nats_kv:
+  jetstream_kv:
     urls: [ tcp://localhost:$PORT ]
     bucket: bucket-$ID
     # We need to make this key random as the NATS server will only deliver the
@@ -59,7 +59,7 @@ output:
 
 input:
   label: kv_input
-  wombat_nats_kv:
+  jetstream_kv:
     urls: [ tcp://localhost:$PORT ]
     bucket: bucket-$ID
 `
@@ -94,7 +94,7 @@ input:
     template := `
 cache_resources:
   - label: testcache
-    wombat_nats_kv:
+    jetstream_kv:
       bucket: bucket-$ID
       urls: [ tcp://localhost:$PORT ]`
     suite := integration.CacheTests(

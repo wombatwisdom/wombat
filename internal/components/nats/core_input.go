@@ -54,7 +54,7 @@ You can access these metadata fields using [function interpolation](/docs/config
 
 func init() {
   err := service.RegisterInput(
-    "wombat_nats", natsInputConfig(),
+    "nats_core", natsInputConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
       input, err := newNATSReader(conf, mgr)
       if err != nil {
@@ -65,7 +65,7 @@ func init() {
       if err != nil {
         return nil, err
       }
-      return conf.WrapInputExtractTracingSpanMapping("wombat_nats", r)
+      return conf.WrapInputExtractTracingSpanMapping("nats_core", r)
     },
   )
   if err != nil {

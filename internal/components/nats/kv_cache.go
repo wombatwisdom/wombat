@@ -25,7 +25,7 @@ func natsKVCacheConfig() *service.ConfigSpec {
 
 func init() {
   err := service.RegisterCache(
-    "wombat_nats_kv", natsKVCacheConfig(),
+    "jetstream_kv", natsKVCacheConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Cache, error) {
       return newKVCache(conf, mgr)
     },

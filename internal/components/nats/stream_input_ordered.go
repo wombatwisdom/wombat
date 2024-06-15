@@ -48,19 +48,19 @@ deterministic message ordering. It is also resilient to consumer deletion.
       Description("the rate at which messages are sent to the consumer.").
       Default("original").
       Advanced()).
+    Field(service.NewIntField("max_ack_pending").
+      Description("The maximum number of outstanding acks to be allowed before consuming is halted.").
+      Advanced().
+      Default(1024)).
     Fields(connectionTailFields()...).
     Fields(inputTracingDocs())
 }
 
 func init() {
-  err := service.RegisterInput(
-    "wombat_nats_stream_ordered", orderedJetStreamInputConfig(),
-    func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
-      i, err := newOrderedJetStreamReaderFromConfig(conf, mgr)
-      if err != nil {
-        return nil, err
-      }
-      return conf.WrapInputExtractTracingSpanMapping("wombat_nats_jetstream_ordered", i)
+  err := service.RegisterBatchInput(
+    "jetstream_stream", orderedJetStreamInputConfig(),
+    func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
+      return newOrderedJetStreamReaderFromConfig(conf, mgr)
     })
   if err != nil {
     panic(err)

@@ -63,7 +63,7 @@ This input adds the following metadata fields to each message:
 
 func init() {
   err := service.RegisterInput(
-    "wombat_nats_kv", natsKVInputConfig(),
+    "jetstream_kv", natsKVInputConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
       reader, err := newKVReader(conf, mgr)
       if err != nil {

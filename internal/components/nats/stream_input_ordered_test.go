@@ -9,13 +9,15 @@ import (
 )
 
 func TestInputJetStreamConfigParse(t *testing.T) {
-  spec := natsJetStreamInputConfig()
+  spec := orderedJetStreamInputConfig()
   env := service.NewEnvironment()
 
   t.Run("Successful config parsing", func(t *testing.T) {
     inputConfig := `
 urls: [ url1, url2 ]
-subject: testsubject
+stream: teststream
+filter_subjects: 
+  - testsubject
 auth:
   nkey_file: test auth n key file
   user_credentials_file: test auth user creds file
@@ -39,7 +41,9 @@ auth:
   t.Run("Missing user_nkey_seed", func(t *testing.T) {
     inputConfig := `
 urls: [ url1, url2 ]
-subject: testsubject
+stream: teststream
+filter_subjects: 
+  - testsubject
 auth:
   user_jwt: test auth inline user JWT
 `
@@ -54,7 +58,9 @@ auth:
   t.Run("Missing user_jwt", func(t *testing.T) {
     inputConfig := `
 urls: [ url1, url2 ]
-subject: testsubject
+stream: teststream
+filter_subjects: 
+  - testsubject
 auth:
   user_jwt: test auth inline user JWT
 `
@@ -69,7 +75,9 @@ auth:
   t.Run("Bind set with durable", func(t *testing.T) {
     inputConfig := `
 urls: [ url1 ]
-subject: testsubject
+stream: teststream
+filter_subjects: 
+  - testsubject
 durable: foodurable
 bind: true
 `

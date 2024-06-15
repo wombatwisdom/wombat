@@ -41,7 +41,7 @@ func natsOutputConfig() *service.ConfigSpec {
 
 func init() {
   err := service.RegisterOutput(
-    "wombat_nats", natsOutputConfig(),
+    "nats_core", natsOutputConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
       maxInFlight, err := conf.FieldInt("max_in_flight")
       if err != nil {

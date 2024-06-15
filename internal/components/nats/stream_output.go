@@ -43,7 +43,7 @@ func natsJetStreamOutputConfig() *service.ConfigSpec {
 
 func init() {
   err := service.RegisterOutput(
-    "wombat_nats_stream", natsJetStreamOutputConfig(),
+    "jetstream_stream", natsJetStreamOutputConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
       maxInFlight, err := conf.FieldInt("max_in_flight")
       if err != nil {
@@ -53,7 +53,7 @@ func init() {
       if err != nil {
         return nil, 0, err
       }
-      spanOutput, err := conf.WrapOutputExtractTracingSpanMapping("wombat_nats_stream", w)
+      spanOutput, err := conf.WrapOutputExtractTracingSpanMapping("jetstream_stream", w)
       if err != nil {
         return nil, 0, err
       }

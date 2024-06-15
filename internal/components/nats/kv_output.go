@@ -40,7 +40,7 @@ you to create a unique key for each message.
 
 func init() {
   err := service.RegisterOutput(
-    "wombat_nats_kv", natsKVOutputConfig(),
+    "jetstream_kv", natsKVOutputConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
       maxInFlight, err := conf.FieldInt("max_in_flight")
       if err != nil {
