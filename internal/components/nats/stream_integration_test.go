@@ -51,12 +51,12 @@ input:
   jetstream_stream:
     urls: [ nats://localhost:$PORT ]
     stream: stream-$ID
-    filter_subjects:
+    subjects:
       - subject-$ID
 `
   suite := integration.StreamTests(
     integration.StreamTestOpenClose(),
-    // integration.StreamTestMetadata(), TODO
+    //integration.StreamTestMetadata(),
     integration.StreamTestSendBatch(10),
     // integration.StreamTestAtLeastOnceDelivery(), // TODO: SubscribeSync doesn't seem to honor durable setting
     integration.StreamTestStreamParallel(1000),
@@ -66,6 +66,7 @@ input:
   )
   suite.Run(
     t, template,
+    //integration.StreamTestOptLogging("TRACE"),
     integration.StreamTestOptPreTest(func(t testing.TB, ctx context.Context, vars *integration.StreamTestConfigVars) {
       js, err := natsConn.JetStream()
       require.NoError(t, err)
