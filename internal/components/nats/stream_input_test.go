@@ -9,7 +9,7 @@ import (
 )
 
 func TestInputJetStreamConfigParse(t *testing.T) {
-  spec := orderedJetStreamInputConfig()
+  spec := natsJetStreamInputConfig()
   env := service.NewEnvironment()
 
   t.Run("Successful config parsing", func(t *testing.T) {
@@ -28,7 +28,7 @@ auth:
     conf, err := spec.ParseYAML(inputConfig, env)
     require.NoError(t, err)
 
-    e, err := newOrderedJetStreamReaderFromConfig(conf, service.MockResources())
+    e, err := newJetStreamReaderFromConfig(conf, service.MockResources())
     require.NoError(t, err)
 
     assert.Equal(t, "url1,url2", e.connDetails.urls)
@@ -51,7 +51,7 @@ auth:
     conf, err := spec.ParseYAML(inputConfig, env)
     require.NoError(t, err)
 
-    _, err = newOrderedJetStreamReaderFromConfig(conf, service.MockResources())
+    _, err = newJetStreamReaderFromConfig(conf, service.MockResources())
     require.Error(t, err)
   })
 
@@ -68,7 +68,7 @@ auth:
     conf, err := spec.ParseYAML(inputConfig, env)
     require.NoError(t, err)
 
-    _, err = newOrderedJetStreamReaderFromConfig(conf, service.MockResources())
+    _, err = newJetStreamReaderFromConfig(conf, service.MockResources())
     require.Error(t, err)
   })
 
@@ -85,7 +85,7 @@ bind: true
     conf, err := spec.ParseYAML(inputConfig, env)
     require.NoError(t, err)
 
-    _, err = newOrderedJetStreamReaderFromConfig(conf, service.MockResources())
+    _, err = newJetStreamReaderFromConfig(conf, service.MockResources())
     require.NoError(t, err)
   })
 
@@ -99,7 +99,7 @@ bind: true
     conf, err := spec.ParseYAML(inputConfig, env)
     require.NoError(t, err)
 
-    _, err = newOrderedJetStreamReaderFromConfig(conf, service.MockResources())
+    _, err = newJetStreamReaderFromConfig(conf, service.MockResources())
     require.NoError(t, err)
   })
 }
