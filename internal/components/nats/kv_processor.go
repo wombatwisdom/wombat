@@ -115,7 +115,7 @@ This processor adds the following metadata fields to each message, depending on 
 
 func init() {
   err := service.RegisterProcessor(
-    "wombat_nats_kv", natsKVProcessorConfig(),
+    "jetstream_kv", natsKVProcessorConfig(),
     func(conf *service.ParsedConfig, mgr *service.Resources) (service.Processor, error) {
       return newKVProcessor(conf, mgr)
     },

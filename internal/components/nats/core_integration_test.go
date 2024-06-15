@@ -38,13 +38,13 @@ func TestIntegrationNats(t *testing.T) {
 
   template := `
 output:
-  wombat_nats:
+  nats_core:
     urls: [ tcp://localhost:$PORT ]
     subject: subject-$ID
     max_in_flight: $MAX_IN_FLIGHT
 
 input:
-  wombat_nats:
+  nats_core:
     urls: [ tcp://localhost:$PORT ]
     queue: queue-$ID
     subject: subject-$ID

@@ -63,7 +63,7 @@ You can access these metadata fields using [function interpolation](/docs/config
 }
 
 func init() {
-  err := service.RegisterProcessor("wombat_nats_request_reply", natsRequestReplyConfig(), newRequestReplyProcessor)
+  err := service.RegisterProcessor("nats_request", natsRequestReplyConfig(), newRequestReplyProcessor)
   if err != nil {
     panic(err)
   }

@@ -13,7 +13,7 @@ func parseDeliverPolicy(conf *service.ParsedConfig, key string) (jetstream.Deliv
     return jetstream.DeliverAllPolicy, nil
   }
   var dp jetstream.DeliverPolicy
-  if err := dp.UnmarshalJSON([]byte(deliver)); err != nil {
+  if err := dp.UnmarshalJSON([]byte(fmt.Sprintf("%q", deliver))); err != nil {
     return jetstream.DeliverAllPolicy, fmt.Errorf("failed to parse deliver option: %v", err)
   }
   return dp, nil
@@ -25,7 +25,7 @@ func parseReplayPolicy(conf *service.ParsedConfig, key string) (jetstream.Replay
     return jetstream.ReplayInstantPolicy, nil
   }
   var rp jetstream.ReplayPolicy
-  if err := rp.UnmarshalJSON([]byte(replay)); err != nil {
+  if err := rp.UnmarshalJSON([]byte(fmt.Sprintf("%q", replay))); err != nil {
     return jetstream.ReplayInstantPolicy, fmt.Errorf("failed to parse replay option: %v", err)
   }
   return rp, nil

@@ -76,6 +76,7 @@ func natsJetStreamInputConfig() *service.ConfigSpec {
       Default(1024)).
     Fields(inputTracingDocs()).
     Fields(connectionTailFields()...)
+
 }
 
 //------------------------------------------------------------------------------
@@ -91,9 +92,11 @@ type jetStreamReader struct {
 
   connMut  sync.Mutex
   natsConn *nats.Conn
-  messages jetstream.MessagesContext
+  consumer jetstream.Consumer
 
   shutSig *shutdown.Signaller
+
+  maxAckPending int
 
   // The pool caller id. This is a unique identifier we will provide when calling methods on the pool. This is used by
   // the pool to do reference counting and ensure that connections are only closed when they are no longer in use.
@@ -109,6 +112,10 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
   }
 
   var err error
+  if j.maxAckPending, err = conf.FieldInt("max_ack_pending"); err != nil {
+    return nil, err
+  }
+
   if j.connDetails, err = connectionDetailsFromParsed(conf, mgr); err != nil {
     return nil, err
   }
@@ -154,12 +161,8 @@ func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
     return err
   }
 
-  if messages, err = consumer.Messages(j.pullOpts...); err != nil {
-    return err
-  }
-
   j.natsConn = nc
-  j.messages = messages
+  j.consumer = consumer
 
   return nil
 }
@@ -168,18 +171,14 @@ func (j *jetStreamReader) disconnect() {
   j.connMut.Lock()
   defer j.connMut.Unlock()
 
-  if j.messages != nil {
-    j.messages.Drain()
-  }
-
   if j.natsConn != nil {
     _ = pool.Release(j.pcid, j.connDetails)
     j.natsConn = nil
   }
 }
 
-func (j *jetStreamReader) Read(ctx context.Context) (*service.Message, service.AckFunc, error) {
-  msg, err := j.messages.Next()
+func (j *jetStreamReader) ReadBatch(ctx context.Context) (service.MessageBatch, service.AckFunc, error) {
+  mb, err := j.consumer.FetchNoWait(j.maxAckPending)
   if err != nil {
     if errors.Is(err, jetstream.ErrMsgIteratorClosed) {
       return nil, nil, service.ErrEndOfInput
@@ -187,7 +186,40 @@ func (j *jetStreamReader) Read(ctx context.Context) (*service.Message, service.A
     return nil, nil, err
   }
 
-  return convertMessage(msg)
+  if mb.Error() != nil {
+    return nil, nil, mb.Error()
+  }
+
+  res := service.MessageBatch{}
+  var acks []func() error
+  var naks []func() error
+  for msg := range mb.Messages() {
+    rm, err := convertMessage(msg)
+    if err != nil {
+      return nil, nil, err
+    }
+
+    acks = append(acks, msg.Ack)
+    naks = append(naks, msg.Nak)
+
+    res = append(res, rm)
+  }
+
+  ack := func(ctx context.Context, err error) error {
+    if err != nil {
+      for _, nak := range naks {
+        _ = nak()
+      }
+      return err
+    }
+
+    for _, ack := range acks {
+      _ = ack()
+    }
+    return err
+  }
+
+  return res, ack, nil
 }
 
 func (j *jetStreamReader) Close(ctx context.Context) error {
@@ -203,7 +235,7 @@ func (j *jetStreamReader) Close(ctx context.Context) error {
   return nil
 }
 
-func convertMessage(m jetstream.Msg) (*service.Message, service.AckFunc, error) {
+func convertMessage(m jetstream.Msg) (*service.Message, error) {
   msg := service.NewMessage(m.Data())
   msg.MetaSet("nats_subject", m.Subject())
 
@@ -224,10 +256,5 @@ func convertMessage(m jetstream.Msg) (*service.Message, service.AckFunc, error) 
     }
   }
 
-  return msg, func(ctx context.Context, res error) error {
-    if res == nil {
-      return m.Ack()
-    }
-    return m.Nak()
-  }, nil
+  return msg, nil
 }
