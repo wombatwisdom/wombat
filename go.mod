@@ -6,10 +6,10 @@ require (
 	github.com/Jeffail/shutdown v1.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/uuid v1.6.0
-	github.com/nats-io/nats.go v1.35.0
+	github.com/nats-io/nats.go v1.36.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/ory/dockertest/v3 v3.10.0
-	github.com/redpanda-data/benthos/v4 v4.28.1
+	github.com/redpanda-data/benthos/v4 v4.30.0
 	github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0
 	github.com/stretchr/testify v1.9.0
 )

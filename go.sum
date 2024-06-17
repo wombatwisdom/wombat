@@ -782,8 +782,8 @@ github.com/nats-io/nats-server/v2 v2.9.23/go.mod h1:wEjrEy9vnqIGE4Pqz4/c75v9Pmaq
 github.com/nats-io/nats-streaming-server v0.24.6 h1:iIZXuPSznnYkiy0P3L0AP9zEN9Etp+tITbbX1KKeq4Q=
 github.com/nats-io/nats-streaming-server v0.24.6/go.mod h1:tdKXltY3XLeBJ21sHiZiaPl+j8sK3vcCKBWVyxeQs10=
 github.com/nats-io/nats.go v1.22.1/go.mod h1:tLqubohF7t4z3du1QDPYJIQQyhb4wl6DhjxEajSI7UA=
-github.com/nats-io/nats.go v1.35.0 h1:XFNqNM7v5B+MQMKqVGAyHwYhyKb48jrenXNxIU20ULk=
-github.com/nats-io/nats.go v1.35.0/go.mod h1:Ubdu4Nh9exXdSz0RVWRFBbRfrbSxOYd26oF0wkWclB8=
+github.com/nats-io/nats.go v1.36.0 h1:suEUPuWzTSse/XhESwqLxXGuj8vGRuPRoG7MoRN/qyU=
+github.com/nats-io/nats.go v1.36.0/go.mod h1:Ubdu4Nh9exXdSz0RVWRFBbRfrbSxOYd26oF0wkWclB8=
 github.com/nats-io/nkeys v0.3.0/go.mod h1:gvUNGjVcM2IPr5rCsRsC6Wb3Hr2CQAm08dsxtV6A5y4=
 github.com/nats-io/nkeys v0.4.7 h1:RwNJbbIdYCoClSDNY7QVKZlyb/wfT6ugvFCiKy6vDvI=
 github.com/nats-io/nkeys v0.4.7/go.mod h1:kqXRgRDPlGy7nGaEDMuYzmiJCIAAWDK0IMBtDmGD0nc=
@@ -874,8 +874,8 @@ github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5X
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/redis/go-redis/v9 v9.4.0 h1:Yzoz33UZw9I/mFhx4MNrB6Fk+XHO1VukNcCa1+lwyKk=
 github.com/redis/go-redis/v9 v9.4.0/go.mod h1:hdY0cQFCN4fnSYT6TkisLufl/4W5UIXyv0b/CLO2V2M=
-github.com/redpanda-data/benthos/v4 v4.28.1 h1:+pXURW62NVbLHMLQXpS8qEUtxCsptpKneh+7chzv7Fw=
-github.com/redpanda-data/benthos/v4 v4.28.1/go.mod h1:veuREp5S8MJ21MXofdfMPVm5qOwQGmymh9c13jax284=
+github.com/redpanda-data/benthos/v4 v4.30.0 h1:JViX1UBMJBB3EXH6vOtKQA2Su9x60LcA+Yb6K1xXkw4=
+github.com/redpanda-data/benthos/v4 v4.30.0/go.mod h1:veuREp5S8MJ21MXofdfMPVm5qOwQGmymh9c13jax284=
 github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0 h1:Z6cF6q86b6bw0uRohX2tnUBe0EgRtak7JjQlaXBnAVs=
 github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0/go.mod h1:AU2ujaShckZ9Zn3N58MGy6QYw500v8bvWgBgdnxCqaE=
 github.com/redpanda-data/connect/v4 v4.29.0 h1:EFA5G+fEPwt+AFJ1PNPRce9KTmz1W7LJh4fskcU9rlM=
