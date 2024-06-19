@@ -3,14 +3,17 @@ module github.com/wombatwisdom/wombat
 go 1.21.0
 
 require (
+	github.com/Jeffail/checkpoint v1.0.1
 	github.com/Jeffail/shutdown v1.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/uuid v1.6.0
-	github.com/nats-io/nats.go v1.35.0
+	github.com/gorilla/mux v1.8.1
+	github.com/nats-io/nats.go v1.36.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/ory/dockertest/v3 v3.10.0
-	github.com/redpanda-data/benthos/v4 v4.28.1
+	github.com/redpanda-data/benthos/v4 v4.30.0
 	github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0
+	github.com/rs/zerolog v1.15.0
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -45,7 +48,6 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/trace v1.21.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.45.0 // indirect
 	github.com/IBM/sarama v1.42.2 // indirect
-	github.com/Jeffail/checkpoint v1.0.1 // indirect
 	github.com/Jeffail/gabs/v2 v2.7.0 // indirect
 	github.com/Jeffail/grok v1.1.0 // indirect
 	github.com/JohnCGriffin/overflow v0.0.0-20211019200055-46fa312c352c // indirect
@@ -170,7 +172,6 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
-	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/gosimple/slug v1.13.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect

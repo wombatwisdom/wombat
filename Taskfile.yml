@@ -41,9 +41,6 @@ tasks:
       - build
     vars:
       INSTALL_DIR: "{{.GOPATH}}/bin"
-    requires:
-      vars:
-        - INSTALL_DIR
     cmds:
       - install -d {{.INSTALL_DIR}}
       - rm -f {{.INSTALL_DIR}}/{{.APP_NAME}}
