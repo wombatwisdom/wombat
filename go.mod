@@ -7,13 +7,11 @@ require (
 	github.com/Jeffail/shutdown v1.0.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/nats-io/nats.go v1.36.0
 	github.com/nats-io/nkeys v0.4.7
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/redpanda-data/benthos/v4 v4.30.0
 	github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0
-	github.com/rs/zerolog v1.15.0
 	github.com/stretchr/testify v1.9.0
 )
 
@@ -172,6 +170,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
+	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
 	github.com/gosimple/slug v1.13.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
