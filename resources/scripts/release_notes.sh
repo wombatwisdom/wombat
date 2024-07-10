@@ -6,10 +6,10 @@ cat CHANGELOG.md | awk '
   }
   /TBD$/ {
       print "";
-      print "NOTE: This is a release candidate, you can download a binary from this page or pull a docker image from https://github.com/benthosdev/benthos/pkgs/container/benthos with the specific tag of the release candidate.";
+      print "NOTE: This is a release candidate, you can download a binary from this page or pull a docker image from https://github.com/wombatwisdom/wombat/pkgs/container/wombat with the specific tag of the release candidate.";
   }
   !/^## [0-9]/ {
       if ( release == 1 ) print;
       if ( release > 1 ) exit;
   }'
-echo "The full change log can be [found here](https://github.com/benthosdev/benthos/blob/main/CHANGELOG.md)."
+echo "The full change log can be [found here](https://github.com/wombatwisdom/wombat/blob/main/CHANGELOG.md)."

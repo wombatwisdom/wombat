@@ -35,6 +35,13 @@ tasks:
       - deps
     cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}} ./cmd/{{.APP_NAME}}/*.go
 
+  build:docgen:
+    deps:
+      - deps
+    cmds:
+      - go build {{.GO_FLAGS}} -ldflags "{{.VER_FLAGS}}" -o {{.TARGET_BIN}}/docgen ./cmd/docgen/*.go
+      - chmod a+x {{.TARGET_BIN}}/docgen
+
   install:
     desc: Install the application
     deps:
@@ -89,6 +96,12 @@ tasks:
   clean:
     cmds:
       - rm -rf {{.TARGET_DIR}}
+
+  docs:
+    deps:
+      - build:docgen
+    cmds:
+      - '{{.TARGET_BIN}}/docgen --output {{.TARGET_BIN}}/docs'
 
 #    docs:
 #      deps:

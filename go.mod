@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/Jeffail/shutdown v1.0.0
+	github.com/fatih/color v1.16.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/nats-io/nats.go v1.35.0
@@ -11,7 +12,9 @@ require (
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/redpanda-data/benthos/v4 v4.28.1
 	github.com/redpanda-data/connect/public/bundle/free/v4 v4.29.0
+	github.com/rs/zerolog v1.15.0
 	github.com/stretchr/testify v1.9.0
+	github.com/urfave/cli/v2 v2.27.1
 )
 
 require (
@@ -136,7 +139,6 @@ require (
 	github.com/eapache/go-xerial-snappy v0.0.0-20230731223053-c322873962e3 // indirect
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.3 // indirect
-	github.com/fatih/color v1.16.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
@@ -281,7 +283,6 @@ require (
 	github.com/trinodb/trino-go-client v0.313.0 // indirect
 	github.com/twmb/franz-go v1.16.1 // indirect
 	github.com/twmb/franz-go/pkg/kmsg v1.7.0 // indirect
-	github.com/urfave/cli/v2 v2.27.1 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
