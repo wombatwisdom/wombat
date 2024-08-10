@@ -35,6 +35,12 @@ tasks:
       - deps
     cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}} ./cmd/{{.APP_NAME}}/*.go
 
+  build:bench:
+    desc: Build the benchmarking tool
+    deps:
+      - deps
+    cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/wombat-bench ./cmd/bench/*.go
+
   install:
     desc: Install the application
     deps:
