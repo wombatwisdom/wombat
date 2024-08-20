@@ -6,12 +6,11 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	"strconv"
 	"sync"
 	"time"
 )
 
-func natsJetStreamInputConfig() *service.ConfigSpec {
+func natsOrderedJetStreamInputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
 		Categories("Services").
@@ -43,24 +42,10 @@ You can access these metadata fields using
 		Fields(connectionHeadFields()...).
 		Field(service.NewStringField("stream").
 			Description("A stream to consume from")).
-		Field(service.NewStringField("name").
-			Description("an optional name for the consumer. If not set, one is generated automatically. Cannot contain whitespace, ., *, >, path separators (forward or backwards slash), and non-printable characters.").
-			Default("").
-			Optional()).
-		Field(service.NewStringField("durable").
-			Description("an optional durable name for the consumer. If both Durable and Name are set, they have to be equal. Unless InactiveThreshold is set, a durable consumer will not be cleaned up automatically. Cannot contain whitespace, ., *, >, path separators (forward or backwards slash), and non-printable characters.").
-			Optional()).
 		Field(service.NewStringListField("subjects").
 			Description("allows filtering messages from a stream by subject").
 			Optional().
 			Example("foo.bar.baz").Example("foo.*.baz").Example("foo.bar.*").Example("foo.>")).
-		Field(service.NewBoolField("bind").
-			Description("Indicates that the subscription should use an existing consumer.").
-			Optional()).
-		Field(service.NewStringField("description").
-			Description("an optional description of the consumer.").
-			Optional().
-			Advanced()).
 		Field(service.NewStringAnnotatedEnumField("deliver", map[string]string{
 			"all":              "Deliver all available messages.",
 			"last":             "Deliver starting with the last published messages.",
@@ -78,14 +63,6 @@ You can access these metadata fields using
 			Description("defines how long to wait for a message to be received.").
 			Default("0s").
 			Advanced()).
-		Field(service.NewDurationField("ack_wait").
-			Description("defines how long the server will wait for an acknowledgement before resending a message.").
-			Default("30s").
-			Advanced()).
-		Field(service.NewIntField("max_deliver").
-			Description("defines the maximum number of delivery attempts for a message. Applies to any message that is re-sent due to ack policy.").
-			Default(-1).
-			Advanced()).
 		Field(service.NewStringAnnotatedEnumField("replay", map[string]string{
 			"instant":  "messages are sent as fast as possible.",
 			"original": "messages are sent in the same intervals in which they were stored on stream.",
@@ -93,23 +70,19 @@ You can access these metadata fields using
 			Description("defines the rate at which messages are sent to the consumer").
 			Default("instant").
 			Advanced()).
-		Field(service.NewIntField("max_ack_pending").
-			Description("is a maximum number of outstanding unacknowledged messages. Once this limit is reached, the server will suspend sending messages to the consumer. Set to -1 for unlimited.").
-			Advanced().
-			Default(1)).
 		Fields(connectionTailFields()...).
 		Field(inputTracingDocs())
 }
 
 func init() {
 	err := service.RegisterInput(
-		"jetstream_stream", natsJetStreamInputConfig(),
+		"jetstream_ordered_stream", natsOrderedJetStreamInputConfig(),
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
-			input, err := newJetStreamReaderFromConfig(conf, mgr)
+			input, err := newOrderedJetStreamReaderFromConfig(conf, mgr)
 			if err != nil {
 				return nil, err
 			}
-			return conf.WrapInputExtractTracingSpanMapping("jetstream_stream", input)
+			return conf.WrapInputExtractTracingSpanMapping("jetstream_ordered_stream", service.AutoRetryNacks(input))
 		})
 	if err != nil {
 		panic(err)
@@ -118,14 +91,14 @@ func init() {
 
 //------------------------------------------------------------------------------
 
-type jetStreamReader struct {
+type orderedJetStreamReader struct {
 	connDetails    connectionDetails
 	stream         string
 	bind           bool
 	msgWait        time.Duration
 	redeliverDelay time.Duration
 
-	cc  *jetstream.ConsumerConfig
+	cc  *jetstream.OrderedConsumerConfig
 	log *service.Logger
 
 	consumer jetstream.Consumer
@@ -142,8 +115,8 @@ type jetStreamReader struct {
 	msgProcDuration *service.MetricTimer
 }
 
-func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resources) (*jetStreamReader, error) {
-	j := jetStreamReader{
+func newOrderedJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resources) (*orderedJetStreamReader, error) {
+	j := orderedJetStreamReader{
 		log:             mgr.Logger(),
 		shutSig:         shutdown.NewSignaller(),
 		msgProcDuration: mgr.Metrics().NewTimer("msg_processing_duration_ms"),
@@ -154,22 +127,10 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 		return nil, err
 	}
 
-	j.cc = &jetstream.ConsumerConfig{}
+	j.cc = &jetstream.OrderedConsumerConfig{}
 
 	if j.stream, err = conf.FieldString("stream"); err != nil {
 		return nil, err
-	}
-
-	if conf.Contains("name") {
-		if j.cc.Name, err = conf.FieldString("name"); err != nil {
-			return nil, err
-		}
-	}
-
-	if conf.Contains("durable") {
-		if j.cc.Durable, err = conf.FieldString("durable"); err != nil {
-			return nil, err
-		}
 	}
 
 	if conf.Contains("subjects") {
@@ -178,23 +139,7 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 		}
 	}
 
-	if conf.Contains("bind") {
-		if j.bind, err = conf.FieldBool("bind"); err != nil {
-			return nil, err
-		}
-	}
-
-	if conf.Contains("description") {
-		if j.cc.Description, err = conf.FieldString("description"); err != nil {
-			return nil, err
-		}
-	}
-
 	if j.cc.DeliverPolicy, err = parseDeliverPolicy(conf, "deliver"); err != nil {
-		return nil, err
-	}
-
-	if j.cc.AckWait, err = conf.FieldDuration("ack_wait"); err != nil {
 		return nil, err
 	}
 
@@ -206,15 +151,7 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 		return nil, err
 	}
 
-	if j.cc.MaxDeliver, err = conf.FieldInt("max_deliver"); err != nil {
-		return nil, err
-	}
-
 	if j.cc.ReplayPolicy, err = parseReplayPolicy(conf, "replay"); err != nil {
-		return nil, err
-	}
-
-	if j.cc.MaxAckPending, err = conf.FieldInt("max_ack_pending"); err != nil {
 		return nil, err
 	}
 
@@ -223,7 +160,7 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 
 //------------------------------------------------------------------------------
 
-func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
+func (j *orderedJetStreamReader) Connect(ctx context.Context) (err error) {
 	j.connMut.Lock()
 	defer j.connMut.Unlock()
 
@@ -255,14 +192,8 @@ func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
 	}
 
 	var consumer jetstream.Consumer
-	// if the consumer is bound, we don't need to create it again, just bind to it
-	if j.bind && j.stream != "" && j.cc.Durable != "" {
-		if _, err = js.Consumer(ctx, j.stream, j.cc.Durable); err != nil {
-			return err
-		}
-	}
 
-	if consumer, err = js.CreateOrUpdateConsumer(ctx, j.stream, *j.cc); err != nil {
+	if consumer, err = js.OrderedConsumer(ctx, j.stream, *j.cc); err != nil {
 		return err
 	}
 	j.consumer = consumer
@@ -270,7 +201,7 @@ func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
 	return nil
 }
 
-func (j *jetStreamReader) disconnect() {
+func (j *orderedJetStreamReader) disconnect() {
 	j.connMut.Lock()
 	defer j.connMut.Unlock()
 
@@ -283,7 +214,7 @@ func (j *jetStreamReader) disconnect() {
 	}
 }
 
-func (j *jetStreamReader) Read(ctx context.Context) (*service.Message, service.AckFunc, error) {
+func (j *orderedJetStreamReader) Read(ctx context.Context) (*service.Message, service.AckFunc, error) {
 	errAck := func(ctx context.Context, err error) error { return err }
 	if j.consumer == nil {
 		return nil, errAck, service.ErrNotConnected
@@ -317,7 +248,7 @@ func (j *jetStreamReader) Read(ctx context.Context) (*service.Message, service.A
 	return m, acker, nil
 }
 
-func (j *jetStreamReader) Close(ctx context.Context) error {
+func (j *orderedJetStreamReader) Close(ctx context.Context) error {
 	go func() {
 		j.disconnect()
 		j.shutSig.TriggerHasStopped()
@@ -328,33 +259,4 @@ func (j *jetStreamReader) Close(ctx context.Context) error {
 		return ctx.Err()
 	}
 	return nil
-}
-
-func convertMessage(m jetstream.Msg) (*service.Message, error) {
-	msg := service.NewMessage(m.Data())
-	msg.MetaSet("nats_subject", m.Subject())
-
-	metadata, err := m.Metadata()
-	if err == nil {
-		msg.MetaSet("nats_sequence_stream", strconv.Itoa(int(metadata.Sequence.Stream)))
-		msg.MetaSet("nats_sequence_consumer", strconv.Itoa(int(metadata.Sequence.Consumer)))
-		msg.MetaSet("nats_num_delivered", strconv.Itoa(int(metadata.NumDelivered)))
-		msg.MetaSet("nats_num_pending", strconv.Itoa(int(metadata.NumPending)))
-		msg.MetaSet("nats_domain", metadata.Domain)
-		msg.MetaSet("nats_timestamp_unix_nano", strconv.Itoa(int(metadata.Timestamp.UnixNano())))
-	}
-
-	for k := range m.Headers() {
-		v := m.Headers().Get(k)
-		if v != "" {
-			msg.MetaSet(k, v)
-		}
-	}
-
-	return msg, nil
-}
-
-type msgErr struct {
-	msg jetstream.Msg
-	err error
 }
