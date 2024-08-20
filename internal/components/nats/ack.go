@@ -14,11 +14,12 @@ func Acker(msg jetstream.Msg, timer *service.MetricTimer) service.AckFunc {
 			timer.Timing(time.Now().UnixMilli() - start)
 		}()
 
-		if err != nil {
-			return msg.Nak()
-		}
-
-		return msg.Ack()
+		return err
+		//if err != nil {
+		//	return msg.Nak()
+		//}
+		//
+		//return msg.Ack()
 
 	}
 }
