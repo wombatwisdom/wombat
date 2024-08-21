@@ -1,0 +1,13 @@
+name: full
+benthos_version: v4.35.0
+libraries:
+  - module: github.com/redpanda-data/benthos/v4
+    version: v4.35.0
+    packages:
+      - public/components/io
+      - public/components/pure
+
+  - module: github.com/redpanda-data/connect/v4
+    version: v4.33.0
+    packages:
+      - public/components/community

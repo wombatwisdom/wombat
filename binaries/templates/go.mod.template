@@ -1,0 +1,3 @@
+module github.com/wombatwisdom/wombat
+
+go {{.GoVersion}}
