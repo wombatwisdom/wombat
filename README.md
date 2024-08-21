@@ -26,7 +26,7 @@ Once all of this is done, grab a binary from the releases and add a binary. You 
 command:
 
 ```shell
-wombat binary add <path/to/spec>
+wombat binary add --select preset:full
 ```
 
 ## Adding your own builds
