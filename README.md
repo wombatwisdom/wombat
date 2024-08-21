@@ -1,63 +1,50 @@
 # Wombat
-
 Wombat is a stream processing toolkit which allows you to define your stream processors
-in a declarative way. It is designed to be simple and easy to use while still harboring
-immense power and flexibility.
+in a declarative way.
+
+## Why
+The goal of wombat is twofold. First, we want to make it easier for people to write stream processors and benefit from
+the ecosystem that is already available. Second, we want to make it easier for people to create smaller binaries that
+contain only the components they need.
+
+## How it works
+Wombat allows you to add binaries based on a spec file. When adding a binary, wombat will download the libraries and
+generate a runtime binary that contains all the components defined in the spec file. Except for the binaries subcommand,
+the wombat binary will pass all subcommands to the currently selected binary. You may want to use `wombat binary current`
+to see which binary is currently selected or select a binary using `wombat binary select <name>`. A list of available
+binaries can be retrieved using `wombat binary list`.
 
 ## Getting Started
-The easiest way at this point to get started with wombat is to download one of the binaries
-from the releases.
+Wombat will compile a binary based on the binary spec you provide. This means that you can decide
+what needs to go into your binary and what not, allowing for smaller binaries and faster startup times.
 
-The first thing to do is to create a wombat config file. This is a yaml file that describes
-where data needs to be read from, what processors need to be applied and where the result 
-should go to. Here is an example config file:
+This also means that wombat will need access to the golang compiler. If you don't have it installed
+yet, you can download it from the [golang website](https://golang.org/dl/). Make sure your `GO_ROOT` environment
+variable is set correctly.
+
+Once all of this is done, grab a binary from the releases and add a binary. You can do this by running the following
+command:
+
+```shell
+wombat binary add <path/to/spec>
+```
+
+## Adding your own builds
+Builds can be added based on a build spec which can be retrieved from a file or from a URL. This spec file is a yaml
+file that describes what needs to go into the binary. Here is an example spec file:
 
 ```yaml
-input:
-  generate:
-    count: 1
-    mapping: |-
-      root.message = "Hello, World!"
+name: full
+benthos_version: v4.35.0
+libraries:
+  - module: github.com/redpanda-data/benthos/v4
+    version: v4.35.0
+    packages:
+      - public/components/io
+      - public/components/pure
 
-pipeline:
-  processors:
-    - log:
-        message: "Look mom, a message: ${! this }"
-    - mapping: |-
-        root.result = root.message.uppercase()
-
-output:
-  stdout: {}
+  - module: github.com/redpanda-data/connect/v4
+    version: v4.33.0
+    packages:
+      - public/components/community
 ```
-
-This config file defines a rather trivial pipeline which:
-- generates a single message
-- logs it
-- converts it to uppercase
-- prints it to stdout
-
-To run this pipeline, you can use the following command:
-
-```shell
-wombat -c path/to/config.yaml
-```
-
-Obviously, there are a lot more things you can do with wombat. 
-We are still working hard to make the online documentation available.
-
-To get a list of all components that are available in wombat, you can 
-use the following command:
-
-```shell
-wombat list
-```
-
-## Disclaimer
-Wombat builds on top of the [RedPanda Benthos](https://github.com/redpanda-data/benthos) and the 
-free (Apache 2) parts of the [RedPanda Connect](https://github.com/redpanda-data/connect) project.
-However, there are additional components being added solely within wombat and we will keep on 
-developing and extending wombat beyond the components in the RedPanda projects.
-
-So why wombat you may ask? Well, we like to be independent from the RedPanda project and still 
-be able to use the tool we love like we did before. We also want to extend it in ways that are
-out of the interest zone of RedPanda.
