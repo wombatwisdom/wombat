@@ -59,6 +59,7 @@ Either run Wombat as a stream processor or choose a command:
 `,
 		Commands: []*cli.Command{
 			binaryCommand,
+			wisdomCommand,
 			{
 				Name:  "echo",
 				Usage: "Parse a config file and echo back a normalised version",

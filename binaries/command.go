@@ -44,7 +44,7 @@ func (i *InDirCommand) GoModTidy(ctx context.Context) error {
 }
 
 func (i *InDirCommand) GoBuild(ctx context.Context, goos string, goarch string, target string) error {
-	cmd := exec.CommandContext(ctx, i.goexec, "build", "-o", target)
+	cmd := exec.CommandContext(ctx, i.goexec, "build", "-ldflags", "-s -w", "-o", target)
 
 	cmd.Env = append(os.Environ(),
 		fmt.Sprintf("GOOS=%s", goos),
