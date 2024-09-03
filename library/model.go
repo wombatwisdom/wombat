@@ -3,27 +3,39 @@ package library
 import "time"
 
 type Repository struct {
-	Name      string   `json:"name"`
+	Name string `json:"name"`
+
 	Summary   string   `json:"summary"`
 	SourceUrl string   `json:"source_url"`
+	Module    string   `json:"module"`
 	Latest    string   `json:"latest"`
 	Versions  []string `json:"versions"`
 }
 
 type Version struct {
-	Repository string   `json:"repository"`
-	Name       string   `json:"name"`
-	Summary    string   `json:"summary"`
-	SourceRef  string   `json:"source_ref"`
-	Packages   []string `json:"packages"`
+	Repository  string `json:"repository"`
+	Name        string `json:"name"`
+	PackagePath string `json:"package_path"`
+
+	Packages     []string `json:"packages"`
+	Buffers      []string `json:"buffers,omitempty"`
+	Caches       []string `json:"caches,omitempty"`
+	Functions    []string `json:"functions,omitempty"`
+	Inputs       []string `json:"inputs,omitempty"`
+	Methods      []string `json:"methods,omitempty"`
+	Metrics      []string `json:"metrics,omitempty"`
+	Outputs      []string `json:"outputs,omitempty"`
+	Processors   []string `json:"processors,omitempty"`
+	RateLimiters []string `json:"rate_limiters,omitempty"`
+	Scanners     []string `json:"scanners,omitempty"`
+	Tracers      []string `json:"tracers,omitempty"`
 }
 
 type Package struct {
-	Repository string              `json:"repository"`
-	Version    string              `json:"version"`
-	Name       string              `json:"name"`
-	Summary    string              `json:"summary"`
-	SourcePath string              `json:"source_path"`
+	Repository string `json:"repository"`
+	Version    string `json:"version"`
+	Name       string `json:"name"`
+
 	Components map[string][]string `json:"components"`
 }
 
@@ -38,7 +50,6 @@ type Component struct {
 	Description string `json:"description,omitempty"`
 	Footnotes   string `json:"footnotes,omitempty"`
 	Status      string `json:"status"`
-	License     string `json:"license"`
 
 	Categories []string  `json:"categories,omitempty"`
 	Examples   []Example `json:"examples,omitempty"`

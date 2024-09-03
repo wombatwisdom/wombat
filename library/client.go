@@ -32,15 +32,7 @@ type Client interface {
 func New(workDir string, serverUrl string) (Client, error) {
 	workDir = os.ExpandEnv(workDir)
 
-	mapping := bleve.NewIndexMapping()
-	mapping.DefaultAnalyzer = "en"
-	index, err := bleve.New(path.Join(workDir, "packages.bleve"), mapping)
-	if err != nil {
-		return nil, err
-	}
-
 	cl := &client{
-		index:     index,
 		dir:       workDir,
 		serverUrl: serverUrl,
 	}
