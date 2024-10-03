@@ -1,0 +1,10 @@
+{
+  "extends": "@docusaurus/tsconfig",
+  "compilerOptions": {
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+  },
+}
