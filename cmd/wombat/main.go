@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	_ "github.com/wombatwisdom/wombat/public/components/redpanda"
-	_ "github.com/wombatwisdom/wombat/public/components/snowflake"
-	_ "github.com/wombatwisdom/wombat/public/components/splunk"
+	_ "github.com/wombatwisdom/wombat/public/components/all"
 )
 
 var Version = "0.0.1"
