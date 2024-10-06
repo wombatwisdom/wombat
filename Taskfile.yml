@@ -25,6 +25,9 @@ vars:
   VER_FLAGS: '-X main.Version={{.VERSION}} -X main.DateBuilt={{.DATE}}'
 
 tasks:
+  godir:
+    cmd: which go
+
   deps:
     desc: Install dependencies
     cmd: go mod tidy
@@ -34,6 +37,13 @@ tasks:
     deps:
       - deps
     cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}} ./cmd/{{.APP_NAME}}/*.go
+
+  tools:
+    desc: Build the tools
+    deps:
+      - deps
+    cmds:
+      - go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/docs_gen ./cmd/docs_gen/*.go
 
   install:
     desc: Install the application
@@ -87,10 +97,9 @@ tasks:
     cmds:
       - rm -rf {{.TARGET_DIR}}
 
-#    docs:
-#      deps:
-#        - build
-#        - tools
-#      cmds:
-#        - '$(PATHINSTBIN)/wombat lint --deprecated "./config/examples/*.yaml" "$(WEBSITE_DIR)/**/*.md"'
-#        - '$(PATHINSTBIN)/wombat template lint "./config/template_examples/*.yaml"'
+  docs:
+#    deps:
+#      - build
+#      - tools
+    cmds:
+      - go run -tags "$(TAGS)" ./cmd/docs_gen
