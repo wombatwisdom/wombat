@@ -1,6 +1,8 @@
 ---
 title: Tracers
 ---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 A tracer type represents a destination for Wombat to send tracing events to such as [Jaeger](https://www.jaegertracing.io/).
 
@@ -24,6 +26,7 @@ tracer:
     sampler_param: 1
 ```
 
-> Although the configuration spec of this component is stable the format of spans, tags and logs created by
-> Wombat is subject to change as it is tuned for improvement.
-{style="warning"}
+<Aside type="caution">
+Although the configuration spec of this component is stable the format of spans, tags and logs created by
+Wombat is subject to change as it is tuned for improvement.
+</Aside>

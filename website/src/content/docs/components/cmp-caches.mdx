@@ -1,6 +1,8 @@
 ---
 title: Caches
 ---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 A cache is a key/value store which can be used by certain components for applications such as deduplication or data
 joins. Caches are configured as a named resource:
@@ -14,7 +16,9 @@ cache_resources:
       default_ttl: 60s
 ```
 
-> It's possible to layer caches with read-through and write-through behaviour using the `multilevel` cache.
+<Aside type="tip">
+It's possible to layer caches with read-through and write-through behaviour using the `multilevel` cache.
+</Aside>
 
 And then any components that use caches have a field `resource` that specifies the cache resource:
 
