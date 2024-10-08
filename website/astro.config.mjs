@@ -5,7 +5,6 @@ import asciidoc from "astro-asciidoc";
 // https://astro.build/config
 export default defineConfig({
 	site:'https://wombatwisdom.github.io',
-	base: '/wombat',
 	integrations: [
 		asciidoc({
 
