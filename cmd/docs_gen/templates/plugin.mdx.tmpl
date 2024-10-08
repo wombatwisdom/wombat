@@ -1,0 +1,82 @@
+---
+title: {{.Name}}
+kind: {{.Type}}
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+{{if eq .Status "beta" -}}
+
+{{end -}}
+{{if eq .Status "experimental" -}}
+
+{{end -}}
+{{if eq .Status "deprecated" -}}
+<Aside type="caution" title="Deprecated">
+	This component is deprecated and will be removed in the next major version release. Please consider moving onto alternative components.
+</Aside>
+{{end -}}
+
+
+{{if gt (len .Summary) 0 -}}
+{{.Summary}}
+{{end -}}{{if gt (len .Version) 0}}
+Introduced in version {{.Version}}.
+{{end}}
+{{if eq .CommonConfigYAML .AdvancedConfigYAML -}}
+```yml
+# Config fields, showing default values
+{{.CommonConfigYAML -}}
+```
+{{else}}
+<Tabs>
+<TabItem label="Common">
+```yml
+# Common config fields, showing default values
+{{.CommonConfigYAML -}}
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
+{{.AdvancedConfigYAML -}}
+```
+</TabItem>
+</Tabs>
+{{end -}}
+{{if gt (len .Description) 0}}
+{{.Description}}
+{{end}}
+{{if and (le (len .Fields) 4) (gt (len .Fields) 0) -}}
+## Fields
+
+{{template "field_docs" . -}}
+{{end -}}
+
+{{if gt (len .Examples) 0 -}}
+## Examples
+
+<Tabs>
+{{range $i, $example := .Examples -}}
+<TabItem label="{{$example.Title}}">
+{{if gt (len $example.Summary) 0 -}}
+{{$example.Summary}}
+{{end}}
+{{if gt (len $example.Config) 0 -}}
+```yaml{{$example.Config}}```
+{{end}}
+</TabItem>
+{{end -}}
+</Tabs>
+
+{{end -}}
+
+{{if gt (len .Fields) 4 -}}
+## Fields
+
+{{template "field_docs" . -}}
+{{end -}}
+
+{{if gt (len .Footnotes) 0 -}}
+{{.Footnotes}}
+{{end}}

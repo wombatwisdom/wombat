@@ -102,4 +102,4 @@ tasks:
 #      - build
 #      - tools
     cmds:
-      - go run -tags "$(TAGS)" ./cmd/docs_gen
+      - go run ./cmd/docs_gen

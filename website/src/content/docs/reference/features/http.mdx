@@ -1,0 +1,163 @@
+---
+title: HTTP
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+The schema of the `http` section is as follows:
+
+### `enabled`
+
+Whether to enable to HTTP server.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `address`
+
+The address to bind to.
+
+
+*Type*: `string`
+
+*Default*: `"0.0.0.0:4195"`
+
+### `root_path`
+
+Specifies a general prefix for all endpoints, this can help isolate the service endpoints when using a reverse proxy with other shared services. All endpoints will still be registered at the root as well as behind the prefix, e.g. with a root_path set to `/foo` the endpoint `/version` will be accessible from both `/version` and `/foo/version`.
+
+
+*Type*: `string`
+
+*Default*: `"/benthos"`
+
+### `debug_endpoints`
+
+Whether to register a few extra endpoints that can be useful for debugging performance or behavioral problems.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `cert_file`
+
+An optional certificate file for enabling TLS.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `key_file`
+
+An optional key file for enabling TLS.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `cors`
+
+Adds Cross-Origin Resource Sharing headers.
+
+
+*Type*: `object`
+
+Requires version 3.63.0 or newer
+
+### `cors.enabled`
+
+Whether to allow CORS requests.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `cors.allowed_origins`
+
+An explicit list of origins that are allowed for CORS requests.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+### `basic_auth`
+
+Allows you to enforce and customise basic authentication for requests to the HTTP server.
+
+
+*Type*: `object`
+
+
+### `basic_auth.enabled`
+
+Enable basic authentication
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `basic_auth.realm`
+
+Custom realm name
+
+
+*Type*: `string`
+
+*Default*: `"restricted"`
+
+### `basic_auth.username`
+
+Username required to authenticate.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `basic_auth.password_hash`
+
+Hashed password required to authenticate. (base64 encoded)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `basic_auth.algorithm`
+
+Encryption algorithm used to generate `password_hash`.
+
+
+*Type*: `string`
+
+*Default*: `"sha256"`
+
+```yml
+# Examples
+
+algorithm: md5
+
+algorithm: sha256
+
+algorithm: bcrypt
+
+algorithm: scrypt
+```
+
+### `basic_auth.salt`
+
+Salt for scrypt algorithm. (base64 encoded)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
