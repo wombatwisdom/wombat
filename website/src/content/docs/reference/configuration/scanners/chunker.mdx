@@ -1,0 +1,26 @@
+---
+title: chunker
+kind: scanner
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Split an input stream into chunks of a given number of bytes.
+
+```yml
+# Config fields, showing default values
+chunker:
+  size: 0 # No default (required)
+```
+
+## Fields
+
+### `size`
+
+The size of each chunk in bytes.
+
+
+*Type*: `int`
+
+
+

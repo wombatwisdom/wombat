@@ -1,0 +1,70 @@
+---
+title: jmespath
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Executes a [JMESPath query](http://jmespath.org/) on JSON documents and replaces the message with the resulting document.
+
+```yml
+# Config fields, showing default values
+label: ""
+jmespath:
+  query: "" # No default (required)
+```
+
+[TIP]
+.Try out Bloblang
+====
+For better performance and improved capabilities try native Redpanda Connect mapping with the `mapping` processor.
+====
+
+
+## Fields
+
+### `query`
+
+The JMESPath query to apply to messages.
+
+
+*Type*: `string`
+
+
+## Examples
+
+<Tabs>
+<TabItem label="Mapping">
+
+When receiving JSON documents of the form:
+
+```json
+{
+  "locations": [
+    {"name": "Seattle", "state": "WA"},
+    {"name": "New York", "state": "NY"},
+    {"name": "Bellevue", "state": "WA"},
+    {"name": "Olympia", "state": "WA"}
+  ]
+}
+```
+
+We could collapse the location names from the state of Washington into a field `Cities`:
+
+```json
+{"Cities": "Bellevue, Olympia, Seattle"}
+```
+
+With the following config:
+
+```yaml
+pipeline:
+  processors:
+    - jmespath:
+        query: "locations[?state == 'WA'].name | sort(@) | {Cities: join(', ', @)}"
+```
+
+</TabItem>
+</Tabs>
+
+
