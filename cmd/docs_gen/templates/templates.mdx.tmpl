@@ -1,0 +1,14 @@
+---
+title: Templating
+description: Learn how templates work.
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="Experimental">
+Templates are an experimental feature and are subject to change outside major version releases.
+</Aside>
+
+The schema of a template file is as follows:
+
+{{template "field_docs" . -}}

@@ -1,0 +1,50 @@
+---
+title: wasm
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Executes a function exported by a WASM module for each message.
+
+Introduced in version 4.11.0.
+
+```yml
+# Config fields, showing default values
+label: ""
+wasm:
+  module_path: "" # No default (required)
+  function: process
+```
+
+This processor uses [Wazero](https://github.com/tetratelabs/wazero) to execute a WASM module (with support for WASI), calling a specific function for each message being processed. From within the WASM module it is possible to query and mutate the message being processed via a suite of functions exported to the module.
+
+This ecosystem is delicate as WASM doesn't have a single clearly defined way to pass strings back and forth between the host and the module. In order to remedy this we're gradually working on introducing libraries and examples for multiple languages which can be found in [the codebase](https://github.com/redpanda-data/benthos/tree/main/public/wasm/README.md).
+
+These examples, as well as the processor itself, is a work in progress.
+
+## Parallelism
+
+It's not currently possible to execute a single WASM runtime across parallel threads with this processor. Therefore, in order to support parallel processing this processor implements pooling of module runtimes. Ideally your WASM module shouldn't depend on any global state, but if it does then you need to ensure the processor is only run on a single thread.
+
+
+## Fields
+
+### `module_path`
+
+The path of the target WASM module to execute.
+
+
+*Type*: `string`
+
+
+### `function`
+
+The name of the function exported by the target WASM module to run for each message.
+
+
+*Type*: `string`
+
+*Default*: `"process"`
+
+
