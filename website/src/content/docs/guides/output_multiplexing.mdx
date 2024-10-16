@@ -1,0 +1,51 @@
+---
+title: Output Multiplexing
+---
+There are a few different ways of multiplexing in Wombat, here's a quick run through:
+
+## Interpolation Multiplexing
+
+Some output fields support [field interpolation](cfg-interpolation.md), which is a super easy way to multiplex messages based
+on their contents in situations where you are multiplexing to the same service.
+
+For example, multiplexing against Kafka topics is a common pattern:
+
+```yaml
+output:
+  kafka:
+    addresses: [ TODO:6379 ]
+    topic: ${! metadata("target_topic") }
+```
+
+Refer to the field documentation for a given output to see if it support interpolation.
+
+## Switch Multiplexing
+
+A more advanced form of multiplexing is to route messages to different output configurations based on a query. This is
+easy with the `switch` output:
+
+```yaml
+output:
+  switch:
+    cases:
+      - check: this.type == "foo"
+        output:
+          amqp_1:
+            urls: [ amqps://guest:guest@localhost:5672/ ]
+            target_address: queue:/the_foos
+
+      - check: this.type == "bar"
+        output:
+          gcp_pubsub:
+            project: dealing_with_mike
+            topic: mikes_bars
+
+      - output:
+          redis_streams:
+            url: tcp://localhost:6379
+            stream: everything_else
+          processors:
+            - mapping: |
+                root = this
+                root.type = this.type.not_null() | "unknown"
+```

@@ -1,0 +1,55 @@
+---
+title: Feature Toggles
+---
+## Feature Toggles
+
+Resources can be imported separately to your config file with the cli flag `-r` or `-resources`, which is a useful way
+to switch out resources with common names based on your chosen environment. For example, with a main configuration file
+`config.yaml`:
+
+```yaml
+pipeline:
+  processors:
+    - resource: get_foo
+```
+
+And then two resource files, one stored at the path `./staging/request.yaml`:
+
+```yaml
+processor_resources:
+  - label: get_foo
+    http:
+      url: http://example.com/foo
+      verb: POST
+      headers:
+        SomeThing: "set-to-this"
+        SomeThingElse: "set-to-something-else"
+```
+
+And another stored at the path `./production/request.yaml`:
+
+```yaml
+processor_resources:
+  - label: get_foo
+    http:
+      url: http://example.com/bar
+      verb: PUT
+      headers:
+        Desires: "are-empty"
+```
+
+We can select our chosen resource by changing which file we import, either running:
+
+```shell
+wombat -r ./staging/request.yaml -c ./config.yaml
+```
+
+Or:
+
+```shell
+wombat -r ./production/request.yaml -c ./config.yaml
+```
+
+These flags also support wildcards, which allows you to import an entire directory of resource files like
+`wombat -r "./staging/*.yaml" -c ./config.yaml`. You can find out more about configuration resources in
+the [resources document](cfg-resources.md).
