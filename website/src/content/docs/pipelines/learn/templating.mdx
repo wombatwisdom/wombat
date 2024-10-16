@@ -1,0 +1,91 @@
+---
+title: Templating
+sidebar:
+    order: 5
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+
+<Aside type="caution" title="experimental">
+Templates are an experimental feature and therefore subject to change outside of major version releases.
+</Aside>
+
+Templates are a way to define new Wombat components (similar to plugins) that are implemented by generating a Wombat
+config snippet from pre-defined parameter fields. This is useful when a common pattern of Wombat configuration is used
+but with varying parameters each time.
+
+A template is defined in a YAML file that can be imported when Wombat runs using the flag `-t`:
+
+```sh
+wombat -t "./templates/*.yaml" -c ./config.yaml
+```
+
+The template describes the type of the component and configuration fields that can be used to customize it, followed by
+a [Bloblang mapping](/bloblang/) that translates an object containing those fields into a wombat config structure.
+This allows you to use logic to generate more complex configurations:
+
+<Tabs>
+<TabItem label="Template">
+
+```yaml
+name: aws_sqs_list
+type: input
+fields:
+  - name: urls
+    type: string
+    kind: list
+  - name: region
+    type: string
+    default: us-east-1
+mapping: |
+  root.broker.inputs = this.urls.map_each(url -> {
+    "aws_sqs": {
+      "url": url,
+      "region": this.region,
+    }
+  })
+```
+</TabItem>
+<TabItem label="Config">
+
+```yml
+input:
+  aws_sqs_list:
+    urls:
+      - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue1
+      - https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue2
+
+pipeline:
+  processors:
+    - mapping: |
+        root.id = uuid_v4()
+        root.foo = this.inner.foo
+        root.body = this.outer
+```
+
+</TabItem>
+<TabItem label="Result">
+
+```yaml
+input:
+  broker:
+    inputs:
+      - aws_sqs:
+          url: https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue1
+          region: us-east-1
+      - aws_sqs:
+          url: https://sqs.us-east-2.amazonaws.com/123456789012/MyQueue2
+          region: us-east-1
+
+pipeline:
+  processors:
+    - mapping: |
+        root.id = uuid_v4()
+        root.foo = this.inner.foo
+        root.body = this.outer
+```
+
+</TabItem>
+</Tabs>

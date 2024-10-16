@@ -1,0 +1,50 @@
+---
+title: Processors
+sidebar:
+    order: 1
+---
+Wombat processors are functions applied to messages passing through a pipeline. The function signature allows a
+processor to mutate or drop messages depending on the content of the message. There are many types on offer but the most
+powerful are the `mapping` and `mutation` processors.
+
+Depending on where in the config they are placed they will be run either immediately
+after a specific input (set in the input section), on all messages (set in the pipeline section) or before a specific
+output (set in the output section). Most processors apply to all messages and can be placed in the pipeline section:
+
+<Tabs>
+    <TabItem label="Input Processors">
+        ```yaml
+        input:
+        kafka:
+        addresses: [ TODO ]
+        topics: [ foo, bar ]
+        consumer_group: foogroup
+        processors:
+        - mapping: |
+        root.message = this
+        root.meta.link_count = this.links.length()
+        ```
+    </TabItem>
+    <TabItem label="Pipeline Processors">
+        ```yaml
+        pipeline:
+        threads: 1
+        processors:
+        - label: my_cool_mapping
+        mapping: |
+        root.message = this
+        root.meta.link_count = this.links.length()
+        ```
+    </TabItem>
+    <TabItem label="Output Processors">
+        ```yaml
+        output:
+        aws_s3:
+        bucket: TODO
+        processors:
+        - mapping: |-
+        root.message = this
+        root.meta.link_count = this.links.length()
+        ```
+    </TabItem>
+</Tabs>

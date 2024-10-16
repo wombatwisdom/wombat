@@ -1,0 +1,17 @@
+---
+title: Dead Letter Queues
+---
+
+It's possible to create fallback outputs for when an output target fails using a `fallback` output:
+
+```yaml
+output:
+  fallback:
+    - aws_sqs:
+        url: https://sqs.us-west-2.amazonaws.com/TODO/TODO
+        max_in_flight: 20
+
+    - http_client:
+        url: http://backup:1234/dlq
+        verb: POST
+```
