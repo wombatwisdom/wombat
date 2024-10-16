@@ -1,54 +1,109 @@
 ---
 title: Resources
 sidebar:
-    order: 4
+    order: 5
 ---
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Resources are components within Wombat that are declared with a unique label and can be referenced any number of times
 within a configuration. Only one instance of each named resource is created, but it is safe to use it in multiple places
 as they can be shared without consequence.
 
-Some components such as caches and rate limits can _only_ be created as a resource. However, for components where it's
-optional there are a few reasons why it might be advantageous to do so.
+The following components can be defined as resources:
 
-```yaml
-input:
-  resource: foo
+- inputs
+- processors
+- outputs
+- caches
+- rate limits
 
-pipeline:
-  processors:
-    - resource: bar
-    - cache:
-        operator: set
-        resource: baz
-        key: ${! json("id") }
-        value: ${! content() }
+Some components such as [caches](/pipelines/build/cache) and [rate limits](/pipelines/build/rate_limit) can _only_ be
+created as a resource. However, for components where it's optional there are a few reasons why it might be
+advantageous to do so.
 
-output:
-  resource: buz
+## How to use resources?
+Resources are defined on the root level of the pipeline configuration file. Each resource is defined as a list under
+a dedicated key that corresponds to the type of resource.
 
-input_resources:
-  - label: foo
-    file:
-      paths: [ ./in.txt ]
+<Tabs>
+    <TabItem label="Input">
+        ```yaml
+        ## Using the resource
+        input:
+          resource: foo_input
 
-processor_resources:
-  - label: bar
-    mapping: 'root = content.lowercase()'
+        ## Defining the resource
+        input_resources:
+          - label: foo_input
+            file:
+              paths: [ ./in.txt ]
+        ```
+    </TabItem>
+    <TabItem label="Processor">
+        ```yaml
+        ## Using the resource
+        pipeline:
+          processors:
+            - resource: foo_processor
 
-cache_resources:
-  - label: baz
-    memory:
-      default_ttl: 300s
+        ## Defining the resource
+        processor_resources:
+          - label: foo_processor
+            mapping: 'root = content.lowercase()'
+        ```
+    </TabItem>
+    <TabItem label="Output">
+        ```yaml
+        ## Using the resource
+        output:
+          resource: foo_output
 
-output_resources:
-  - label: buz
-    file:
-      path: ./out.txt
-```
+        ## Defining the resource
+        output_resources:
+          - label: foo_output
+            file:
+                path: ./out.txt
+        ```
+    </TabItem>
+    <TabItem label="Cache">
+        ```yaml
+        ## Using the resource
+        pipeline:
+          processors:
+            - cache:
+                resource: foo_cache
+                operator: set
+                key: ${! json("id") }
+                value: ${! content() }
 
-## Reusability
+        ## Defining the resource
+        cache_resources:
+          - label: foo_cache
+            memory:
+              default_ttl: 300s
+        ```
+    </TabItem>
+    <TabItem label="Rate Limit">
+        ```yaml
+        ## Using the resource
+        pipeline:
+          processors:
+            - http_client:
+                url: http://example.com
+                verb: GET
+                rate_limit: foo_rate_limit
 
+        ## Defining the resource
+        rate_limit_resources:
+          - label: foo_rate_limit
+            local:
+              count: 10
+              interval: 1s
+        ```
+    </TabItem>
+</Tabs>
+
+## Why use resources?
 Sometimes it's necessary to use a rather large component multiple times. Instead of copy/pasting the configuration or
 using YAML anchors you can define your component as a resource.
 
@@ -76,87 +131,3 @@ processor_resources:
         SomeThing: "set-to-this"
         SomeThingElse: "set-to-something-else"
 ```
-
-## Feature Toggling
-
-### With Environment Variables
-
-There are two ways of using resources for feature toggling, the first is to define your feature components with unique
-names and then apply the old switcheroo with environment variables to select the one you wish to execute:
-
-```yaml
-pipeline:
-  processors:
-    - resource: ${FEATURE_REQUEST}
-
-processor_resources:
-  - label: get_foo
-    http:
-      url: http://example.com/foo
-      verb: POST
-      headers:
-        SomeThing: "set-to-this"
-        SomeThingElse: "set-to-something-else"
-
-  - label: get_bar
-    http:
-      url: http://example.com/bar
-      verb: PUT
-      headers:
-        Desires: "are-empty"
-```
-
-Then when you execute Wombat use the environment variable to choose your resource:
-`FEATURE_REQUEST=get_foo wombat -c ./your_config.yaml`.
-
-### With Imports
-
-However, Wombat allows you to import resources from separate files with the cli flag `-r` or `-resources`, which can be
-a useful way to switch out resources with common names based on your chosen environment. For example, with a main
-configuration file `config.yaml`:
-
-```yaml
-pipeline:
-  processors:
-    - resource: get_foo
-```
-
-And then two resource files, one stored at the path `./staging/request.yaml`:
-
-```yaml
-processor_resources:
-  - label: get_foo
-    http:
-      url: http://example.com/foo
-      verb: POST
-      headers:
-        SomeThing: "set-to-this"
-        SomeThingElse: "set-to-something-else"
-```
-
-And another stored at the path `./production/request.yaml`:
-
-```yaml
-processor_resources:
-  - label: get_foo
-    http:
-      url: http://example.com/bar
-      verb: PUT
-      headers:
-        Desires: "are-empty"
-```
-
-We can select our chosen resource by changing which file we import, either running:
-
-```sh
-wombat -r ./staging/request.yaml -c ./config.yaml
-```
-
-Or:
-
-```sh
-wombat -r ./production/request.yaml -c ./config.yaml
-```
-
-These flags also support wildcards, which allows you to import an entire directory of resource files like
-`wombat -r "./staging/*.yaml" -c ./config.yaml`.

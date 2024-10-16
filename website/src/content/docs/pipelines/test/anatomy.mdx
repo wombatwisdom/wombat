@@ -1,0 +1,107 @@
+---
+title: Anatomy
+sidebar:
+    order: 1
+---
+import {Aside, Steps} from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+No matter which way you choose to write your tests, the `tests` field should contain a list of test definitions, each
+with their own unique `name` field. Each test is run in complete isolation, including any resources defined by the
+config file.
+
+<Aside type="tip">
+    Find out more about the details of each field in the [configuration reference](/reference/configuration/unit_testing).
+</Aside>
+
+## Input Data
+The `input_batch` field lists one or more messages to be fed into the targeted processors as a batch. Each message of
+the batch may have its raw content defined as well as metadata key/value pairs.
+
+## Output Conditions
+Having only an input batch is quite useless without any output conditions to test against. The `output_batches` field
+lists any number of batches of messages which are expected to result from the target processors. Each batch lists any
+number of messages, each one defining conditions to describe the expected contents of the message.
+
+If the number of batches defined does not match the resulting number of batches the test will fail. If the number of
+messages defined in each batch does not match the number in the resulting batches the test will fail. If any condition
+of a message fails then the test fails.
+
+## Target Processors
+The optional `target_processors` field is either the label of a processor to test, or a
+[JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) that identifies the position of a processor, or list of
+processors, within the file which should be executed by the test. For example a value of `foo` would target a processor
+with the label `foo`, and a value of `/input/processors` would target all processors within the input section of the
+config.
+
+## Environment Variables
+Since it is quite common to use environment variables in your configuration files, the `environment` field allows you to
+define an object of key/value pairs that set environment variables to be evaluated during the parsing of the target
+config file. These are unique to each test, allowing you to test different environment variable interpolation.
+
+## Mocking Processors
+
+<Aside type="danger">
+    This feature is currently in a BETA phase, which means breaking changes could be made if a fundamental issue with
+    the feature is found.
+</Aside>
+
+Sometimes you'll want to write tests for a series of processors, where one or more of them are networked (or otherwise
+stateful). Rather than creating and managing mocked services you can define mock versions of those processors in the
+test definition. For example, if we have a config with the following processors:
+
+```yaml
+pipeline:
+  processors:
+    - mapping: 'root = "simon says: " + content()'
+    - label: get_foobar_api
+      http:
+        url: http://example.com/foobar
+        verb: GET
+    - mapping: 'root = content().uppercase()'
+```
+
+Rather than create a fake service for the [`http` processor](/references/components/processors/http) to interact with we can define a mock in our test definition
+that replaces it with a [`mapping` processor](/reference/components/processors/mapping). Mocks are configured as a map of labels that identify
+a processor to replace and the config to replace it with:
+
+```yaml
+tests:
+  - name: mocks the http proc
+    target_processors: '/pipeline/processors'
+    mocks:
+      get_foobar_api:
+        mapping: 'root = content().string() + " this is some mock content"'
+    input_batch:
+      - content: "hello world"
+    output_batches:
+      - - content_equals: "SIMON SAYS: HELLO WORLD THIS IS SOME MOCK CONTENT"
+```
+
+With the above test definition the `http` processor will be swapped out for
+`mapping: 'root = content().string() + " this is some mock content"'`. For the purposes of mocking it is recommended
+that you use a [`mapping` processor](/reference/components/processors/mapping) that simply mutates the message in a way that you would expect
+the mocked processor to.
+
+<Aside type="caution">
+    It's not currently possible to mock components that are imported as separate resource files (using `--resource`/
+    `-r`). It is recommended that you mock these by maintaining separate definitions for test purposes (
+    `-r "./test/*.yaml"`).
+</Aside>
+
+### More granular mocking
+It is also possible to target specific fields within the test config by [JSON pointers](https://datatracker.ietf.org/doc/html/rfc6901) as an alternative
+to labels. The following test definition would create the same mock as the previous:
+
+```yaml
+tests:
+  - name: mocks the http proc
+    target_processors: '/pipeline/processors'
+    mocks:
+      /pipeline/processors/1:
+        mapping: 'root = content().string() + " this is some mock content"'
+    input_batch:
+      - content: "hello world"
+    output_batches:
+      - - content_equals: "SIMON SAYS: HELLO WORLD THIS IS SOME MOCK CONTENT"
+```

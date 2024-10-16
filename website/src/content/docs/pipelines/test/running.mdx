@@ -1,0 +1,15 @@
+---
+title: Running Tests
+tableOfContents: false
+sidebar:
+    order: 3
+---
+Executing tests for a specific config can be done by pointing the subcommand `test` at either the config to be tested or
+its test definition, e.g. `wombat test ./config.yaml` and `wombat test ./config_wombat_test.yaml` are equivalent.
+
+The `test` subcommand also supports wildcard patterns e.g. `wombat test ./foo/*.yaml` will execute all tests within
+matching files. In order to walk a directory tree and execute all tests found you can use the shortcut `./...`, e.g.
+`wombat test ./...` will execute all tests found in the current directory, any child directories, and so on.
+
+If you want to allow components to write logs at a provided level to stdout when running the tests, you can use
+`wombat test --log <level>`. Please consult the [logger docs](/reference/configuration/logger) for further details.

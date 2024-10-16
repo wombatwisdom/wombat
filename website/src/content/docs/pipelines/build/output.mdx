@@ -8,8 +8,8 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 An output is a sink where we wish to send our consumed data after applying an optional array
 of processors. Only one output is configured at the root of a Wombat config. However, the output can be
-a `broker` which combines multiple outputs under a chosen brokering pattern, or a `switch`
-which is used to multiplex against different outputs.
+a [`broker`](/reference/components/outputs/broker) which combines multiple outputs under a chosen brokering pattern,
+or a [`switch`](/reference/components/outputs/switch) which is used to multiplex against different outputs.
 
 An output config section looks like this:
 
@@ -26,39 +26,31 @@ output:
     - mapping: '{"message":this,"meta":{"link_count":this.links.length()}}'
 ```
 
-These types are hierarchical. For example, an `input` can have a list of child `processor` types attached to it, which
-in turn can have their own `processor` children.
-
-This is powerful but can potentially lead to large and cumbersome configuration files. This document outlines tooling
-provided by Wombat to help with writing and managing these more complex configuration files.
-
 ## Back Pressure
-
 Wombat outputs apply back pressure to components upstream. This means if your output target starts blocking traffic
 Wombat will gracefully stop consuming until the issue is resolved.
 
-## Retries
-
+## Retrying
 When a Wombat output fails to send a message the error is propagated back up to the input, where depending on the
 protocol it will either be pushed back to the source as a Noack (e.g. AMQP) or will be reattempted indefinitely with the
 commit withheld until success (e.g. Kafka).
 
-It's possible to instead have Wombat indefinitely retry an output until success with a `retry` output.
-Some other outputs, such as the `broker`, might also retry indefinitely depending on their
-configuration.
+It's possible to instead have Wombat indefinitely retry an output until success with a [`retry` output](/reference/components/outputs/retry).
+Some other outputs, such as the [`broker` output](/reference/components/outputs/broker), might also retry indefinitely
+depending on their configuration.
 
-## Batching and Multiple Part Messages
+## Output Processors
+Output processors are functions applied to messages just before they are sent to the output. They are entirely optional
+but can be used to transform the message content, or to add metadata to the message. For example,
+imagine you want to add a count of the number of links in a message to the message itself before sending the message to
+an S3 bucket:
 
-All Wombat processors support multiple part messages, which are synonymous with batches. This enables some
-cool [windowed processing](/guides/windowed_processing) capabilities.
-
-Many processors are able to perform their behaviours on specific parts of a message batch, or on all parts, and have a
-field `parts` for specifying an array of part indexes they should apply to. If the list of target parts is empty these
-processors will be applied to all message parts.
-
-Part indexes can be negative, and if so the part will be selected from the end counting backwards starting from -1. E.g.
-if part = -1 then the selected part will be the last part of the message, if part = -2 then the part before the last
-element will be selected, and so on.
-
-Some processors such as `dedupe` act across an entire batch, when instead we might like to perform
-them on individual messages of a batch. In this case the `for_each` processor can be used.
+```yaml
+output:
+  aws_s3:
+    bucket: TODO
+  processors:
+    - mapping: |-
+        root.message = this
+        root.meta.link_count = this.links.length()
+```

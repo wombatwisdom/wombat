@@ -6,9 +6,9 @@ sidebar:
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Within a Wombat configuration, in between `input` and `output`, is a `pipeline` section. This section describes an array
-of processors that are to be applied to *all* messages, and are not bound to any particular input or
-output.
+Within a Wombat configuration, in between the [`input`](input) and [`output`](output) sections, there can be an
+optional `pipeline` section containing an array of processors that are to be applied to *all* messages, and are not
+bound to any particular input or output.
 
 If you have processors that are heavy on CPU and aren't specific to a certain input or output they are best suited for
 the pipeline section. It is advantageous to use the pipeline section as it allows you to set an explicit number of
