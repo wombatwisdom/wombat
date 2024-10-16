@@ -1,9 +1,8 @@
 ---
 title: Templating
 sidebar:
-    order: 5
+    order: 6
 ---
-
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
@@ -16,6 +15,7 @@ Templates are a way to define new Wombat components (similar to plugins) that ar
 config snippet from pre-defined parameter fields. This is useful when a common pattern of Wombat configuration is used
 but with varying parameters each time.
 
+## How to define and use templates?
 A template is defined in a YAML file that can be imported when Wombat runs using the flag `-t`:
 
 ```sh
@@ -23,7 +23,7 @@ wombat -t "./templates/*.yaml" -c ./config.yaml
 ```
 
 The template describes the type of the component and configuration fields that can be used to customize it, followed by
-a [Bloblang mapping](/bloblang/) that translates an object containing those fields into a wombat config structure.
+a [Bloblang mapping](/bloblang) that translates an object containing those fields into a wombat config structure.
 This allows you to use logic to generate more complex configurations:
 
 <Tabs>

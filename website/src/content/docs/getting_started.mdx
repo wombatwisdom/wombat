@@ -36,15 +36,16 @@ Wombat is ready to commit to this relationship, are you?
 </Tabs>
 
 ## Create a pipeline config file
-A Wombat stream pipeline is configured with a single [pipeline config file](pipelines/about), you can generate a
+A Wombat stream pipeline is configured with a single [pipeline config file](/pipelines/learn), you can generate a
 fresh one with:
 
 ```shell
 wombat create > config.yaml
 ```
 
-The main sections that make up a config are `input`, `pipeline` and `output`. When you generate a fresh config
-it'll simply pipe `stdin` to `stdout` like this:
+The main sections that make up a config are [`input`](/pipelines/build/input), [`pipeline`](/pipelines/build/pipeline)
+and [`output`](/pipelines/build/output). When you generate a fresh config it'll simply pipe
+[`stdin`](/reference/components/inputs/stdin) to [`stdout`](/reference/components/outputs/stdout) like this:
 
 ```yaml
 input:
@@ -57,7 +58,7 @@ output:
     stdout: {}
 ```
 
-Eventually we'll want to configure a more useful [input](pipelines/inputs) and [output](pipelines/outputs), but
+Eventually we'll want to configure a more useful [input](/pipelines/build/input) and [output](/pipelines/build/output), but
 for now this is useful for quickly testing processors.
 
 ## Run your pipeline
@@ -72,8 +73,8 @@ for hours, there's more stuff to try out.
 
 ## Add a processor
 Next, let's add some processing steps in order to mutate messages. The most powerful one is the
-[`mapping` processor](reference/processors/mapping) which allows us to perform mappings, let's add a mapping to
-uppercase our messages:
+[`mapping` processor](/reference/components/processors/mapping) which allows us to perform mappings, let's add a
+mapping to uppercase our messages:
 
 ```yaml
 input:
@@ -88,7 +89,7 @@ output:
 ```
 
 Now your messages should come out in all caps, how whacky! IT'S LIKE WOMBAT IS SHOUTING BACK AT YOU!
-You can add as many [processing steps](pipelines/processors) as you like, and since processors are what make Wombat
+You can add as many [processing steps](/pipelines/build/processor) as you like, and since processors are what make Wombat
 powerful they are worth experimenting with.
 
 ## Working with structured data
@@ -133,19 +134,19 @@ How exciting! I don't know about you but I'm going to need to lie down for a whi
 might I suggest you peruse these sections to see if anything tickles your fancy?
 
 <LinkCard
-    title="Pipelines"
-    href="pipelines/about"
-    description="Learn how to write advanced pipelines."
-/>
-
-<LinkCard
     title="Bloblang"
-    href="bloblang/getting_started"
+    href="/bloblang/getting_started"
     description="Dive deeper into the mistery mapping language."
 />
 
 <LinkCard
-    title="Cookbooks"
-    href="cookbooks"
+    title="Guides"
+    href="/guides"
     description="Practical examples of how to use Wombat."
+/>
+
+<LinkCard
+    title="Reference"
+    href="/reference"
+    description="Navigate the reference documentation to find the meaning of that specific field."
 />

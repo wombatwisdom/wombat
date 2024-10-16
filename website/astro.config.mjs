@@ -1,10 +1,14 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import asciidoc from "astro-asciidoc";
+import starlightLinksValidator from 'starlight-links-validator'
 
 // https://astro.build/config
 export default defineConfig({
 	site:'https://wombatwisdom.github.io',
+	plugins: [
+		starlightLinksValidator(),
+	],
 	integrations: [
 		asciidoc({
 

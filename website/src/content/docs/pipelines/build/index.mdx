@@ -3,8 +3,12 @@ title: Building Pipelines
 sidebar:
     order: 0
 ---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Writing configurations isn't difficult at all. We even provide a generator for you to get started quickly:
+[As mentioned before](/pipelines/learn), a Wombat pipeline is defined by a configuration file that describes how
+messages are processed. Writing configurations isn't difficult at all. We even provide a generator for you to get
+started quickly:
 
 ```shell
 wombat create -s stdin/mapping/stdout > my_pipeline.yaml
@@ -52,8 +56,12 @@ Each of these sections can contain a number of components that are used to defin
 
 ### Core Components
 
-Every Wombat pipeline has at least one [input](input), an optional [buffer](buffer), an [output](output) and any
-number of [processors](processors):
+Every Wombat pipeline configuration at least has one [`input`](input) and one [`output`](output). A [`pipeline`](pipeline)
+section containing allowing parallel execution is optional. Some more advanced pipeline configurations might want to
+rely on a [`buffer`](buffer) section as well to allow messages to be buffered before being flushed to the output or
+pipeline.
+
+These components are considered to be the main components within Wombat as they provide the majority of useful behaviour.
 
 ```yaml
 input:
@@ -77,12 +85,8 @@ output:
     path: '${! metadata("kafka_topic") }/${! json("message.id") }.json'
 ```
 
-These are the main components within Wombat and they provide the majority of useful behaviour.
-
 ### Resource Components
-
-Finally, there are [caches](cache) and [rate limits](rate_limit). These are components that are referenced by core
-components and can be shared.
+Resource components like [caches](cache) and [rate limits](rate_limit) are referenced and shared among the core components.
 
 ```yaml
 input:
@@ -112,12 +116,14 @@ cache_resources:
 ```
 
 It's also possible to configure inputs, outputs and processors as resources which allows them to be reused throughout a
-configuration with the `resource` input, `resource` output and `resource` processor respectively.
+configuration with the [`resource` input](/reference/components/inputs/resource),
+[`resource` output](/reference/components/outputs/resource) and [`resource` processor](/reference/components/processors/resource) respectively.
 
 ### Observability Components
 
-There are also the observability components [http](/pipelines/observe/http), [logger](/pipelines/observe/logger), [metrics](/pipelines/observe/metrics), and [tracing](/pipelines/observe/tracers),
-which allow you to specify how Wombat exposes observability data:
+Finally, there are the observability components [http](/pipelines/observe/http), [logger](/pipelines/observe/logger),
+[metrics](/pipelines/observe/metrics), and [tracing](/pipelines/observe/tracers), which allows you to specify how
+Wombat exposes observability data:
 
 ```yaml
 http:
@@ -138,3 +144,5 @@ tracer:
   jaeger:
     agent_address: localhost:6831
 ```
+
+More details on observability and monitoring can be found in the [observability](/pipelines/observe) section.

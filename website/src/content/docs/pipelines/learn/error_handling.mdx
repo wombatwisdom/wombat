@@ -1,22 +1,22 @@
 ---
 title: Error Handling
 sidebar:
-    order: 3
+    order: 4
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 It's always possible for things to go wrong, be a good captain and plan ahead.
 
-Wombat supports a range of processors such as `http` and `aws_lambda` that have the potential to fail if
+Wombat supports a range of processors such as [`http`](/reference/components/processors/http) and
+[`aws_lambda`](/reference/components/processors/aws_lambda) that have the potential to fail if
 their retry attempts are exhausted. When this happens the data is not dropped but instead continues through the pipeline
 mostly unchanged, but a metadata flag is added allowing you to handle the errors in a way that suits your needs.
 
 This document outlines common patterns for dealing with errors, such as dropping them, recovering them with more
 processing, routing them to a dead-letter queue, or any combination thereof.
 
-### Abandon on Failure
-
+## Abandon on Failure
 It's possible to define a list of processors which should be skipped for messages that failed a previous stage using
 the `try` processor:
 
@@ -29,9 +29,9 @@ pipeline:
         - resource: baz # Skipped if foo or bar failed
 ```
 
-### Recover Failed Messages
+## Recover Failed Messages
 
-Failed messages can be fed into their own processor steps with a `catch` processor:
+Failed messages can be fed into their own processor steps with a [`catch`](/reference/components/processors/catch) processor:
 
 ```yaml
 pipeline:
@@ -42,7 +42,8 @@ pipeline:
 ```
 
 Once messages finish the catch block they will have their failure flags removed and are treated like regular messages.
-If this behaviour is not desired then it is possible to simulate a catch block with a `switch` processor:
+If this behaviour is not desired then it is possible to simulate a catch block with a
+[`switch`](/reference/components/processors/switch) processor:
 
 ```yaml
 pipeline:
@@ -54,13 +55,12 @@ pipeline:
             - resource: bar # Recover here
 ```
 
-### Logging Errors
-
+## Logging Errors
 When an error occurs there will occasionally be useful information stored within the error flag that can be exposed with
 the interpolation function `error`. This allows you to expose the information with
 processors.
 
-For example, when catching failed processors you can `log` the messages:
+For example, when catching failed processors you can [`log`](/reference/components/processors/log) the messages:
 
 ```yaml
 pipeline:
@@ -83,9 +83,9 @@ pipeline:
             root.meta.error = error()
 ```
 
-### Attempt Until Success
-
-It's possible to reattempt a processor for a particular message until it is successful with a `retry` processor:
+## Attempt Until Success
+It's possible to reattempt a processor for a particular message until it is successful with a
+[`retry`](/reference/components/processors/retry) processor:
 
 ```yaml
 pipeline:
@@ -100,9 +100,9 @@ pipeline:
           - resource: foo
 ```
 
-### Drop Failed Messages
-
-In order to filter out any failed messages from your pipeline you can use a `mapping` processor:
+## Drop Failed Messages
+In order to filter out any failed messages from your pipeline you can use a
+[`mapping`](/reference/components/processors/mapping) processor:
 
 ```yaml
 pipeline:
@@ -113,10 +113,10 @@ pipeline:
 This will remove any failed messages from a batch. Furthermore, dropping a message will propagate an acknowledgement (
 also known as "ack") upstream to the pipeline's input.
 
-### Reject Messages
-
+## Reject Messages
 Some inputs such as NATS, GCP Pub/Sub and AMQP support nacking (rejecting) messages. We can perform a nack (or
-rejection) on data that has failed to process rather than delivering it to our output with a `reject_errored` output:
+rejection) on data that has failed to process rather than delivering it to our output with a
+[`reject_errored`](/reference/components/output/reject_errored) output:
 
 ```yaml
 output:
@@ -124,10 +124,9 @@ output:
     resource: foo # Only non-errored messages go here
 ```
 
-### Route to a Dead-Letter Queue
-
-And by placing the above within a `fallback` output we can instead route the failed messages to a
-different output:
+## Route to a Dead-Letter Queue
+And by placing the above within a [`fallback`](/reference/components/output/fallback) output we can instead route the
+failed messages to a different output:
 
 ```yaml
 output:
@@ -139,7 +138,7 @@ output:
 ```
 
 And, finally, in cases where we wish to route data differently depending on the error message itself we can use a
-`switch` output:
+[`switch`](/reference/components/output/switch) output:
 
 ```yaml
 output:

@@ -3,6 +3,12 @@ title: Rate Limits
 sidebar:
     order: 8
 ---
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside type="note">
+    A rate limit is defined as a **resource** which can be used by other components.
+    Find out more about resources [in this document.](/pipelines/learn/resources)
+</Aside>
 
 A rate limit is a strategy for limiting the usage of a shared resource across parallel components in a Wombat instance,
 or potentially across multiple instances. They are configured as a resource:
@@ -16,8 +22,8 @@ rate_limit_resources:
 ```
 
 And most components that hit external services have a field `rate_limit` for specifying a rate limit resource to use,
-identified by the `label` field. For example, if we wanted to use our `foobar` rate limit with an `http_client` input 
-it would look like this:
+identified by the `label` field. For example, if we wanted to use our `foobar` rate limit with an
+[`http_client` input](/reference/components/inputs/http_client) it would look like this:
 
 ```yaml
 input:
@@ -31,9 +37,9 @@ By using a rate limit in this way we can guarantee that our input will only poll
 requests per second.
 
 Some components don't have a `rate_limit` field but we might still wish to throttle them by a rate limit, in which case
-we can use the `rate_limit` processor that applies back pressure to a processing pipeline when
-the limit is reached. For example, if we wished to limit the consumption of lines of a `csv` file input to
-a specified rate limit we can do that with the following:
+we can use the [`rate_limit` processor](/reference/components/processor/rate_limit) that applies back pressure to a
+processing pipeline when the limit is reached. For example, if we wished to limit the consumption of lines of a
+[`csv` input](/reference/components/inputs/csv) to a specified rate limit we can do that with the following:
 
 ```yaml
 input:
@@ -44,5 +50,3 @@ input:
     - rate_limit:
         resource: foobar
 ```
-
-You can find out more about resources [in this document.](cfg-resources.md)
