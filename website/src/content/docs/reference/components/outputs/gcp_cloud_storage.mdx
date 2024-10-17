@@ -167,19 +167,14 @@ Determines how file path collisions should be dealt with.
 *Default*: `"overwrite"`
 Requires version 3.53.0 or newer
 
-|===
-| Option | Summary
 
-| `append`
-| Append the message bytes to the original file.
-| `error-if-exists`
-| Return an error, this is the equivalent of a nack.
-| `ignore`
-| Do not modify the original file, the new data will be dropped.
-| `overwrite`
-| Replace the existing file with the new one.
+| Option | Summary |
+| ------ | ------- |
+| `append` | Append the message bytes to the original file. |
+| `error-if-exists` | Return an error, this is the equivalent of a nack. |
+| `ignore` | Do not modify the original file, the new data will be dropped. |
+| `overwrite` | Replace the existing file with the new one. |
 
-|===
 
 ### `chunk_size`
 

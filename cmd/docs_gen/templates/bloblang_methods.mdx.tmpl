@@ -42,7 +42,7 @@ Introduced in version {{.Version}}.
 {{end}}
 {{template "parameters" .Params -}}
 {{if gt (len .Examples) 0}}
-==== Examples
+#### Examples
 
 {{range $i, $example := .Examples}}
 {{template "method_example" $example -}}

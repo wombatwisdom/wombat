@@ -1,84 +1,69 @@
 ---
-title: nats_kv
-kind: processor
+title: nats_jetstream_batched
+kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Perform operations on a NATS key-value bucket.
-
-Introduced in version 4.12.0.
+Write messages to a NATS JetStream subject.
 
 
 <Tabs>
 <TabItem label="Common">
 ```yml
 # Common config fields, showing default values
-label: ""
-nats_kv:
-  urls: [] # No default (required)
-  bucket: my_kv_bucket # No default (required)
-  operation: "" # No default (required)
-  key: foo # No default (required)
+output:
+  label: ""
+  nats_jetstream_batched:
+    urls: [] # No default (required)
+    subject: foo.bar.baz # No default (required)
+    headers: {}
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 1024
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
 ```
 </TabItem>
 <TabItem label="Advanced">
 ```yml
 # Advanced config fields, showing default values
-label: ""
-nats_kv:
-  urls: [] # No default (required)
-  bucket: my_kv_bucket # No default (required)
-  operation: "" # No default (required)
-  key: foo # No default (required)
-  revision: "42" # No default (optional)
-  timeout: 5s
-  tls:
-    enabled: false
-    skip_cert_verify: false
-    enable_renegotiation: false
-    root_cas: ""
-    root_cas_file: ""
-    client_certs: []
-  auth:
-    nkey_file: ./seed.nk # No default (optional)
-    user_credentials_file: ./user.creds # No default (optional)
-    user_jwt: "" # No default (optional)
-    user_nkey_seed: "" # No default (optional)
+output:
+  label: ""
+  nats_jetstream_batched:
+    urls: [] # No default (required)
+    subject: foo.bar.baz # No default (required)
+    headers: {}
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 1024
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    tls:
+      enabled: false
+      skip_cert_verify: false
+      enable_renegotiation: false
+      root_cas: ""
+      root_cas_file: ""
+      client_certs: []
+    auth:
+      nkey_file: ./seed.nk # No default (optional)
+      user_credentials_file: ./user.creds # No default (optional)
+      user_jwt: "" # No default (optional)
+      user_nkey_seed: "" # No default (optional)
+    inject_tracing_map: meta = @.merge(this) # No default (optional)
 ```
 </TabItem>
 </Tabs>
-
-## KV operations
-
-The NATS KV processor supports a multitude of KV operations via the operation field. Along with `get`, `put`, and `delete`, this processor supports atomic operations like `update` and `create`, as well as utility operations like `purge`, `history`, and `keys`.
-
-## Metadata
-
-This processor adds the following metadata fields to each message, depending on the chosen `operation`:
-
-### get, get_revision
-``` text
-- nats_kv_key
-- nats_kv_bucket
-- nats_kv_revision
-- nats_kv_delta
-- nats_kv_operation
-- nats_kv_created
-```
-
-### create, update, delete, purge
-``` text
-- nats_kv_key
-- nats_kv_bucket
-- nats_kv_revision
-- nats_kv_operation
-```
-
-### keys
-``` text
-- nats_kv_bucket
-```
 
 ## Connection name
 
@@ -86,17 +71,17 @@ When monitoring and managing a production NATS system, it is often useful to
 know which connection a message was send/received from. This can be achieved by
 setting the connection name option when creating a NATS connection.
 
-Redpanda Connect will automatically set the connection name based off the label of the given
-NATS component, so that monitoring tools between NATS and Redpanda Connect can stay in sync.
+Wombat will automatically set the connection name based off the label of the given
+NATS component, so that monitoring tools between NATS and Wombat can stay in sync.
 
 
 ## Authentication
 
-There are several components within Redpanda Connect which uses NATS services. You will find that each of these components
-support optional advanced authentication parameters for [NKeys](https://docs.nats.io/nats-server/configuration/securing_nats/auth_intro/nkey_auth)
-and [User Credentials](https://docs.nats.io/using-nats/developer/connecting/creds).
+There are several components within Wombat which uses NATS services. You will find that each of these components
+support optional advanced authentication parameters for [[https://docs.nats.io/using-nats/developer/connecting/creds](https://docs.nats.io/nats-server/configuration/securing_nats/auth_intro/nkey_auth](NKeys)
+and )(User Credentials).
 
-See an [in-depth tutorial](https://docs.nats.io/running-a-nats-service/nats_admin/security/jwt).
+See an [[https://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/nkey_auth](https://docs.nats.io/running-a-nats-service/nats_admin/security/jwt](in-depth tutorial).
 
 ### NKey file
 
@@ -104,21 +89,21 @@ The NATS server can use these NKeys in several ways for authentication. The simp
 with a list of known public keys and for the clients to respond to the challenge by signing it with its private NKey
 configured in the `nkey_file` field.
 
-[More details](https://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/nkey_auth).
+)(More details).
 
 ### User credentials
 
-NATS server supports decentralized authentication based on JSON Web Tokens (JWT). Clients need an [user JWT](https://docs.nats.io/nats-server/configuration/securing_nats/jwt#json-web-tokens)
-and a corresponding [NKey secret](https://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/nkey_auth) when connecting to a server
+NATS server supports decentralized authentication based on JSON Web Tokens (JWT). Clients need an [[https://docs.nats.io/running-a-nats-service/configuration/securing_nats/auth_intro/nkey_auth](https://docs.nats.io/nats-server/configuration/securing_nats/jwt#json-web-tokens](user JWT)
+and a corresponding )(NKey secret) when connecting to a server
 which is configured to use this authentication scheme.
 
 The `user_credentials_file` field should point to a file containing both the private key and the JWT and can be
-generated with the [nsc tool](https://docs.nats.io/nats-tools/nsc).
+generated with the [[https://docs.nats.io/using-nats/developer/connecting/creds](https://docs.nats.io/nats-tools/nsc](nsc tool).
 
 Alternatively, the `user_jwt` field can contain a plain text JWT and the `user_nkey_seed`can contain
 the plain text NKey Seed.
 
-[More details](https://docs.nats.io/using-nats/developer/connecting/creds).
+)(More details).
 
 ## Fields
 
@@ -140,45 +125,9 @@ urls:
   - nats://username:password@127.0.0.1:4222
 ```
 
-### `bucket`
+### `subject`
 
-The name of the KV bucket.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-bucket: my_kv_bucket
-```
-
-### `operation`
-
-The operation to perform on the KV bucket.
-
-
-*Type*: `string`
-
-
-
-| Option | Summary |
-| ------ | ------- |
-| `create` | Adds the key/value pair if it does not exist. Returns an error if it already exists. |
-| `delete` | Deletes the key/value pair, but keeps historical values. |
-| `get` | Returns the latest value for `key`. |
-| `get_revision` | Returns the value of `key` for the specified `revision`. |
-| `history` | Returns historical values of `key` as an array of objects containing the following fields: `key`, `value`, `bucket`, `revision`, `delta`, `operation`, `created`. |
-| `keys` | Returns the keys in the `bucket` which match the `keys_filter` as an array of strings. |
-| `purge` | Deletes the key/value pair and all historical values. |
-| `put` | Places a new value for the key into the store. |
-| `update` | Updates the value for `key` only if the `revision` matches the latest revision. |
-
-
-### `key`
-
-The key for each message. Supports [wildcards](https://docs.nats.io/nats-concepts/subjects#wildcards) for the `history` and `keys` operations.
+A subject to write to.
 This field supports interpolation functions.
 
 
@@ -188,42 +137,192 @@ This field supports interpolation functions.
 ```yml
 # Examples
 
-key: foo
+subject: foo.bar.baz
 
-key: foo.bar.baz
+subject: ${! meta("kafka_topic") }
 
-key: foo.*
-
-key: foo.>
-
-key: foo.${! json("meta.type") }
+subject: foo.${! json("meta.type") }
 ```
 
-### `revision`
+### `headers`
 
-The revision of the key to operate on. Used for `get_revision` and `update` operations.
+Explicit message headers to add to messages.
 This field supports interpolation functions.
 
 
-*Type*: `string`
+*Type*: `object`
+
+*Default*: `{}`
+Requires version 4.1.0 or newer
+
+```yml
+# Examples
+
+headers:
+  Content-Type: application/json
+  Timestamp: ${!meta("Timestamp")}
+```
+
+### `metadata`
+
+Determine which (if any) metadata values should be added to messages as headers.
+
+
+*Type*: `object`
+
+
+### `metadata.include_prefixes`
+
+Provide a list of explicit metadata key prefixes to match against.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+```yml
+# Examples
+
+include_prefixes:
+  - foo_
+  - bar_
+
+include_prefixes:
+  - kafka_
+
+include_prefixes:
+  - content-
+```
+
+### `metadata.include_patterns`
+
+Provide a list of explicit metadata key regular expression (re2) patterns to match against.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+```yml
+# Examples
+
+include_patterns:
+  - .*
+
+include_patterns:
+  - _timestamp_unix$
+```
+
+### `max_in_flight`
+
+The maximum number of messages to have in flight at a given time. Increase this to improve throughput.
+
+
+*Type*: `int`
+
+*Default*: `1024`
+
+### `batching`
+
+Allows you to configure a batching policy.
+
+
+*Type*: `object`
 
 
 ```yml
 # Examples
 
-revision: "42"
+batching:
+  byte_size: 5000
+  count: 0
+  period: 1s
 
-revision: ${! @nats_kv_revision }
+batching:
+  count: 10
+  period: 1s
+
+batching:
+  check: this.contains("END BATCH")
+  count: 0
+  period: 1m
 ```
 
-### `timeout`
+### `batching.count`
 
-The maximum period to wait on an operation before aborting and returning an error.
+A number of messages at which the batch should be flushed. If `0` disables count based batching.
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `batching.byte_size`
+
+An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `batching.period`
+
+A period in which an incomplete batch should be flushed regardless of its size.
 
 
 *Type*: `string`
 
-*Default*: `"5s"`
+*Default*: `""`
+
+```yml
+# Examples
+
+period: 1s
+
+period: 1m
+
+period: 500ms
+```
+
+### `batching.check`
+
+A Bloblang query that should return a boolean value indicating whether a message should end a batch.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+check: this.type == "end_of_transaction"
+```
+
+### `batching.processors`
+
+A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
+
+
+*Type*: `array`
+
+
+```yml
+# Examples
+
+processors:
+  - archive:
+      format: concatenate
+
+processors:
+  - archive:
+      format: lines
+
+processors:
+  - archive:
+      format: json_array
+```
 
 ### `tls`
 
@@ -441,5 +540,22 @@ An optional plain text user NKey Seed (given along with the corresponding user J
 
 *Type*: `string`
 
+
+### `inject_tracing_map`
+
+EXPERIMENTAL: A Bloblang mapping used to inject an object containing tracing propagation information into outbound messages. The specification of the injected fields will match the format used by the service wide tracer.
+
+
+*Type*: `string`
+
+Requires version 3.45.0 or newer
+
+```yml
+# Examples
+
+inject_tracing_map: meta = @.merge(this)
+
+inject_tracing_map: root.meta.span = this
+```
 
 

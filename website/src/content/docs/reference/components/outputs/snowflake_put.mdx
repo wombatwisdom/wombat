@@ -137,20 +137,20 @@ For the optimal batch size, please consult the Snowflake [documentation]([`archi
 
 ### Snowpipe
 
-Given a table called `WOMBAT_TBL` with one column of type `variant`:
+Given a table called `BENTO_TBL` with one column of type `variant`:
 
 ```sql
-CREATE OR REPLACE TABLE WOMBAT_DB.PUBLIC.WOMBAT_TBL(RECORD variant)
+CREATE OR REPLACE TABLE BENTO_DB.PUBLIC.BENTO_TBL(RECORD variant)
 ```
 
-and the following `WOMBAT_PIPE` Snowpipe:
+and the following `BENTO_PIPE` Snowpipe:
 
 ```sql
-CREATE OR REPLACE PIPE WOMBAT_DB.PUBLIC.WOMBAT_PIPE AUTO_INGEST = FALSE AS COPY INTO WOMBAT_DB.PUBLIC.WOMBAT_TBL FROM (SELECT * FROM @%WOMBAT_TBL) FILE_FORMAT = (TYPE = JSON COMPRESSION = AUTO)
+CREATE OR REPLACE PIPE BENTO_DB.PUBLIC.BENTO_PIPE AUTO_INGEST = FALSE AS COPY INTO BENTO_DB.PUBLIC.BENTO_TBL FROM (SELECT * FROM @%BENTO_TBL) FILE_FORMAT = (TYPE = JSON COMPRESSION = AUTO)
 ```
 
-you can configure Bento to use the implicit table stage `@%WOMBAT_TBL` as the `stage` and
-`WOMBAT_PIPE` as the `snowpipe`. In this case, you must set `compression` to `AUTO` and, if
+you can configure Bento to use the implicit table stage `@%BENTO_TBL` as the `stage` and
+`BENTO_PIPE` as the `snowpipe`. In this case, you must set `compression` to `AUTO` and, if
 using message batching, you'll need to configure an )(/docs/components/processors/archive) processor
 with the `concatenate` format. Since the `compression` is set to `AUTO`, the
 [gosnowflake]([`compress`](https://github.com/snowflakedb/gosnowflake) client library will compress the messages automatically so you
@@ -241,15 +241,15 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
-    path: bento/WOMBAT_TBL/${! @kafka_partition }
+    stage: "@%BENTO_TBL"
+    path: bento/BENTO_TBL/${! @kafka_partition }
     file_name: ${! @kafka_start_offset }_${! @kafka_end_offset }_${! meta("batch_timestamp") }
     upload_parallel_threads: 4
     compression: NONE
-    snowpipe: WOMBAT_PIPE
+    snowpipe: BENTO_PIPE
 ```
 
 </TabItem>
@@ -263,10 +263,10 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
+    stage: "@%BENTO_TBL"
     path: bento
     upload_parallel_threads: 4
     compression: NONE
@@ -289,10 +289,10 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
+    stage: "@%BENTO_TBL"
     path: bento
     file_extension: parquet
     upload_parallel_threads: 4
@@ -321,10 +321,10 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
+    stage: "@%BENTO_TBL"
     path: bento
     upload_parallel_threads: 4
     compression: AUTO
@@ -347,14 +347,14 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
+    stage: "@%BENTO_TBL"
     path: bento
     upload_parallel_threads: 4
     compression: DEFLATE
-    snowpipe: WOMBAT_PIPE
+    snowpipe: BENTO_PIPE
     batching:
       count: 10
       period: 3s
@@ -376,14 +376,14 @@ output:
     user: test@bento.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: WOMBAT_DB
+    database: BENTO_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%WOMBAT_TBL"
+    stage: "@%BENTO_TBL"
     path: bento
     upload_parallel_threads: 4
     compression: RAW_DEFLATE
-    snowpipe: WOMBAT_PIPE
+    snowpipe: BENTO_PIPE
     batching:
       count: 10
       period: 3s
@@ -589,23 +589,16 @@ Compression type.
 
 *Default*: `"AUTO"`
 
-|===
-| Option | Summary
 
-| `AUTO`
-| Compression (gzip) is applied automatically by the output and messages must contain plain-text JSON. Default `file_extension`: `gz`.
-| `DEFLATE`
-| Messages must be pre-compressed using the zlib algorithm (with zlib header, RFC1950). Default `file_extension`: `deflate`.
-| `GZIP`
-| Messages must be pre-compressed using the gzip algorithm. Default `file_extension`: `gz`.
-| `NONE`
-| No compression is applied and messages must contain plain-text JSON. Default `file_extension`: `json`.
-| `RAW_DEFLATE`
-| Messages must be pre-compressed using the flate algorithm (without header, RFC1951). Default `file_extension`: `raw_deflate`.
-| `ZSTD`
-| Messages must be pre-compressed using the Zstandard algorithm. Default `file_extension`: `zst`.
+| Option | Summary |
+| ------ | ------- |
+| `AUTO` | Compression (gzip) is applied automatically by the output and messages must contain plain-text JSON. Default `file_extension`: `gz`. |
+| `DEFLATE` | Messages must be pre-compressed using the zlib algorithm (with zlib header, RFC1950). Default `file_extension`: `deflate`. |
+| `GZIP` | Messages must be pre-compressed using the gzip algorithm. Default `file_extension`: `gz`. |
+| `NONE` | No compression is applied and messages must contain plain-text JSON. Default `file_extension`: `json`. |
+| `RAW_DEFLATE` | Messages must be pre-compressed using the flate algorithm (without header, RFC1951). Default `file_extension`: `raw_deflate`. |
+| `ZSTD` | Messages must be pre-compressed using the Zstandard algorithm. Default `file_extension`: `zst`. |
 
-|===
 
 ### `request_id`
 
