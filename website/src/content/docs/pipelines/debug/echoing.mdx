@@ -1,0 +1,12 @@
+---
+title: Echoing
+---
+Echoing is where Wombat can print back your configuration _after_ it has been parsed. It is done with the `echo`
+subcommand, which is able to show you a normalised version of your config, allowing you to see how it was interpreted:
+
+```shell
+wombat -c ./your-config.yaml echo
+```
+
+You can check the output of the above command to see if certain sections are missing or fields are incorrect, which
+allows you to pinpoint typos in the config.

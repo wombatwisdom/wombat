@@ -1,0 +1,24 @@
+---
+title: Storing Tests
+sidebar:
+    order: 2
+---
+import {Aside, Steps} from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+## Inline
+Tests can be written as part of the pipeline configuration file itself by providing a `tests` field at the root of the
+config. This field should contain a list of test definitions, each of which should have a unique `name` field.
+
+## Separate Files
+However, it is more common to write tests in separate files that accompany the configuration file being tested. These
+files should have the same name as the configuration file but with a `_wombat_test` suffix. For example, if you have a
+config file `foo.yaml` you would write your tests in a file named `foo_wombat_test.yaml`. Each of these files should
+have a `tests` field at the root that contains a list of test definitions.
+
+## Fragmented
+A last option is to write fragmented tests across multiple files, in which case you must provide a `target_processors`
+field that points to the processor(s) being tested. This field should be a full
+[JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) that points to the processor(s) within the configuration
+file. This is particularly useful when you have a large number of tests to write for a single configuration file. Each
+of these test files should have a `tests` field at the root that contains a list of test definitions.

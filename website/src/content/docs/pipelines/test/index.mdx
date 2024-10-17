@@ -1,0 +1,41 @@
+---
+title: Testing
+sidebar:
+    order: 0
+tableOfContents: false
+---
+import {Aside, Steps} from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+[Debugging](/pipelines/debug) is one thing, but how do you ensure that your configuration is working as expected? Wombat
+provides offers the ability to write unit tests for your configuration files. It makes it easy to protect your pipeline
+configurations from regressions over time. And honestly, who doesn't like green ticks?
+
+So how hard can it be to write a test? Not hard at all! A test is defined as a YAML object with a few key fields. Just
+follow this 5 step plan to internal peace and equilibrium:
+
+<Steps>
+    1. Decide where to [store](storing) your tests
+    2. Create a test definition with a unique `name` field:
+        ```yaml
+        tests:
+          - name: test name
+        ```
+    3. Define some input data:
+        ```yaml
+        tests:
+          - name: test name
+            input_batch:
+              - content: 'example content'
+        ```
+    4. Add output conditions to test:
+        ```yaml
+        tests:
+          - name: test name
+            input_batch:
+              - content: 'example content'
+            output_batches:
+              - - content_equals: 'example content'
+        ```
+    5. [Run](running) the test with `wombat test your_test_file.yaml`
+</Steps>

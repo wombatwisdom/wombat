@@ -1,0 +1,35 @@
+---
+title: Buffers
+sidebar:
+    order: 5
+---
+import { LinkCard, Aside } from '@astrojs/starlight/components';
+
+<Aside type="caution">
+    Since buffers are able to modify (or disable) the transaction model within Wombat it is important that when you choose a
+    buffer you read its documentation to understand the implication it will have on delivery guarantees.
+</Aside>
+
+Wombat uses a transaction model internally for guaranteeing delivery of messages, this means that a message from an
+input is not acknowledged (or its offset committed, etc) until that message has been processed and either intentionally
+deleted or successfully delivered to all outputs. This transaction model makes Wombat safe to deploy in scenarios where
+data loss is unacceptable. However, sometimes it's useful to customize the way in which messages are delivered, and this
+is where buffers come in.
+
+A buffer is an optional component type that comes immediately after the input layer and can be used as a way of
+decoupling the transaction model from components downstream such as the processing layer and outputs. This is considered
+an advanced component as most users will likely not benefit from a buffer, but they enable you to do things like group
+messages using window algorithms or intentionally weaken the delivery guarantees of the pipeline depending on the buffer
+you choose.
+
+## Metrics
+The following metrics are exposed for a buffer:
+
+- `buffer_received`: A count of the number of messages written to the buffer.
+- `buffer_batch_received`: A count of the number of message batches written to the buffer.
+- `buffer_sent`: A count of the number of messages read from the buffer.
+- `buffer_batch_sent`: A count of the number of message batches read from the buffer.
+- `buffer_latency_ns`: Measures the roundtrip latency in nanoseconds from the point at which a message is read from the
+buffer up to the moment it has been acknowledged by the output.
+- `batch_created`: A count of each time a buffer-level batch has been created using a batching policy. Includes a label
+`mechanism` describing the particular mechanism that triggered it, one of; `count`, `size`, `period`, `check`.
