@@ -5,7 +5,7 @@ There are a few different ways of multiplexing in Wombat, here's a quick run thr
 
 ## Interpolation Multiplexing
 
-Some output fields support [field interpolation](cfg-interpolation.md), which is a super easy way to multiplex messages based
+Some output fields support [field interpolation][interpolation], which is a super easy way to multiplex messages based
 on their contents in situations where you are multiplexing to the same service.
 
 For example, multiplexing against Kafka topics is a common pattern:
@@ -49,3 +49,5 @@ output:
                 root = this
                 root.type = this.type.not_null() | "unknown"
 ```
+
+[interpolation]: /pipelines/learn/interpolation
