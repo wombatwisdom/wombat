@@ -1,0 +1,15 @@
+---
+title: Health API
+---
+
+The Health API serves two endpoints to check the state of a Wombat process. These endpoints can be used as liveness
+and readiness probes in Kubernetes or other orchestration systems.
+
+## API
+
+### GET `/ping`
+Always returns a 200 OK response. This can be used as a liveness probe to make sure Wombat is running.
+
+### GET `/ready`
+Returns 200 only when both the input and output are connected and the pipeline is ready to process messages.
+Otherwise, a 503 response is returned.
