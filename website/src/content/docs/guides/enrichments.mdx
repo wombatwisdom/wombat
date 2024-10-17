@@ -3,18 +3,18 @@ title: Enrichment Workflow
 ---
 
 This cookbook demonstrates how to enrich a stream of JSON documents with HTTP services. This method also works 
-with [AWS Lambda functions][processor.lambda], [subprocesses][processor.subprocess], etc.
+with [AWS Lambda functions](/references/components/processors/lambda), [subprocesses](/references/components/processors/subprocess), etc.
 
 We will start off by configuring a single enrichment, then we will move onto a workflow of enrichments with a network 
-of dependencies using the [`workflow` processor][processor.workflow].
+of dependencies using the [`workflow` processor](/references/components/processors/workflow).
 
-Each enrichment will be performed in parallel across a [pre-batched][batching] stream of documents. Workflow 
+Each enrichment will be performed in parallel across a [pre-batched](/pipelines/learn/batching) stream of documents. Workflow
 enrichments that do not depend on each other will also be performed in parallel, making this orchestration method 
 very efficient.
 
 The imaginary problem we are going to solve is applying a set of NLP based enrichments to a feed of articles in order 
 to detect fake news. We will be consuming and writing to Kafka, but the example works with 
-any [input][inputs] and [output][outputs] combination.
+any [input](/pipelines/build/input) and [output](/pipelines/build/output) combination.
 
 Articles are received over the topic `articles` and look like this:
 
@@ -65,7 +65,7 @@ Since each request only applies to a single document we will make this enrichmen
 services and hitting those instances in parallel across our document batches.
 
 In order to send a mapped request and map the response back into the original document we will use the 
-[`branch` processor][processor.branch], with a child [`http`][processor.http] processor.
+[`branch` processor](/references/components/processors/branch), with a child [`http`](/references/components/processors/http) processor.
 
 ```yaml
 input:
@@ -145,8 +145,8 @@ And the response looks like this:
 ```
 
 In order to create a single request from a batch of documents, and subsequently map the result back into our batch, 
-we will use the [`archive`][processor.archive] and [`unarchive`][processor.unarchive] processors in our 
-[`branch`][processor.branch] flow, like this:
+we will use the [`archive`](/references/components/processors/archive) and [`unarchive`](/references/components/processors/unarchive) processors in our
+[`branch`](/references/components/processors/branch) flow, like this:
 
 ```yaml
 pipeline:
@@ -203,7 +203,7 @@ And returns an object of the form:
 ```
 
 We then wish to map the field `fake_news_rank` from that result into the original document at the path 
-`article.fake_news_score`. Our [`branch`][processor.branch] block for this enrichment would look like this:
+`article.fake_news_score`. Our [`branch`](/references/components/processors/branch) block for this enrichment would look like this:
 
 ```yaml
 pipeline:
@@ -254,13 +254,13 @@ potentially be executed in parallel in order to reduce processing latency.
 
 ## Combining into a Workflow
 
-If we configure our enrichments within a [`workflow` processor][processor.workflow] we can use Wombat to automatically 
+If we configure our enrichments within a [`workflow` processor](/references/components/processors/workflow) we can use Wombat to automatically
 detect our dependency graph, giving us two key benefits:
 
 1. Enrichments at the same level of a dependency graph (claims and hyperbole) will be executed in parallel.
 2. When introducing more enrichments to our pipeline the added complexity of resolving the dependency graph is handled automatically by Wombat.
 
-Placing our branches within a [`workflow` processor][processor.workflow] makes our final pipeline configuration look like this:
+Placing our branches within a [`workflow` processor](/references/components/processors/workflow) makes our final pipeline configuration look like this:
 
 ```yaml
 input:
@@ -324,22 +324,8 @@ output:
 ```
 
 Since the contents of `tmp` won't be required downstream we remove it after our enrichments using a
-[`mapping` processor][processor.mapping].
+[`mapping` processor](/references/components/processors/mapping).
 
-A [`catch`][processor.catch] processor was added at the end of the pipeline which catches documents that failed 
+A [`catch`](/references/components/processors/catch) processor was added at the end of the pipeline which catches documents that failed
 enrichment. You can replace the log event with a wide range of recovery actions such as sending to a dead-letter/retry 
-queue, dropping the message entirely, etc. You can read more about error handling [in this article][error-handling].
-
-[inputs]: /docs/components/inputs/about
-[outputs]: /docs/components/outputs/about
-[error-handling]: /docs/configuration/error_handling
-[batching]: /docs/configuration/batching
-[processor.catch]: /docs/components/processors/catch
-[processor.archive]: /docs/components/processors/archive
-[processor.unarchive]: /docs/components/processors/unarchive
-[processor.mapping]: /docs/components/processors/mapping
-[processor.subprocess]: /docs/components/processors/subprocess
-[processor.lambda]: /docs/components/processors/aws_lambda
-[processor.http]: /docs/components/processors/http
-[processor.branch]: /docs/components/processors/branch
-[processor.workflow]: /docs/components/processors/workflow
+queue, dropping the message entirely, etc. You can read more about error handling [in this article](/pipelines/learn/error_handling).
