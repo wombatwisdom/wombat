@@ -43,3 +43,17 @@ pipeline:
 For the simple case where you wish to store messages in a cache as an output destination for your pipeline check out
 the [`cache` output](/reference/components/outputs/cache). To see examples of more advanced uses of caches such as
 hydration and deduplication check out the [`cache` processor](/reference/components/processors/cache).
+
+## Metrics
+The following metrics are exposed for a cache:
+
+All cache metrics have a label `operation` denoting the operation that triggered the metric series, one of; `add`,
+`get`, `set` or `delete`.
+
+- `cache_success`: A count of the number of successful cache operations.
+- `cache_error`: A count of the number of cache operations that resulted in an error.
+- `cache_latency_ns`: Latency of operations in nanoseconds.
+- `cache_not_found`: A count of the number of get operations that yielded no value due to the item not being found. This
+count is separate from `cache_error`.
+- `cache_duplicate`: A count of the number of add operations that were aborted due to the key already existing. This
+count is separate from `cache_error`.

@@ -50,3 +50,10 @@ input:
     - rate_limit:
         resource: foobar
 ```
+
+## Metrics
+The following metrics are exposed for a rate limit:
+
+- `rate_limit_checked`: A count of the number of times the rate limit has been probed.
+- `rate_limit_triggered`: A count of the number of times the rate limit has been triggered by a probe.
+- `rate_limit_error`: A count of the number of times the rate limit has errored when probed.

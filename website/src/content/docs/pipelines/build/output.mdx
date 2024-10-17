@@ -54,3 +54,27 @@ output:
         root.message = this
         root.meta.link_count = this.links.length()
 ```
+
+## Metrics
+The following metrics are exposed for an output:
+
+- `output_sent`: A count of the number of messages sent by the output.
+- `output_batch_sent`: A count of the number of message batches sent by the output.
+- `output_error`: A count of the number of send attempts that have failed. On failed batched sends this count is
+incremented once only.
+- `output_latency_ns`: Latency of writes in nanoseconds. This metric may not be populated by outputs that are pull-based
+such as the `http_server`.
+- `batch_created`: A count of each time an output-level batch has been created using a batching policy. Includes a label
+`mechanism` describing the particular mechanism that triggered it, one of; `count`, `size`, `period`, `check`.
+- `output_connection_up`: For continuous stream based outputs represents a count of the number of the times the output
+has successfully established a connection to the target sink. For poll based outputs that do not retain an active
+connection this value will increment once.
+- `output_connection_failed`: For continuous stream based outputs represents a count of the number of times the output
+has failed to establish a connection to the target sink.
+- `output_connection_lost`: For continuous stream based outputs represents a count of the number of times the output has
+lost a previously established connection to the target sink.
+
+<Aside type="caution">
+    The behaviour of connection metrics may differ based on output type due to certain libraries and protocols obfuscating
+    the concept of a single connection.
+</Aside>
