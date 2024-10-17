@@ -132,7 +132,7 @@ func TestSnowflakeOutput(t *testing.T) {
 		t.Helper()
 
 		outputConfig := `
-account: bento
+account: wombat
 region: east-us-2
 cloud: azure
 user: foobar

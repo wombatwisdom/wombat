@@ -114,20 +114,20 @@ For the optimal batch size, please consult the Snowflake [documentation](https:/
 
 ### Snowpipe
 
-Given a table called `+"`BENTO_TBL`"+` with one column of type `+"`variant`"+`:
+Given a table called `+"`WOMBAT_TBL`"+` with one column of type `+"`variant`"+`:
 
 `+"```sql"+`
-CREATE OR REPLACE TABLE BENTO_DB.PUBLIC.BENTO_TBL(RECORD variant)
+CREATE OR REPLACE TABLE WOMBAT_DB.PUBLIC.WOMBAT_TBL(RECORD variant)
 `+"```"+`
 
-and the following `+"`BENTO_PIPE`"+` Snowpipe:
+and the following `+"`WOMBAT_PIPE`"+` Snowpipe:
 
 `+"```sql"+`
-CREATE OR REPLACE PIPE BENTO_DB.PUBLIC.BENTO_PIPE AUTO_INGEST = FALSE AS COPY INTO BENTO_DB.PUBLIC.BENTO_TBL FROM (SELECT * FROM @%BENTO_TBL) FILE_FORMAT = (TYPE = JSON COMPRESSION = AUTO)
+CREATE OR REPLACE PIPE WOMBAT_DB.PUBLIC.WOMBAT_PIPE AUTO_INGEST = FALSE AS COPY INTO WOMBAT_DB.PUBLIC.WOMBAT_TBL FROM (SELECT * FROM @%WOMBAT_TBL) FILE_FORMAT = (TYPE = JSON COMPRESSION = AUTO)
 `+"```"+`
 
-you can configure Bento to use the implicit table stage `+"`@%BENTO_TBL`"+` as the `+"`stage`"+` and
-`+"`BENTO_PIPE`"+` as the `+"`snowpipe`"+`. In this case, you must set `+"`compression`"+` to `+"`AUTO`"+` and, if
+you can configure Bento to use the implicit table stage `+"`@%WOMBAT_TBL`"+` as the `+"`stage`"+` and
+`+"`WOMBAT_PIPE`"+` as the `+"`snowpipe`"+`. In this case, you must set `+"`compression`"+` to `+"`AUTO`"+` and, if
 using message batching, you'll need to configure an [`+"`archive`"+`](/docs/components/processors/archive) processor
 with the `+"`concatenate`"+` format. Since the `+"`compression`"+` is set to `+"`AUTO`"+`, the
 [gosnowflake](https://github.com/snowflakedb/gosnowflake) client library will compress the messages automatically so you
@@ -164,10 +164,10 @@ curl -H "Authorization: Bearer ${JWT_TOKEN}" "https://<account>.snowflakecomputi
 `+"```"+`
 
 If you need to pass in a valid `+"`requestId`"+` to any of these Snowpipe REST API endpoints, you can set a
-[uuid_v4()](https://www.bento.dev/docs/guides/bloblang/functions#uuid_v4) string in a metadata field called
-`+"`request_id`"+`, log it via the [`+"`log`"+`](https://www.bento.dev/docs/components/processors/log) processor and
+[uuid_v4()](/bloblang/functions#uuid_v4) string in a metadata field called
+`+"`request_id`"+`, log it via the [`+"`log`"+`](/reference/components/processors/log) processor and
 then configure `+"`request_id: ${ @request_id }`"+` ). Alternatively, you can enable debug logging as described
-[here](/docs/components/logger/about) and Bento will print the Request IDs that it sends to Snowpipe.
+[here](/reference/configuration/logger) and Bento will print the Request IDs that it sends to Snowpipe.
 
 ### General Troubleshooting
 
@@ -234,7 +234,7 @@ input:
       - localhost:9092
     topics:
       - foo
-    consumer_group: bento
+    consumer_group: wombat
     batching:
       count: 10
       period: 3s
@@ -248,32 +248,32 @@ input:
 
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento/BENTO_TBL/${! @kafka_partition }
+    stage: "@%WOMBAT_TBL"
+    path: wombat/WOMBAT_TBL/${! @kafka_partition }
     file_name: ${! @kafka_start_offset }_${! @kafka_end_offset }_${! meta("batch_timestamp") }
     upload_parallel_threads: 4
     compression: NONE
-    snowpipe: BENTO_PIPE
+    snowpipe: WOMBAT_PIPE
 `).
 		Example("No compression", "Upload concatenated messages into a `.json` file to a table stage without calling Snowpipe.", `
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento
+    stage: "@%WOMBAT_TBL"
+    path: wombat
     upload_parallel_threads: 4
     compression: NONE
     batching:
@@ -286,15 +286,15 @@ output:
 		Example("Parquet format with snappy compression", "Upload concatenated messages into a `.parquet` file to a table stage without calling Snowpipe.", `
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento
+    stage: "@%WOMBAT_TBL"
+    path: wombat
     file_extension: parquet
     upload_parallel_threads: 4
     compression: NONE
@@ -313,15 +313,15 @@ output:
 		Example("Automatic compression", "Upload concatenated messages compressed automatically into a `.gz` archive file to a table stage without calling Snowpipe.", `
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento
+    stage: "@%WOMBAT_TBL"
+    path: wombat
     upload_parallel_threads: 4
     compression: AUTO
     batching:
@@ -334,18 +334,18 @@ output:
 		Example("DEFLATE compression", "Upload concatenated messages compressed into a `.deflate` archive file to a table stage and call Snowpipe to load them into a table.", `
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento
+    stage: "@%WOMBAT_TBL"
+    path: wombat
     upload_parallel_threads: 4
     compression: DEFLATE
-    snowpipe: BENTO_PIPE
+    snowpipe: WOMBAT_PIPE
     batching:
       count: 10
       period: 3s
@@ -358,18 +358,18 @@ output:
 		Example("RAW_DEFLATE compression", "Upload concatenated messages compressed into a `.raw_deflate` archive file to a table stage and call Snowpipe to load them into a table.", `
 output:
   snowflake_put:
-    account: bento
-    user: test@bento.dev
+    account: wombat
+    user: test@wombat.dev
     private_key_file: path_to_ssh_key.pem
     role: ACCOUNTADMIN
-    database: BENTO_DB
+    database: WOMBAT_DB
     warehouse: COMPUTE_WH
     schema: PUBLIC
-    stage: "@%BENTO_TBL"
-    path: bento
+    stage: "@%WOMBAT_TBL"
+    path: wombat
     upload_parallel_threads: 4
     compression: RAW_DEFLATE
-    snowpipe: BENTO_PIPE
+    snowpipe: WOMBAT_PIPE
     batching:
       count: 10
       period: 3s
