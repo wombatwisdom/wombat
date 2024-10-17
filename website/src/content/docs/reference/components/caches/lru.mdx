@@ -88,17 +88,13 @@ the lru cache implementation
 
 *Default*: `"standard"`
 
-|===
-| Option | Summary
 
-| `arc`
-| is an adaptive replacement cache. It tracks recent evictions as well as recent usage in both the frequent and recent caches. Its computational overhead is comparable to two_queues, but the memory overhead is linear with the size of the cache. ARC has been patented by IBM.
-| `standard`
-| is a simple LRU cache. It is based on the LRU implementation in groupcache
-| `two_queues`
-| tracks frequently used and recently used entries separately. This avoids a burst of accesses from taking out frequently used entries, at the cost of about 2x computational overhead and some extra bookkeeping.
+| Option | Summary |
+| ------ | ------- |
+| `arc` | is an adaptive replacement cache. It tracks recent evictions as well as recent usage in both the frequent and recent caches. Its computational overhead is comparable to two_queues, but the memory overhead is linear with the size of the cache. ARC has been patented by IBM. |
+| `standard` | is a simple LRU cache. It is based on the LRU implementation in groupcache |
+| `two_queues` | tracks frequently used and recently used entries separately. This avoids a burst of accesses from taking out frequently used entries, at the cost of about 2x computational overhead and some extra bookkeeping. |
 
-|===
 
 ### `two_queues_recent_ratio`
 

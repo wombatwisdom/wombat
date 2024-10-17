@@ -1,0 +1,221 @@
+---
+title: Templating
+description: Learn how templates work.
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+<Aside type="caution" title="Experimental">
+Templates are an experimental feature and are subject to change outside major version releases.
+</Aside>
+
+The schema of a template file is as follows:
+
+### `name`
+
+The name of the component this template will create.
+
+
+*Type*: `string`
+
+
+### `type`
+
+The type of the component this template will create.
+
+
+*Type*: `string`
+
+
+Options:
+`cache`
+, `input`
+, `output`
+, `processor`
+, `rate_limit`
+.
+
+### `status`
+
+The stability of the template describing the likelihood that the configuration spec of the template, or it's behavior, will change.
+
+
+*Type*: `string`
+
+*Default*: `"stable"`
+
+
+| Option | Summary |
+| ------ | ------- |
+| `stable` | This template is stable and will therefore not change in a breaking way outside of major version releases. |
+| `beta` | This template is beta and will therefore not change in a breaking way unless a major problem is found. |
+| `experimental` | This template is experimental and therefore subject to breaking changes outside of major version releases. |
+
+
+### `categories`
+
+An optional list of tags, which are used for arbitrarily grouping components in documentation.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+### `summary`
+
+A short summary of the component.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `description`
+
+A longer form description of the component and how to use it.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `fields`
+
+The configuration fields of the template, fields specified here will be parsed from a Redpanda Connect config and will be accessible from the template mapping.
+
+
+*Type*: `array`
+
+
+### `fields[].name`
+
+The name of the field.
+
+
+*Type*: `string`
+
+
+### `fields[].description`
+
+A description of the field.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `fields[].type`
+
+The scalar type of the field.
+
+
+*Type*: `string`
+
+
+
+| Option | Summary |
+| ------ | ------- |
+| `string` | standard string type |
+| `int` | standard integer type |
+| `float` | standard float type |
+| `bool` | a boolean true/false |
+| `unknown` | allows for nesting arbitrary configuration inside of a field |
+
+
+### `fields[].kind`
+
+The kind of the field.
+
+
+*Type*: `string`
+
+*Default*: `"scalar"`
+
+Options:
+`scalar`
+, `map`
+, `list`
+.
+
+### `fields[].default`
+
+An optional default value for the field. If a default value is not specified then a configuration without the field is considered incorrect.
+
+
+*Type*: `unknown`
+
+
+### `fields[].advanced`
+
+Whether this field is considered advanced.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `mapping`
+
+A xref:guides:bloblang/about.adoc[Bloblang] mapping that translates the fields of the template into a valid Redpanda Connect configuration for the target component type.
+
+
+*Type*: `string`
+
+
+### `metrics_mapping`
+
+An optional xref:guides:bloblang/about.adoc[Bloblang mapping] that allows you to rename or prevent certain metrics paths from being exported. For more information check out the xref:components:metrics/about.adoc#metric-mapping[metrics documentation]. When metric paths are created, renamed and dropped a trace log is written, enabling TRACE level logging is therefore a good way to diagnose path mappings.
+
+Invocations of this mapping are able to reference a variable $label in order to obtain the value of the label provided to the template config. This allows you to match labels with the root of the config.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+metrics_mapping: this.replace("input", "source").replace("output", "sink")
+
+metrics_mapping: |-
+  root = if ![
+    "input_received",
+    "input_latency",
+    "output_sent"
+  ].contains(this) { deleted() }
+```
+
+### `tests`
+
+Optional unit test definitions for the template that verify certain configurations produce valid configs. These tests are executed with the command `rpk connect template lint`.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+### `tests[].name`
+
+A name to identify the test.
+
+
+*Type*: `string`
+
+
+### `tests[].config`
+
+A configuration to run this test with, the config resulting from applying the template with this config will be linted.
+
+
+*Type*: `object`
+
+
+### `tests[].expected`
+
+An optional configuration describing the expected result of applying the template, when specified the result will be diffed and any mismatching fields will be reported as a test error.
+
+
+*Type*: `object`
+
+

@@ -100,23 +100,25 @@ func getSchema() *service.ConfigSchema {
 }
 
 func main() {
-	docsDir := "./website/src/content/docs/reference"
+	docsDir := "./website/src/content/docs"
 	flag.StringVar(&docsDir, "dir", docsDir, "The directory to write docs to")
 	flag.Parse()
 
-	getSchema().Environment().WalkInputs(viewForDir(path.Join(docsDir, "./configuration/inputs")))
-	getSchema().Environment().WalkBuffers(viewForDir(path.Join(docsDir, "./configuration/buffers")))
-	getSchema().Environment().WalkCaches(viewForDir(path.Join(docsDir, "./configuration/caches")))
-	getSchema().Environment().WalkMetrics(viewForDir(path.Join(docsDir, "./configuration/metrics")))
-	getSchema().Environment().WalkOutputs(viewForDir(path.Join(docsDir, "./configuration/outputs")))
-	getSchema().Environment().WalkProcessors(viewForDir(path.Join(docsDir, "./configuration/processors")))
-	getSchema().Environment().WalkRateLimits(viewForDir(path.Join(docsDir, "./configuration/rate_limits")))
-	getSchema().Environment().WalkTracers(viewForDir(path.Join(docsDir, "./configuration/tracers")))
-	getSchema().Environment().WalkScanners(viewForDir(path.Join(docsDir, "./configuration/scanners")))
+	refDir := path.Join(docsDir, "./reference")
+
+	getSchema().Environment().WalkInputs(viewForDir(path.Join(refDir, "./components/inputs")))
+	getSchema().Environment().WalkBuffers(viewForDir(path.Join(refDir, "./components/buffers")))
+	getSchema().Environment().WalkCaches(viewForDir(path.Join(refDir, "./components/caches")))
+	getSchema().Environment().WalkMetrics(viewForDir(path.Join(refDir, "./components/metrics")))
+	getSchema().Environment().WalkOutputs(viewForDir(path.Join(refDir, "./components/outputs")))
+	getSchema().Environment().WalkProcessors(viewForDir(path.Join(refDir, "./components/processors")))
+	getSchema().Environment().WalkRateLimits(viewForDir(path.Join(refDir, "./components/rate_limits")))
+	getSchema().Environment().WalkTracers(viewForDir(path.Join(refDir, "./components/tracers")))
+	getSchema().Environment().WalkScanners(viewForDir(path.Join(refDir, "./components/scanners")))
 
 	// Bloblang stuff
-	doBloblangMethods(docsDir)
-	doBloblangFunctions(docsDir)
+	doBloblangMethods(refDir)
+	doBloblangFunctions(refDir)
 
 	// Unit test docs
 	doTestDocs(docsDir)
@@ -315,7 +317,7 @@ func doTestDocs(dir string) {
 		panic(fmt.Sprintf("Failed to generate tests docs: %v", err))
 	}
 
-	create("tests docs", filepath.Join(dir, "features", "unit_testing.mdx"), buf.Bytes())
+	create("tests docs", filepath.Join(dir, "configuration", "unit_testing.mdx"), buf.Bytes())
 }
 
 func doHTTP(dir string) {
@@ -329,7 +331,7 @@ func doHTTP(dir string) {
 		panic(fmt.Sprintf("Failed to generate http docs: %v", err))
 	}
 
-	create("http docs", filepath.Join(dir, "features", "http.mdx"), buf.Bytes())
+	create("http docs", filepath.Join(dir, "configuration", "http.mdx"), buf.Bytes())
 }
 
 func doLogger(dir string) {
@@ -343,7 +345,7 @@ func doLogger(dir string) {
 		panic(fmt.Sprintf("Failed to generate logger docs: %v", err))
 	}
 
-	create("logger docs", filepath.Join(dir, "features", "logger.mdx"), buf.Bytes())
+	create("logger docs", filepath.Join(dir, "configuration", "logger.mdx"), buf.Bytes())
 }
 
 func doTemplates(dir string) {
@@ -357,5 +359,5 @@ func doTemplates(dir string) {
 		panic(fmt.Sprintf("Failed to generate template docs: %v", err))
 	}
 
-	create("tests docs", filepath.Join(dir, "features", "templating.mdx"), buf.Bytes())
+	create("tests docs", filepath.Join(dir, "configuration", "templating.mdx"), buf.Bytes())
 }

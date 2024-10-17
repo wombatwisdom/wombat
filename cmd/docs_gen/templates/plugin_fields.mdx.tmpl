@@ -21,14 +21,12 @@ This field supports interpolation functions.
 {{if gt (len $field.Version) 0}}Requires version {{$field.Version}} or newer
 {{end -}}
 {{if gt (len $field.AnnotatedOptions) 0}}
-|===
-| Option | Summary
 
+| Option | Summary |
+| ------ | ------- |
 {{range $j, $option := $field.AnnotatedOptions -}}
-| `{{index $option 0}}`
-| {{index $option 1}}
+| `{{index $option 0}}` | {{index $option 1}} |
 {{end}}
-|===
 {{else if gt (len $field.Options) 0}}
 Options:
 {{range $j, $option := $field.Options -}}

@@ -1,5 +1,5 @@
 ---
-title: Methods
+title: Bloblang Methods
 description: A list of Bloblang methods
 ---
 import { Aside } from '@astrojs/starlight/components';
@@ -35,7 +35,7 @@ Apply a declared mapping to a target value.
 
 *`mapping`* &lt;string&gt; The mapping to apply.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -70,7 +70,7 @@ If the result of a target query fails (due to incorrect types, failed parsing, e
 
 *`fallback`* &lt;query expression&gt; A value to yield, or query to execute, if the target query fails.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -106,7 +106,7 @@ Checks that a field, identified via a dot path, exists in an object.
 
 *`path`* &lt;string&gt; A dot path to a field.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -130,7 +130,7 @@ Modifies a target query such that certain functions are executed from the perspe
 
 *`index`* &lt;integer&gt; The message index to use as a perspective.  
 
-==== Examples
+#### Examples
 
 
 For example, the following map extracts the contents of the JSON field `foo` specifically from message index `1` of a batch, effectively overriding the field `foo` for all messages of a batch to that of message 1:
@@ -144,7 +144,7 @@ root.foo = json("foo").from(1)
 
 Modifies a target query such that certain functions are executed from the perspective of each message in the batch, and returns the set of results as an array. Functions that support this behavior are `content`, `json` and `meta`.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -160,7 +160,7 @@ If the result of the target query fails or resolves to `null`, returns the argum
 
 *`fallback`* &lt;query expression&gt; A value to yield, or query to execute, if the target query fails or resolves to `null`.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -173,7 +173,7 @@ root.doc.id = this.thing.id.or(uuid_v4())
 
 Takes a string value and returns a copy with all Unicode letters that begin words mapped to their Unicode title case.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -191,7 +191,7 @@ Checks whether a string matches a hashed secret using Argon2.
 
 *`hashed_secret`* &lt;string&gt; The hashed secret to compare with the input. This must be a fully-qualified string which encodes the Argon2 options used to generate the hash.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -216,7 +216,7 @@ Checks whether a string matches a hashed secret using bcrypt.
 
 *`hashed_secret`* &lt;string&gt; The hashed secret value to compare with the input.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -241,7 +241,7 @@ Checks whether a string contains a substring and returns a boolean result.
 
 *`value`* &lt;unknown&gt; A value to test against elements of the target.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -258,7 +258,7 @@ root.has_foo = this.thing.contains("foo")
 
 Escapes a string so that special characters like `<` to become `&lt;`. It escapes only five such characters: `<`, `>`, `&`, `'` and `"` so that it can be safely placed within an HTML entity.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -272,7 +272,7 @@ root.escaped = this.value.escape_html()
 
 Escapes a string so that it can be safely placed within a URL query.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -286,7 +286,7 @@ root.escaped = this.value.escape_url_query()
 
 Joins an array of path elements into a single file path. The separator depends on the operating system of the machine.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -300,7 +300,7 @@ root.path = this.path_elements.filepath_join()
 
 Splits a file path immediately following the final Separator, separating it into a directory and file name component returned as a two element array of strings. If there is no Separator in the path, the first element will be empty and the second will contain the path. The separator depends on the operating system of the machine.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -317,7 +317,7 @@ root.path_sep = this.path.filepath_split()
 
 Use a value string as a format specifier in order to produce a new string, using any number of provided arguments. Please refer to the Go https://pkg.go.dev/fmt[`fmt` package documentation^] for the list of valid format verbs.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -335,7 +335,7 @@ Checks whether a string has a prefix argument and returns a bool.
 
 *`value`* &lt;string&gt; The string to test.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -354,7 +354,7 @@ Checks whether a string has a suffix argument and returns a bool.
 
 *`value`* &lt;string&gt; The string to test.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -373,7 +373,7 @@ Returns the starting index of the argument substring in a string target, or `-1`
 
 *`value`* &lt;string&gt; A string to search for.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -394,7 +394,7 @@ root.index = content().index_of("meow")
 
 Returns the length of a string.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -408,7 +408,7 @@ root.foo_len = this.foo.length()
 
 Convert a string value into lowercase.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -422,7 +422,7 @@ root.foo = this.foo.lowercase()
 
 Quotes a target string using escape sequences (`\t`, `\n`, `\xFF`, `\u0100`) for control characters and non-printable characters.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -441,7 +441,7 @@ Replaces all occurrences of the first argument in a target string with the secon
 *`old`* &lt;string&gt; A string to match against.  
 *`new`* &lt;string&gt; A string to replace with.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -459,7 +459,7 @@ For each pair of strings in an argument array, replaces all occurrences of the f
 
 *`values`* &lt;array&gt; An array of values, each even value will be replaced with the following odd value.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -478,7 +478,7 @@ root.new_value = this.value.replace_all_many([
 
 Returns the target string in reverse order.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -504,7 +504,7 @@ Extract a slice from a string by specifying two indices, a low and high bound, w
 *`low`* &lt;integer&gt; The low bound, which is the first element of the selection, or if negative selects from the end.  
 *`high`* &lt;(optional) integer&gt; An optional high bound.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -539,7 +539,7 @@ Introduced in version 4.2.0.
 
 *`lang`* &lt;(optional) string, default `"en"`&gt;   
 
-==== Examples
+#### Examples
 
 
 Creates a slug from an English string
@@ -568,7 +568,7 @@ Split a string value into an array of strings by splitting it on a string separa
 
 *`delimiter`* &lt;string&gt; The delimiter to split with.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -586,7 +586,7 @@ Attempts to remove all HTML tags from a target string.
 
 *`preserve`* &lt;(optional) unknown&gt; An optional array of element types to preserve in the output.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -613,7 +613,7 @@ Remove all leading and trailing characters from a string that are contained with
 
 *`cutset`* &lt;(optional) string&gt; An optional string of characters to trim from the target value.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -635,7 +635,7 @@ Introduced in version 4.12.0.
 
 *`prefix`* &lt;string&gt; The leading prefix substring to trim from the string.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -657,7 +657,7 @@ Introduced in version 4.12.0.
 
 *`suffix`* &lt;string&gt; The trailing suffix substring to trim from the string.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -672,7 +672,7 @@ root.description = this.description.trim_suffix("_foobar")
 
 Unescapes a string so that entities like `&lt;` become `<`. It unescapes a larger range of entities than `escape_html` escapes. For example, `&aacute;` unescapes to `á`, as does `&#225;` and `&xE1;`.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -686,7 +686,7 @@ root.unescaped = this.value.unescape_html()
 
 Expands escape sequences from a URL query string.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -700,7 +700,7 @@ root.unescaped = this.value.unescape_url_query()
 
 Unquotes a target string, expanding any escape sequences (`\t`, `\n`, `\xFF`, `\u0100`) for control characters and non-printable characters.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -714,7 +714,7 @@ root.unquoted = this.thing.unquote()
 
 Convert a string value into uppercase.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -734,7 +734,7 @@ Returns an array containing all successive matches of a regular expression in a 
 
 *`pattern`* &lt;string&gt; The pattern to match against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -752,7 +752,7 @@ Returns an array of objects containing all matches of the regular expression and
 
 *`pattern`* &lt;string&gt; The pattern to match against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -777,7 +777,7 @@ Returns an array of arrays containing all successive matches of the regular expr
 
 *`pattern`* &lt;string&gt; The pattern to match against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -795,7 +795,7 @@ Returns an object containing the first match of the regular expression and the m
 
 *`pattern`* &lt;string&gt; The pattern to match against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -820,7 +820,7 @@ Checks whether a regular expression matches against any part of a string and ret
 
 *`pattern`* &lt;string&gt; The pattern to match against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -842,7 +842,7 @@ Replaces all occurrences of the argument regular expression in a string with a v
 *`pattern`* &lt;string&gt; The pattern to match against.  
 *`value`* &lt;string&gt; The value to replace with.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -858,7 +858,7 @@ root.new_value = this.value.re_replace_all("ADD ([0-9]+)","+($1)")
 
 Returns the absolute value of an int64 or float64 number. As a special case, when an integer is provided that is the minimum value it is converted to the maximum value.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -874,7 +874,7 @@ root.outs = this.ins.map_each(ele -> ele.abs())
 
 Returns the least integer value greater than or equal to a number. If the resulting value fits within a 64-bit integer then that is returned, otherwise a new floating point number is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -891,7 +891,7 @@ root.new_value = this.value.ceil()
 
 Calculates the cosine of a given angle specified in radians.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -914,7 +914,7 @@ Converts a numerical type into a 32-bit floating point number, this is for advan
 
 If the value is a string then an attempt will be made to parse it as a 32-bit floating point number. Please refer to the [`strconv.ParseFloat` documentation](https://pkg.go.dev/strconv#ParseFloat) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -933,7 +933,7 @@ Converts a numerical type into a 64-bit floating point number, this is for advan
 
 If the value is a string then an attempt will be made to parse it as a 64-bit floating point number. Please refer to the [`strconv.ParseFloat` documentation](https://pkg.go.dev/strconv#ParseFloat) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -949,7 +949,7 @@ root.out = this.in.float64()
 
 Returns the greatest integer value less than or equal to the target number. If the resulting value fits within a 64-bit integer then that is returned, otherwise a new floating point number is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -966,7 +966,7 @@ Converts a numerical type into a 16-bit signed integer, this is for advanced use
 
 If the value is a string then an attempt will be made to parse it as a 16-bit signed integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -997,7 +997,7 @@ Converts a numerical type into a 32-bit signed integer, this is for advanced use
 
 If the value is a string then an attempt will be made to parse it as a 32-bit signed integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1028,7 +1028,7 @@ Converts a numerical type into a 64-bit signed integer, this is for advanced use
 
 If the value is a string then an attempt will be made to parse it as a 64-bit signed integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1059,7 +1059,7 @@ Converts a numerical type into a 8-bit signed integer, this is for advanced use 
 
 If the value is a string then an attempt will be made to parse it as a 8-bit signed integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1087,7 +1087,7 @@ root = this.int8()
 
 Returns the natural logarithm of a number.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1104,7 +1104,7 @@ root.new_value = this.value.log().round()
 
 Returns the decimal logarithm of a number.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1121,7 +1121,7 @@ root.new_value = this.value.log10()
 
 Returns the largest numerical value found within an array. All values must be numerical and the array must not be empty, otherwise an error is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1145,7 +1145,7 @@ root.new_value = [0,this.value].max()
 
 Returns the smallest numerical value found within an array. All values must be numerical and the array must not be empty, otherwise an error is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1173,7 +1173,7 @@ Returns the number raised to the specified exponent.
 
 *`exponent`* &lt;float&gt; The exponent you want to raise to the power of.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1194,7 +1194,7 @@ root.new_value = this.value.pow(-2)
 
 Rounds numbers to the nearest integer, rounding half away from zero. If the resulting value fits within a 64-bit integer then that is returned, otherwise a new floating point number is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1211,7 +1211,7 @@ root.new_value = this.value.round()
 
 Calculates the sine of a given angle specified in radians.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1231,7 +1231,7 @@ root.new_value = (this.value * (pi() / 180)).sin()
 
 Calculates the tangent of a given angle specified in radians.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1254,7 +1254,7 @@ Converts a numerical type into a 16-bit unsigned integer, this is for advanced u
 
 If the value is a string then an attempt will be made to parse it as a 16-bit unsigned integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1285,7 +1285,7 @@ Converts a numerical type into a 32-bit unsigned integer, this is for advanced u
 
 If the value is a string then an attempt will be made to parse it as a 32-bit unsigned integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1316,7 +1316,7 @@ Converts a numerical type into a 64-bit unsigned integer, this is for advanced u
 
 If the value is a string then an attempt will be made to parse it as a 64-bit unsigned integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1347,7 +1347,7 @@ Converts a numerical type into a 8-bit unsigned integer, this is for advanced us
 
 If the value is a string then an attempt will be made to parse it as a 8-bit unsigned integer. If the target value exceeds the capacity of an integer or contains decimal values then this method will throw an error. In order to convert a floating point number containing decimals first use  `.round()` on the value. Please refer to the [`strconv.ParseInt` documentation](https://pkg.go.dev/strconv#ParseInt) for details regarding the supported formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1377,7 +1377,7 @@ root = this.uint8()
 
 Attempts to parse a string as a duration and returns an integer of nanoseconds. A duration string is a possibly signed sequence of decimal numbers, each with an optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1401,7 +1401,7 @@ This method is mostly stable but breaking changes could still be made outside of
 </Aside>
 Attempts to parse a string using ISO-8601 rules as a duration and returns an integer of nanoseconds. A duration string is represented by the format "P[n]Y[n]M[n]DT[n]H[n]M[n]S" or "P[n]W". In these representations, the "[n]" is replaced by the value for each of the date and time elements that follow the "[n]". For example, "P3Y6M4DT12H30M5S" represents a duration of "three years, six months, four days, twelve hours, thirty minutes, and five seconds". The last field of the format allows fractions with one decimal place, so "P3.5S" will return 3500000000ns. Any additional decimals will be truncated.
 
-==== Examples
+#### Examples
 
 
 Arbitrary ISO-8601 duration string to nanoseconds:
@@ -1456,7 +1456,7 @@ The output format is defined by showing how the reference time, defined to be Mo
 *`format`* &lt;string, default `"2006-01-02T15:04:05.999999999Z07:00"`&gt; The output format to use.  
 *`tz`* &lt;(optional) string&gt; An optional timezone to use, otherwise the timezone of the input string is used, or in the case of unix timestamps the local timezone is used.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1506,7 +1506,7 @@ The input format is defined by showing how the reference time, defined to be Mon
 
 *`format`* &lt;string&gt; The format of the target string.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1530,7 +1530,7 @@ Introduced in version 4.2.0.
 
 *`duration`* &lt;integer&gt; A duration measured in nanoseconds to round by.  
 
-==== Examples
+#### Examples
 
 
 Use the method `parse_duration` to convert a duration string into an integer argument.
@@ -1554,7 +1554,7 @@ Attempts to format a timestamp value as a string according to a specified strfti
 *`format`* &lt;string&gt; The output format to use.  
 *`tz`* &lt;(optional) string&gt; An optional timezone to use, otherwise the timezone of the input string is used.  
 
-==== Examples
+#### Examples
 
 
 The format consists of zero or more conversion specifiers and ordinary characters (except `%`). All ordinary characters are copied to the output string without modification. Each conversion specification begins with `%` character followed by the character that determines the behavior of the specifier. Please refer to https://linux.die.net/man/3/strftime[man 3 strftime] for the list of format specifiers.
@@ -1598,7 +1598,7 @@ Attempts to parse a string as a timestamp following a specified strptime-compati
 
 *`format`* &lt;string&gt; The format of the target string.  
 
-==== Examples
+#### Examples
 
 
 The format consists of zero or more conversion specifiers and ordinary characters (except `%`). All ordinary characters are copied to the output string without modification. Each conversion specification begins with a `%` character followed by the character that determines the behavior of the specifier. Please refer to https://linux.die.net/man/3/strptime[man 3 strptime] for the list of format specifiers.
@@ -1633,7 +1633,7 @@ Introduced in version 4.23.0.
 
 *`t2`* &lt;timestamp&gt; The second timestamp to be subtracted from the method target.  
 
-==== Examples
+#### Examples
 
 
 Use the `.abs()` method in order to calculate an absolute duration between two timestamps.
@@ -1670,7 +1670,7 @@ Introduced in version 4.3.0.
 
 *`tz`* &lt;string&gt; The timezone to change to. If set to "UTC" then the timezone will be UTC. If set to "Local" then the local timezone will be used. Otherwise, the argument is taken to be a location name corresponding to a file in the IANA Time Zone database, such as "America/New_York".  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1687,7 +1687,7 @@ This method is mostly stable but breaking changes could still be made outside of
 </Aside>
 Attempts to format a timestamp value as a unix timestamp. Timestamp values can either be a numerical unix time in seconds (with up to nanosecond precision via decimals), or a string in RFC 3339 format. The  `ts_parse` method can be used in order to parse different timestamp formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1704,7 +1704,7 @@ This method is mostly stable but breaking changes could still be made outside of
 </Aside>
 Attempts to format a timestamp value as a unix timestamp with microsecond precision. Timestamp values can either be a numerical unix time in seconds (with up to nanosecond precision via decimals), or a string in RFC 3339 format. The  `ts_parse` method can be used in order to parse different timestamp formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1721,7 +1721,7 @@ This method is mostly stable but breaking changes could still be made outside of
 </Aside>
 Attempts to format a timestamp value as a unix timestamp with millisecond precision. Timestamp values can either be a numerical unix time in seconds (with up to nanosecond precision via decimals), or a string in RFC 3339 format. The  `ts_parse` method can be used in order to parse different timestamp formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1738,7 +1738,7 @@ This method is mostly stable but breaking changes could still be made outside of
 </Aside>
 Attempts to format a timestamp value as a unix timestamp with nanosecond precision. Timestamp values can either be a numerical unix time in seconds (with up to nanosecond precision via decimals), or a string in RFC 3339 format. The  `ts_parse` method can be used in order to parse different timestamp formats.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1754,7 +1754,7 @@ root.created_at_unix = this.created_at.ts_unix_nano()
 
 Return an array containing the target value. If the value is already an array it is unchanged.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1772,7 +1772,7 @@ Attempt to parse a value into a boolean. An optional argument can be provided, i
 
 *`default`* &lt;(optional) bool&gt; An optional value to yield if the target cannot be parsed as a boolean.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1784,7 +1784,7 @@ root.bar = this.thing.bool(true)
 
 Marshal a value into a byte array. If the value is already a byte array it is unchanged.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1798,7 +1798,7 @@ root.first_byte = this.name.bytes().index(0)
 
 Ensures that the given string, array or object value is not empty, and if so returns it, otherwise an error is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1827,7 +1827,7 @@ root.a = this.a.not_empty()
 
 Ensures that the given value is not `null`, and if so returns it, otherwise an error is returned.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1848,7 +1848,7 @@ Attempt to parse a value into a number. An optional argument can be provided, in
 
 *`default`* &lt;(optional) float&gt; An optional value to yield if the target cannot be parsed as a number.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1860,7 +1860,7 @@ root.bar = this.thing.number(5) * 10
 
 Marshal a value into a string. If the value is already a string it is unchanged.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1881,7 +1881,7 @@ root.id = this.id.string()
 
 Returns the type of a value as a string, providing one of the following values: `string`, `bytes`, `number`, `bool`, `timestamp`, `array`, `object` or `null`.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1938,7 +1938,7 @@ Checks each element of an array against a query and returns true if all elements
 
 *`test`* &lt;query expression&gt; A test query to apply to each element.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1959,7 +1959,7 @@ Checks the elements of an array against a query and returns true if any element 
 
 *`test`* &lt;query expression&gt; A test query to apply to each element.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1976,7 +1976,7 @@ root.any_over_21 = this.patrons.any(patron -> patron.age >= 21)
 
 Returns an array with new elements appended to the end.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -1994,7 +1994,7 @@ Merge a source object into an existing destination object. When a collision is f
 
 *`with`* &lt;unknown&gt; A value to merge the target value with.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2012,7 +2012,7 @@ Collapse an array or object into an object of key/value pairs for each field, wh
 
 *`include_empty`* &lt;bool, default `false`&gt; Whether to include empty objects and arrays in the resulting object.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2035,7 +2035,7 @@ root.result = this.collapse(include_empty: true)
 
 Concatenates an array value with one or more argument arrays.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2053,7 +2053,7 @@ Checks whether an array contains an element matching the argument, or an object 
 
 *`value`* &lt;unknown&gt; A value to test against elements of the target.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2094,7 +2094,7 @@ Introduced in version 4.25.0.
 
 Converts an array into a new array of objects, where each object has a field index containing the `index` of the element and a field `value` containing the original value of the element.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2112,7 +2112,7 @@ Explodes an array or object at a xref:configuration:field_paths.adoc[field path]
 
 *`path`* &lt;string&gt; A dot path to a field to explode.  
 
-==== Examples
+#### Examples
 
 
 ##### On arrays
@@ -2145,7 +2145,7 @@ Executes a mapping query argument for each element of an array or key/value pair
 
 *`test`* &lt;query expression&gt; A query to apply to each element, if this query resolves to any value other than a boolean `true` the element will be removed from the result.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2177,7 +2177,7 @@ Returns the index of the first occurrence of a value in an array. `-1` is return
 
 *`value`* &lt;unknown&gt; A value to find.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2205,7 +2205,7 @@ Returns an array containing the indexes of all occurrences of a value in an arra
 
 *`value`* &lt;unknown&gt; A value to find.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2233,7 +2233,7 @@ Returns an array containing the indexes of all occurrences of an array where the
 
 *`query`* &lt;query expression&gt; A query to execute for each element.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2254,7 +2254,7 @@ Returns the index of the first occurrence of an array where the provided query r
 
 *`query`* &lt;query expression&gt; A query to execute for each element.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2268,7 +2268,7 @@ root.index = this.find_by(v -> v != "bar")
 
 Iterates an array and any element that is itself an array is removed and has its elements inserted directly in the resulting array.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2289,7 +2289,7 @@ The first argument is the value that `tally` will have on the first call.
 *`initial`* &lt;unknown&gt; The initial value to start the fold with. For example, an empty object `{}`, a zero count `0`, or an empty string `""`.  
 *`query`* &lt;query expression&gt; A query to apply for each element. The query is provided an object with two fields; `tally` containing the current tally, and `value` containing the value of the current element. The query should result in a new tally to be passed to the next element query.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2323,7 +2323,7 @@ Extract a field value, identified via a dot path, from an object.
 
 *`path`* &lt;string&gt; A dot path identifying a field to obtain.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2344,7 +2344,7 @@ Extract an element from an array by an index. The index can be negative, and if 
 
 *`index`* &lt;integer&gt; The index to obtain from an array.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2371,7 +2371,7 @@ Join an array of strings with an optional delimiter into a single string.
 
 *`delimiter`* &lt;(optional) string&gt; An optional delimiter to add between each string.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2393,7 +2393,7 @@ Executes the given JSONPath expression on an object or array and returns the res
 
 *`expression`* &lt;string&gt; The JSONPath expression to execute.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2424,7 +2424,7 @@ Checks a [JSON schema](https://json-schema.org/) against a value and returns the
 
 *`schema`* &lt;string&gt; The schema to check values against.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2454,7 +2454,7 @@ root = this.json_schema(file(env("BENTHOS_TEST_BLOBLANG_SCHEMA_FILE")))
 
 Returns the key/value pairs of an object as an array, where each element is an object with a `key` field and a `value` field. The order of the resulting array will be random.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2468,7 +2468,7 @@ root.foo_key_values = this.foo.key_values().sort_by(pair -> pair.key)
 
 Returns the keys of an object as an array.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2482,7 +2482,7 @@ root.foo_keys = this.foo.keys()
 
 Returns the length of an array or object (number of keys).
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2503,7 +2503,7 @@ root.foo_len = this.foo.length()
 
 *`query`* &lt;query expression&gt; A query that will be used to map each element.  
 
-==== Examples
+#### Examples
 
 
 ##### On arrays
@@ -2540,7 +2540,7 @@ Apply a mapping to each key of an object, and replace the key with the result, w
 
 *`query`* &lt;query expression&gt; A query that will be used to map each key.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2565,7 +2565,7 @@ Merge a source object into an existing destination object. When a collision is f
 
 *`with`* &lt;unknown&gt; A value to merge the target value with.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2598,7 +2598,7 @@ Extract a slice from an array by specifying two indices, a low and high bound, w
 *`low`* &lt;integer&gt; The low bound, which is the first element of the selection, or if negative selects from the end.  
 *`high`* &lt;(optional) integer&gt; An optional high bound.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2627,7 +2627,7 @@ Attempts to sort the values of an array in increasing order. The type of all val
 
 *`compare`* &lt;(optional) query expression&gt; An optional query that should explicitly compare elements `left` and `right` and provide a boolean result.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2654,7 +2654,7 @@ Attempts to sort the elements of an array, in increasing order, by a value emitt
 
 *`query`* &lt;query expression&gt; A query to apply to each element that yields a value used for sorting.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2668,7 +2668,7 @@ root.sorted = this.foo.sort_by(ele -> ele.id)
 
 Squashes an array of objects into a single object, where key collisions result in the values being merged (following similar rules as the `.merge()` method)
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2682,7 +2682,7 @@ root.locations = this.locations.map_each(loc -> {loc.state: [loc.name]}).squash(
 
 Sum the numerical values of an array.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2700,7 +2700,7 @@ Attempts to remove duplicate values from an array. The array may contain a combi
 
 *`emit`* &lt;(optional) query expression&gt; An optional query that can be used in order to yield a value for each element to determine uniqueness.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2714,7 +2714,7 @@ root.uniques = this.foo.unique()
 
 Returns the values of an object as an array. The order of the resulting array will be random.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2730,7 +2730,7 @@ Returns an object where all but one or more field path arguments are removed. Ea
 
 If a key within a nested path does not exist then it is ignored.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2746,7 +2746,7 @@ Returns an object where one or more xref:configuration:field_paths.adoc[field pa
 
 If a key within a nested path does not exist or is not an object then it is not removed.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2760,7 +2760,7 @@ root = this.without("inner.a","inner.c","d")
 
 Zip an array value with one or more argument arrays. Each array must match in length.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2783,7 +2783,7 @@ Executes an argument Bloblang mapping on the target. This method can be used in 
 
 *`mapping`* &lt;string&gt; The mapping to execute.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2809,7 +2809,7 @@ Serializes a target value into a pretty-printed JSON byte array (with 4 space in
 *`no_indent`* &lt;bool, default `false`&gt; Disable indentation.  
 *`escape_html`* &lt;bool, default `true`&gt; Escape problematic HTML characters.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2880,7 +2880,7 @@ root = this.doc.format_json(escape_html: false)
 
 Formats data as a [MessagePack](https://msgpack.org/) message in bytes format.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2908,7 +2908,7 @@ Serializes a target value into an XML byte array.
 *`indent`* &lt;string, default `"    "`&gt; Indentation string. Each element in an XML object or array will begin on a new, indented line followed by one or more copies of indent according to the indentation nesting.  
 *`no_indent`* &lt;bool, default `false`&gt; Disable indentation.  
 
-==== Examples
+#### Examples
 
 
 Serializes a target value into a pretty-printed XML byte array (with 4 space indentation by default).
@@ -2959,7 +2959,7 @@ root = this.format_xml(no_indent: true)
 
 Serializes a target value into a YAML byte array.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -2988,7 +2988,7 @@ Attempts to parse a string into an array of objects by following the CSV format 
 *`delimiter`* &lt;string, default `","`&gt; The delimiter to use for splitting values in each record. It must be a single character.  
 *`lazy_quotes`* &lt;bool, default `false`&gt; If set to `true`, a quote may appear in an unquoted field and a non-doubled quote may appear in a quoted field.  
 
-==== Examples
+#### Examples
 
 
 Parses CSV data with a header row
@@ -3031,7 +3031,7 @@ root.orders = this.orders.parse_csv(lazy_quotes:true)
 
 Attempts to parse a url-encoded query string (from an x-www-form-urlencoded request body) and returns a structured result.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3049,7 +3049,7 @@ Attempts to parse a string as a JSON document and returns the result.
 
 *`use_number`* &lt;(optional) bool&gt; An optional flag that when set makes parsing numbers as json.Number instead of the default float64.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3070,7 +3070,7 @@ root.doc = this.doc.parse_json(use_number: true)
 
 Parses a [MessagePack](https://msgpack.org/) message into a structured document.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3095,7 +3095,7 @@ Decodes a [Parquet file](https://parquet.apache.org/docs/) into an array of obje
 
 *`byte_array_as_string`* &lt;bool, default `false`&gt; Deprecated: This parameter is no longer used.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3106,7 +3106,7 @@ root = content().parse_parquet()
 
 Attempts to parse a URL from a string value, returning a structured result that describes the various facets of the URL. The fields returned within the structured result roughly follow https://pkg.go.dev/net/url#URL, and may be expanded in future in order to present more information.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3142,7 +3142,7 @@ Attempts to parse a string as an XML document and returns a structured result, w
 
 *`cast`* &lt;(optional) bool, default `false`&gt; whether to try to cast values that are numbers and booleans to the right type.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3170,7 +3170,7 @@ root.doc = this.doc.parse_xml(cast: true)
 
 Attempts to parse a string as a single YAML document and returns the result.
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3191,7 +3191,7 @@ Compresses a string or byte array value according to a specified algorithm.
 *`algorithm`* &lt;string&gt; One of `flate`, `gzip`, `pgzip`, `lz4`, `snappy`, `zlib`, `zstd`.  
 *`level`* &lt;integer, default `-1`&gt; The level of compression to use. May not be applicable to all algorithms.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3221,7 +3221,7 @@ Available schemes are: `base64`, `base64url` https://rfc-editor.org/rfc/rfc4648.
 
 *`scheme`* &lt;string&gt; The decoding scheme to use.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3246,7 +3246,7 @@ Decompresses a string or byte array value according to a specified algorithm. Th
 
 *`algorithm`* &lt;string&gt; One of `gzip`, `pgzip`, `zlib`, `bzip2`, `flate`, `snappy`, `lz4`, `zstd`.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3275,7 +3275,7 @@ Decrypts an encrypted string or byte array target according to a chosen AES encr
 *`key`* &lt;string&gt; A key to decrypt with.  
 *`iv`* &lt;string&gt; An initialization vector / nonce.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3295,7 +3295,7 @@ Encodes a string or byte array target according to a chosen scheme and returns a
 
 *`scheme`* &lt;string&gt; The encoding scheme to use.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3322,7 +3322,7 @@ Encrypts a string or byte array target according to a chosen AES encryption meth
 *`key`* &lt;string&gt; A key to encrypt with.  
 *`iv`* &lt;string&gt; An initialization vector / nonce.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3348,7 +3348,7 @@ The following algorithms require a key, which is specified as a second argument:
 *`key`* &lt;(optional) string&gt; An optional key to use.  
 *`polynomial`* &lt;string, default `"IEEE"`&gt; An optional polynomial key to use when selecting the `crc32` algorithm, otherwise ignored. Options are `IEEE` (default), `Castagnoli` and `Koopman`  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3383,7 +3383,7 @@ This vector can be inserted into various SQL databases if they have support for 
 Introduced in version 4.33.0.
 
 
-==== Examples
+#### Examples
 
 
 Create a vector from an array literal
@@ -3411,7 +3411,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The ES256 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3435,7 +3435,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The ES384 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3460,7 +3460,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The ES512 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3486,7 +3486,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The HS256 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3507,7 +3507,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The HS384 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3528,7 +3528,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The HS512 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3549,7 +3549,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The RS256 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3578,7 +3578,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The RS384 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3607,7 +3607,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The RS512 secret that was used for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3636,7 +3636,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3659,7 +3659,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3682,7 +3682,7 @@ Introduced in version v4.20.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3705,7 +3705,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3726,7 +3726,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3747,7 +3747,7 @@ Introduced in version v4.12.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3768,7 +3768,7 @@ Introduced in version v4.18.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3791,7 +3791,7 @@ Introduced in version v4.18.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
@@ -3814,7 +3814,7 @@ Introduced in version v4.18.0.
 
 *`signing_secret`* &lt;string&gt; The secret to use for signing the token.  
 
-==== Examples
+#### Examples
 
 
 ```coffeescript
