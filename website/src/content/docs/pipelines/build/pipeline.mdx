@@ -35,3 +35,15 @@ output:
 If the field `threads` is set to `-1` (the default) it will automatically match the number of logical CPUs available. By
 default almost all Wombat sources will utilise as many processing threads as have been configured, which makes
 horizontal scaling easy.
+
+## Metrics
+The following metrics are exposed for a processor:
+
+- `processor_received`: A count of the number of messages the processor has been executed upon.
+- `processor_batch_received`: A count of the number of message batches the processor has been executed upon.
+- `processor_sent`: A count of the number of messages the processor has returned.
+- `processor_batch_sent`: A count of the number of message batches the processor has returned.
+- `processor_error`: A count of the number of times the processor has errored. In cases where an error is batch-wide the
+count is incremented by one, and therefore would not match the number of messages.
+- `processor_latency_ns`: Latency of message processing in nanoseconds. When a processor acts upon a batch of messages
+this latency measures the time taken to process all messages of the batch.

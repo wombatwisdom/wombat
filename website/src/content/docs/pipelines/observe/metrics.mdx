@@ -1,9 +1,8 @@
 ---
 title: Metrics
+sidebar:
+    order: 3
 ---
-import { Aside } from '@astrojs/starlight/components';
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
 Wombat emits lots of metrics in order to expose how components configured within your pipeline are behaving. You can
 configure exactly where these metrics end up with the config field `metrics`, which describes a metrics format and
 destination. For example, if you wished to push them via the StatsD protocol you could use this configuration:
@@ -15,7 +14,7 @@ metrics:
     flush_period: 100ms
 ```
 
-The default metrics configuration is to expose Prometheus metrics on the [service-wide HTTP endpoint](cmp-http.mdx) at the
+The default metrics configuration is to expose Prometheus metrics on the [service-wide HTTP endpoint](../http)at the
 endpoints `/metrics` and `/stats`.
 
 ### Timings
@@ -30,91 +29,6 @@ Each major Wombat component type emits one or more metrics with the name prefixe
 intended to provide an overview of behaviour, performance and health. Some specific component implementations may
 provide their own unique metrics on top of these standardised ones, these extra metrics can be found listed on their
 respective documentation pages.
-
-### Inputs
-
-- `input_received`: A count of the number of messages received by the input.
-- `input_latency_ns`: Measures the roundtrip latency in nanoseconds from the point at which a message is read up to the
-  moment the message has either been acknowledged by an output, has been stored within a buffer, or has been rejected (
-  nacked).
-- `batch_created`: A count of each time an input-level batch has been created using a batching policy. Includes a label
-  `mechanism` describing the particular mechanism that triggered it, one of; `count`, `size`, `period`, `check`.
-- `input_connection_up`: For continuous stream based inputs represents a count of the number of the times the input has
-  successfully established a connection to the target source. For poll based inputs that do not retain an active
-  connection this value will increment once.
-- `input_connection_failed`: For continuous stream based inputs represents a count of the number of times the input has
-  failed to establish a connection to the target source.
-- `input_connection_lost`: For continuous stream based inputs represents a count of the number of times the input has
-  lost a previously established connection to the target source.
-
-<Aside type="caution">
-The behaviour of connection metrics may differ based on input type due to certain libraries and protocols obfuscating
-the concept of a single connection.
-</Aside>
-
-### Buffers
-
-- `buffer_received`: A count of the number of messages written to the buffer.
-- `buffer_batch_received`: A count of the number of message batches written to the buffer.
-- `buffer_sent`: A count of the number of messages read from the buffer.
-- `buffer_batch_sent`: A count of the number of message batches read from the buffer.
-- `buffer_latency_ns`: Measures the roundtrip latency in nanoseconds from the point at which a message is read from the
-  buffer up to the moment it has been acknowledged by the output.
-- `batch_created`: A count of each time a buffer-level batch has been created using a batching policy. Includes a label
-  `mechanism` describing the particular mechanism that triggered it, one of; `count`, `size`, `period`, `check`.
-
-### Processors
-
-- `processor_received`: A count of the number of messages the processor has been executed upon.
-- `processor_batch_received`: A count of the number of message batches the processor has been executed upon.
-- `processor_sent`: A count of the number of messages the processor has returned.
-- `processor_batch_sent`: A count of the number of message batches the processor has returned.
-- `processor_error`: A count of the number of times the processor has errored. In cases where an error is batch-wide the
-  count is incremented by one, and therefore would not match the number of messages.
-- `processor_latency_ns`: Latency of message processing in nanoseconds. When a processor acts upon a batch of messages
-  this latency measures the time taken to process all messages of the batch.
-
-### Outputs
-
-- `output_sent`: A count of the number of messages sent by the output.
-- `output_batch_sent`: A count of the number of message batches sent by the output.
-- `output_error`: A count of the number of send attempts that have failed. On failed batched sends this count is
-  incremented once only.
-- `output_latency_ns`: Latency of writes in nanoseconds. This metric may not be populated by outputs that are pull-based
-  such as the `http_server`.
-- `batch_created`: A count of each time an output-level batch has been created using a batching policy. Includes a label
-  `mechanism` describing the particular mechanism that triggered it, one of; `count`, `size`, `period`, `check`.
-- `output_connection_up`: For continuous stream based outputs represents a count of the number of the times the output
-  has successfully established a connection to the target sink. For poll based outputs that do not retain an active
-  connection this value will increment once.
-- `output_connection_failed`: For continuous stream based outputs represents a count of the number of times the output
-  has failed to establish a connection to the target sink.
-- `output_connection_lost`: For continuous stream based outputs represents a count of the number of times the output has
-  lost a previously established connection to the target sink.
-
-<Aside type="caution">
-The behaviour of connection metrics may differ based on output type due to certain libraries and protocols obfuscating
-the concept of a single connection.
-</Aside>
-
-### Caches
-
-All cache metrics have a label `operation` denoting the operation that triggered the metric series, one of; `add`,
-`get`, `set` or `delete`.
-
-- `cache_success`: A count of the number of successful cache operations.
-- `cache_error`: A count of the number of cache operations that resulted in an error.
-- `cache_latency_ns`: Latency of operations in nanoseconds.
-- `cache_not_found`: A count of the number of get operations that yielded no value due to the item not being found. This
-  count is separate from `cache_error`.
-- `cache_duplicate`: A count of the number of add operations that were aborted due to the key already existing. This
-  count is separate from `cache_error`.
-
-### Rate Limits
-
-- `rate_limit_checked`: A count of the number of times the rate limit has been probed.
-- `rate_limit_triggered`: A count of the number of times the rate limit has been triggered by a probe.
-- `rate_limit_error`: A count of the number of times the rate limit has errored when probed.
 
 ## Metric Labels
 
@@ -142,7 +56,7 @@ component.
 ### `stream`
 
 The `stream` label is present in a metric series emitted from a stream config executed when Wombat is running
-in [streams mode][streams.about], and is populated with the stream name.
+in [streams mode](/pipelines/deploy/streams), and is populated with the stream name.
 
 ## Example
 
@@ -194,7 +108,7 @@ output_sent{label="bar",path="root.output"}
 ## Metric Mapping
 
 Since Wombat emits a large variety of metrics it is often useful to restrict or modify the metrics that are emitted.
-This can be done using the [Bloblang mapping language][bloblang.about] in the field `metrics.mapping`. This is a mapping
+This can be done using the [Bloblang mapping language](/bloblang) in the field `metrics.mapping`. This is a mapping
 executed for each metric that is registered within the Wombat service and allows you to delete an entire series, modify
 the series name and delete or modify individual labels.
 
@@ -232,9 +146,3 @@ metrics:
   prometheus:
     use_histogram_timing: false
 ```
-
-[bloblang.about]: /docs/guides/bloblang/about
-
-[http.about]: /docs/components/http/about
-
-[streams.about]: /docs/guides/streams_mode/about
