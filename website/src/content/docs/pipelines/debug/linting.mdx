@@ -1,0 +1,24 @@
+---
+title: Linting
+---
+
+Wombat will print errors and halt execution if you try to run a config that has linting errors. If, however, you
+want to test your configs before deployment you can do so with the `lint` subcommand:
+
+For example, imagine we have a config `foo.yaml`, where we intend to read from AMQP, but there is a typo in our config
+struct:
+
+```yaml
+input:
+  amqp_0_9:
+    yourl: amqp://guest:guest@rabbitmqserver:5672/
+```
+
+We can catch this error before attempting to run the config:
+
+```shell
+$ wombat lint ./foo.yaml
+./foo.yaml: line 3: field yourl not recognised
+```
+
+For more information read the output from `wombat lint --help`.

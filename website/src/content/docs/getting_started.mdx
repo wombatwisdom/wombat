@@ -1,83 +1,80 @@
 ---
 title: Getting Started
-
 ---
+import { Steps } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
 
-Wombat is a declarative data streaming service that solves a wide range of data engineering problems with simple, chained, stateless [processing steps][docs.processors]. It implements transaction based resiliency with back pressure, so when connecting to at-least-once sources and sinks it's able to guarantee at-least-once delivery without needing to persist messages during transit.
+Wombat is a declarative data streaming service that solves a wide range of data engineering problems with simple,
+chained, stateless processing steps. It implements transaction based resiliency with back pressure, so when connecting
+to at-least-once sources and sinks it's able to guarantee at-least-once delivery without needing to persist messages
+during transit.
 
-It's [simple to deploy][docs.guides.getting_started], comes with a wide range of [connectors](#components), and is totally data agnostic, making it easy to drop into your existing infrastructure. Wombat has functionality that overlaps with integration frameworks, log aggregators and ETL workflow engines, and can therefore be used to complement these traditional data engineering tools or act as a simpler alternative.
+It's simple to deploy, comes with a wide range of connectors, and is totally data agnostic, making it easy to drop
+into your existing infrastructure. Wombat has functionality that overlaps with integration frameworks, log aggregators
+and ETL workflow engines, and can therefore be used to complement these traditional data engineering tools or act as
+a simpler alternative.
 
 Wombat is ready to commit to this relationship, are you?
 
-## Install
 
-### Binary
-The easiest way to install Wombat is with this handy script:
-
-import { Tabs, TabItem } from '@astrojs/starlight/components';
-
+## Install Wombat
 <Tabs>
-<TabItem label="Latest">
+    <TabItem label="Binary">
+        Wombat is distributed as a single binary which you can download from the
+        [releases page](https://github.com/wombatwisdom/wombat/releases).
+    </TabItem>
+    <TabItem label="Docker">
+        If you have docker installed you can pull the latest official Wombat image with:
 
-```sh
-curl -Lsf https://wombat.dev/sh/install | bash
-```
-
-</TabItem>
-<TabItem label="Version">
-
-```sh
-curl -Lsf https://wombat.dev/sh/install | bash -s -- 1.0.1
-```
-
-</TabItem>
+        ```sh
+        docker pull ghcr.io/wombatwisdom/wombat
+        docker run --rm -v /path/to/your/config.yaml:/wombat.yaml ghcr.io/wombatwisdom/wombat
+        ```
+    </TabItem>
 </Tabs>
 
-Or you can grab an archive containing Wombat from the [releases page][releases].
-
-### Docker
-
-If you have docker installed you can pull the latest official Wombat image with:
-
-```sh
-docker pull ghcr.io/wombatwisdom/wombat
-docker run --rm -v /path/to/your/config.yaml:/wombat.yaml ghcr.io/wombatwisdom/wombat
-```
-
-### Serverless
-
-For information about serverless deployments of Wombat check out the serverless section [here][serverless].
-
-## Run
-
-A Wombat stream pipeline is configured with a single [config file][configuration], you can generate a fresh one with:
+## Create a pipeline config file
+A Wombat stream pipeline is configured with a single [pipeline config file](/pipelines/learn), you can generate a
+fresh one with:
 
 ```shell
 wombat create > config.yaml
 ```
 
-The main sections that make up a config are `input`, `pipeline` and `output`. When you generate a fresh config it'll simply pipe `stdin` to `stdout` like this:
+The main sections that make up a config are [`input`](/pipelines/build/input), [`pipeline`](/pipelines/build/pipeline)
+and [`output`](/pipelines/build/output). When you generate a fresh config it'll simply pipe
+[`stdin`](/reference/components/inputs/stdin) to [`stdout`](/reference/components/outputs/stdout) like this:
 
 ```yaml
 input:
-  stdin: {}
+    stdin: {}
 
 pipeline:
-  processors: []
+    processors: []
 
 output:
-  stdout: {}
+    stdout: {}
 ```
 
-Eventually we'll want to configure a more useful [input][inputs] and [output][outputs], but for now this is useful for quickly testing processors. You can execute this config with:
+Eventually we'll want to configure a more useful [input](/pipelines/build/input) and [output](/pipelines/build/output), but
+for now this is useful for quickly testing processors.
+
+## Run your pipeline
+Now that you have a simple pipeline configuration, you can pass it to the wombat command to actually run it:
 
 ```sh
 wombat -c ./config.yaml
 ```
 
-Anything you write to stdin will get written unchanged to stdout, cool! Resist the temptation to play with this for hours, there's more stuff to try out.
+Anything you write to stdin will get written unchanged to stdout, cool! Resist the temptation to play with this
+for hours, there's more stuff to try out.
 
-Next, let's add some processing steps in order to mutate messages. The most powerful one is the [`mapping` processor][processors.mapping] which allows us to perform mappings, let's add a mapping to uppercase our messages:
+## Add a processor
+Next, let's add some processing steps in order to mutate messages. The most powerful one is the
+[`mapping` processor](/reference/components/processors/mapping) which allows us to perform mappings, let's add a
+mapping to uppercase our messages:
 
 ```yaml
 input:
@@ -91,9 +88,12 @@ output:
   stdout: {}
 ```
 
-Now your messages should come out in all caps, how whacky! IT'S LIKE BENTO IS SHOUTING BACK AT YOU!
+Now your messages should come out in all caps, how whacky! IT'S LIKE WOMBAT IS SHOUTING BACK AT YOU!
+You can add as many [processing steps](/pipelines/build/processor) as you like, and since processors are what make Wombat
+powerful they are worth experimenting with.
 
-You can add as many [processing steps][processors] as you like, and since processors are what make Wombat powerful they are worth experimenting with. Let's create a more advanced pipeline that works with JSON documents:
+## Working with structured data
+Let's create a more advanced pipeline that works with JSON documents:
 
 ```yaml
 input:
@@ -112,7 +112,9 @@ output:
   stdout: {}
 ```
 
-First, we sleep for 500 milliseconds just to keep the suspense going. Next, we restructure our input JSON document by nesting it within a field `doc`, we map the upper-cased first element of `names` to a new field `first_name`. Finally, we map the hashed and base64 encoded value of the last element of `names` to a new field `last_name`.
+First, we sleep for 500 milliseconds just to keep the suspense going. Next, we restructure our input JSON document
+by nesting it within a field `doc`, we map the upper-cased first element of `names` to a new field `first_name`.
+Finally, we map the hashed and base64 encoded value of the last element of `names` to a new field `last_name`.
 
 Try running that config with some sample documents:
 
@@ -128,26 +130,23 @@ You should see (amongst some logs):
 {"doc":{"id":"2","names":["chad","robert","kroeger"]},"first_name":"CHAD","last_name":"uXXg5wCKPjpyj/qbivPbD9H9CZ5DH/F0Q1Twytnt2hQ="}
 ```
 
-How exciting! I don't know about you but I'm going to need to lie down for a while. Now that you are a Wombat expert might I suggest you peruse these sections to see if anything tickles your fancy?
+How exciting! I don't know about you but I'm going to need to lie down for a while. Now that you are a Wombat expert
+might I suggest you peruse these sections to see if anything tickles your fancy?
 
-- [Bloblang Walkthrough][bloblang.walkthrough]
-- [Inputs][inputs]
-- [Processors][processors]
-- [Outputs][outputs]
-- [Monitoring][monitoring]
-- [Cookbooks][cookbooks]
-- [More about configuration][configuration]
+<LinkCard
+    title="Bloblang"
+    href="/bloblang/getting_started"
+    description="Dive deeper into the mistery mapping language."
+/>
 
-[proc_proc_field]: /docs/components/processors/process_field
-[proc_text]: /docs/components/processors/text
-[processors]: /docs/components/processors/about
-[processors.mapping]: /docs/components/processors/mapping
-[inputs]: /docs/components/inputs/about
-[outputs]: /docs/components/outputs/about
-[jmespath]: http://jmespath.org/
-[releases]: https://github.com/wombatwisdom/wombat/releases
-[serverless]: /docs/guides/serverless/about
-[configuration]: /docs/configuration/about
-[monitoring]: /docs/guides/monitoring
-[cookbooks]: /cookbooks
-[bloblang.walkthrough]: /docs/guides/bloblang/walkthrough
+<LinkCard
+    title="Guides"
+    href="/guides"
+    description="Practical examples of how to use Wombat."
+/>
+
+<LinkCard
+    title="Reference"
+    href="/reference"
+    description="Navigate the reference documentation to find the meaning of that specific field."
+/>

@@ -74,15 +74,14 @@ For example, if your input usually produces 10 msgs/s, but occasionally spikes t
 
 ## Maximising CPU Utilisation
 
-Some [processors][processors] within Wombat are relatively heavy on your CPU, and can potentially become the bottleneck of a service. In these circumstances it is worth configuring Wombat so that your processors are running on each available core of your machine without contention.
+Some processors within Wombat are relatively heavy on your CPU, and can potentially become the bottleneck of a service. In these circumstances it is worth configuring Wombat so that your processors are running on each available core of your machine without contention.
 
 An array of processors in any section of a Wombat config becomes a single logical pipeline of steps running on a single logical thread. The easiest way to create parallel processor threads is to configure them inside the [pipeline][pipeline] configuration block, where we can explicitly set any number of parallel processor threads independent of how many inputs or outputs we want to use.
 
 Please refer [to the documentation regarding pipelines][pipeline] for some examples.
 
-[pipeline]: /docs/configuration/processing_pipelines
-[batching]: /docs/configuration/batching
-[processors]: /docs/components/processors/about
-[buffers]: /docs/components/buffers/about
-[broker-input]: /docs/components/inputs/broker
-[broker-output]: /docs/components/outputs/broker
+[pipeline]: /pipelines/build/pipeline
+[batching]: /pipelines/learn/batching
+[buffers]: /pipelines/build/buffers
+[broker-input]: /reference/components/inputs/broker
+[broker-output]: /reference/components/outputs/broker
