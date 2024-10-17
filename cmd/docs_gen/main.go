@@ -121,16 +121,16 @@ func main() {
 	doBloblangFunctions(refDir)
 
 	// Unit test docs
-	doTestDocs(docsDir)
+	doTestDocs(refDir)
 
 	// HTTP docs
-	doHTTP(docsDir)
+	doHTTP(refDir)
 
 	// Logger docs
-	doLogger(docsDir)
+	doLogger(refDir)
 
 	// Template docs
-	doTemplates(docsDir)
+	doTemplates(refDir)
 }
 
 func viewForDir(docsDir string) func(string, *service.ConfigView) {
