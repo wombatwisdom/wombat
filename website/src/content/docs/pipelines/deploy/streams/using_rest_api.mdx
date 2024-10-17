@@ -1,10 +1,14 @@
 ---
 title: Streams Via REST API
+sidebar:
+    order: 2
 ---
 
-By using the Wombat `streams` mode REST API you can dynamically control which streams are active at runtime. The full spec for the Wombat streams mode REST API can be [found here][http-interface].
+By using the Wombat `streams` mode REST API you can dynamically control which streams are active at runtime. The full
+spec for the Wombat streams mode REST API can be [found here](/reference/streams_api).
 
-Note that stream configs created and updated using this API do *not* benefit from [environment variable interpolation][interpolation] (function interpolation will still work).
+Note that stream configs created and updated using this API do *not* benefit from
+[environment variable interpolation](/pipelines/learn/interpolation) (function interpolation will still work).
 
 ## Walkthrough
 
@@ -224,6 +228,3 @@ $ curl http://localhost:4195/streams | jq '.'
 ```
 
 Done.
-
-[http-interface]: /docs/guides/streams_mode/streams_api
-[interpolation]: /docs/configuration/interpolation

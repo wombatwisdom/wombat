@@ -3,3 +3,39 @@ title: Deploying
 sidebar:
     order: 0
 ---
+While there are cases where you might want to run Wombat as a tool to get a specific job done, the whole idea behind
+a streaming pipeline would be to deploy it in a production worthy context. This section will explain a few of the
+options for deploying your Wombat pipeline.
+
+## Operating Modes
+### Simple Mode
+The default mode of running Wombat is the simplest way to deploy your pipeline. Chances are you've already done
+this as part of running through these docs. It basically comes down to running the following command:
+
+```shell
+wombat run -c ./pipeline.yaml
+```
+
+Or if you are more docker minded, you might want to run it in a container:
+
+```shell
+docker run -v $(pwd)/pipeline.yaml:/pipeline.yaml ghcr.io/wombatwisdom/wombat:latest
+```
+
+### Streams Mode
+Sometimes you might want provide others with a way to run their own pipelines. In this case you might be interested
+in running Wombat in Streams mode.
+
+```shell
+wombat -r "./prod/*.yaml" -c ./config.yaml streams
+```
+
+Running Wombat in streams mode will expose a ReST API which allows you to dynamically create, read the status of,
+update, and delete streams at runtime.
+
+## Deployment Targets
+
+### Cloud
+Running Wombat in the cloud is a great way to ensure that your pipeline is always available. We currently support
+running Wombat in [AWS](cloud/aws.mdx) and [GCP](cloud/gcp.mdx) but it should be fairly easy to run it in other
+cloud environments as well.
