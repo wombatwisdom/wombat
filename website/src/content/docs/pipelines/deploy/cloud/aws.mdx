@@ -3,7 +3,8 @@ title: Amazon Web Services
 description: Find out about AWS components in Wombat
 ---
 
-There are many components within Wombat which utilise AWS services. You will find that each of these components contains a configuration section under the field `credentials`, of the format:
+There are many components within Wombat which utilise AWS services. You will find that each of these components
+contains a configuration section under the field `credentials`, of the format:
 
 ```yml
 credentials:
@@ -15,15 +16,19 @@ credentials:
   role_external_id: ""
 ```
 
-This section contains many fields and it isn't immediately clear which of them are compulsory and which aren't. This document aims to make it clear what each field is responsible for and how it might be used.
+This section contains many fields and it isn't immediately clear which of them are compulsory and which aren't. This
+document aims to make it clear what each field is responsible for and how it might be used.
 
 ### None of these fields are compulsory
 
-The first thing to make clear is that _all_ of these fields are optional. When all fields are left blank Wombat will attempt to load credentials from a shared credentials file (`~/.aws/credentials`). The profile loaded will be `default` unless the `AWS_PROFILE` environment variable is set.
+The first thing to make clear is that _all_ of these fields are optional. When all fields are left blank Wombat will
+attempt to load credentials from a shared credentials file (`~/.aws/credentials`). The profile loaded will be `default`
+unless the `AWS_PROFILE` environment variable is set.
 
 ## Explicit Credentials
 
-By explicitly setting the credentials you are using at the component level it's possible to connect to components using different accounts within the same Wombat process.
+By explicitly setting the credentials you are using at the component level it's possible to connect to components
+using different accounts within the same Wombat process.
 
 ### Selecting a Profile
 
@@ -55,7 +60,9 @@ credentials:
 
 ## Assuming a Role
 
-It's also possible to configure Wombat to [assume a role][assuming-role] using your credentials by setting the field `role` to your target role ARN.
+It's also possible to configure Wombat to
+[assume a role](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html) using your credentials by setting
+the field `role` to your target role ARN.
 
 ```yml
 credentials:
@@ -64,14 +71,12 @@ credentials:
 
 This does NOT require explicit credentials, but it's possible to use both.
 
-If you need to assume a role owned by another organisation they might require you to [provide an external ID][role-external-id], in which case place it in the field `role_external_id`:
+If you need to assume a role owned by another organisation they might require you to
+[provide an external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html),
+in which case place it in the field `role_external_id`:
 
 ```yml
 credentials:
   role: fooarn # Role ARN
   role_external_id: bar_id
 ```
-
-[temporary-creds]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_use-resources.html
-[assuming-role]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use.html
-[role-external-id]: https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html

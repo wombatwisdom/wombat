@@ -1,23 +1,26 @@
 ---
 title: Streams Via Config Files
+sidebar:
+    order: 1
 ---
 
-When running Wombat in `streams` mode it's possible to create streams with their own static configurations, simply list one or more files after the `streams` subcommand:
+When running Wombat in `streams` mode it's possible to create streams with their own static configurations, simply
+list one or more files after the `streams` subcommand:
 
 ```sh
 wombat streams ./foo.yaml ./configs/*.yaml
 ```
 
 ## Resources
-
-A stream configuration should only include the base stream component fields (`input`, `buffer`, `pipeline`, `output`), and therefore should NOT include any [resources][resources]. Instead, define resources separately and import them using the `-r`/`--resources` flag:
+A stream configuration should only include the base stream component fields (`input`, `buffer`, `pipeline`, `output`),
+and therefore should NOT include any [resources](/pipelines/learn/resources). Instead, define resources separately and import them
+using the `-r`/`--resources` flag:
 
 ```sh
 wombat -r "./resources/prod/*.yaml" streams ./stream_configs/*.yaml
 ```
 
 ## Walkthrough
-
 Make a directory of stream configs:
 
 ``` bash
@@ -127,8 +130,4 @@ You can then send data to the stream via its namespaced URL:
 $ curl http://localhost:4195/foo/post -d '{"user":{"id":"foo"},"body":{"content":"bar"}}'
 ```
 
-There are other endpoints [in the REST API][rest-api] for creating, updating and deleting streams.
-
-[rest-api]: /docs/guides/streams_mode/using_rest_api
-[interpolation]: /docs/configuration/interpolation
-[resources]: /docs/configuration/resources
+There are other endpoints [in the REST API](../using_rest_api) for creating, updating and deleting streams.

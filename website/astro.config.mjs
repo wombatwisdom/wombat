@@ -2,10 +2,16 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import asciidoc from "astro-asciidoc";
 import starlightLinksValidator from 'starlight-links-validator'
+import rehypeMermaid from 'rehype-mermaid'
 
 // https://astro.build/config
 export default defineConfig({
 	site:'https://wombatwisdom.github.io',
+	markdown: {
+		rehypePlugins: [
+			[rehypeMermaid, { simple: true }],
+		],
+	},
 	plugins: [
 		starlightLinksValidator(),
 	],
