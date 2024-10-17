@@ -13,7 +13,7 @@ therefore it's worth fully understanding these behaviors if you intend to use th
 All mathematical operators (`+`, `-`, `*`, `/`, `%`) are valid against number values, and addition (`+`) is also
 supported when both the left and right hand side arguments are strings. If a mathematical operator is used with an
 argument that is non-numeric (with the aforementioned string exception) then
-a [recoverable mapping error will be thrown](cfg-error_handling.md).
+a [recoverable mapping error will be thrown](/pipelines/learn/error_handling).
 
 ### Number Degradation
 
@@ -31,7 +31,7 @@ In order to explicitly coerce numbers into integer types you can use the `.ceil(
 
 The not (`!`) operator reverses the boolean value of the expression immediately following it, and is valid to place
 before any query that yields a boolean value. If the following expression yields a non-boolean value then
-a [recoverable mapping error will be thrown](cfg-error_handling.md).
+a [recoverable mapping error will be thrown](/pipelines/learn/error_handling).
 
 If you wish to reverse the boolean result of a complex query then simply place the query within brackets (
 `!(this.foo > this.bar)`).
@@ -48,9 +48,9 @@ underlying representations (integer, float, etc) do not need to match in order f
 ### Numerical
 
 Numerical comparisons (`>`, `>=`, `<`, `<=`) are valid to use against number values only. If a non-number value is used
-as an argument then a [recoverable mapping error will be thrown](cfg-error_handling.md).
+as an argument then a [recoverable mapping error will be thrown](/pipelines/learn/error_handling).
 
 ### Boolean
 
 Boolean comparison operators (`||`, `&&`) are valid to use against boolean values only (`true` or `false`). If a
-non-boolean value is used as an argument then a [recoverable mapping error will be thrown](cfg-error_handling.md).
+non-boolean value is used as an argument then a [recoverable mapping error will be thrown](/pipelines/learn/error_handling).

@@ -61,7 +61,7 @@ root = {}
 root.foo = this.message
 ```
 
-Bloblang supports a bunch of [literal types][blobl.literals], and the first line of this mapping assigns an empty object
+Bloblang supports a bunch of [literal types](/bloblang/#literals), and the first line of this mapping assigns an empty object
 literal to the root. The second line then creates a new field `foo` on that object by assigning it the value of`message`
 from the input document. You should see that our output has changed to:
 
@@ -99,8 +99,8 @@ on quick before our self-satisfaction gets in the way of progress.
 
 Nothing is ever good enough for you, why should the input document be any different? Usually in our mappings it's
 necessary to mutate values whilst we map them over, this is almost always done with methods, of
-which [there are many][blobl.methods]. To demonstrate we're going to change our mapping
-to [uppercase][blobl.methods.uppercase] the field `message` from our input document:
+which [there are many](/bloblang#methods). To demonstrate we're going to change our mapping
+to [uppercase](/reference/bloblang/methods/#uppercase) the field `message` from our input document:
 
 ```coffee
 root.foo.bar = this.message.uppercase()
@@ -123,7 +123,7 @@ the method name and arguments within brackets. With this method added our output
 
 Since the result of any Bloblang query is a value you can use methods on anything, including other methods. For example,
 we could expand our mapping of `message` to also replace `WORLD` with `EARTH` using the [
-`replace_all` method][blobl.methods.replace_all]:
+`replace_all` method](/reference/bloblang/methods/#replace_all):
 
 ```coffee
 root.foo.bar = this.message.uppercase().replace_all("WORLD", "EARTH")
@@ -140,9 +140,9 @@ root.foo."buz me".baz = "I like mapping"
 ```
 
 Woah, I think that's the plot to Inception, let's move onto functions. Functions are just boring methods that don't have
-a target, and there are [plenty of them as well][blobl.functions]. Functions are often used to extract information
-unrelated to the input document, such as [environment variables][blobl.functions.env], or to generate data such
-as [timestamps][blobl.functions.now] or [UUIDs][blobl.functions.uuid_v4].
+a target, and there are [plenty of them as well](/reference/bloblang/functions). Functions are often used to extract information
+unrelated to the input document, such as [environment variables](/reference/bloblang/functions/#env), or to generate data such
+as [timestamps](/reference/bloblang/functions/#now) or [UUIDs](/reference/bloblang/functions/#uuid_v4).
 
 Since we're completionists let's add one to our mapping:
 
@@ -157,7 +157,7 @@ Now I can't tell you what the output looks like since it will be different each 
 ### Deletions
 
 Everything in Bloblang is an expression to be assigned, including deletions, which is a [function
-`deleted()`][blobl.functions.deleted]. To illustrate let's create a field we want to delete by changing our input to the
+`deleted()`](/reference/bloblang/functions/#deleted). To illustrate let's create a field we want to delete by changing our input to the
 following:
 
 ```json
@@ -192,7 +192,7 @@ And it won't be included in the output:
 }
 ```
 
-An alternative way to delete fields is the [method `without`][blobl.methods.without], our above example could be
+An alternative way to delete fields is the [method `without`](/reference/bloblang/methods/#without), our above example could be
 rewritten as a single assignment `root = this.without("name")`. However, `deleted()` is generally more powerful and will
 come into play more later on.
 
@@ -221,7 +221,7 @@ not quoted. This is what makes it possible to output data of any format, includi
 binary data.
 
 Unstructured mapping is not limited to the output. Rather than referencing the input document with `this`, where it must
-be structured, it is possible to reference it as a binary string with the [function `content`][blobl.functions.content],
+be structured, it is possible to reference it as a binary string with the [function `content`](/reference/bloblang/functions/#content),
 try changing your mapping to:
 
 ```coffee
@@ -448,11 +448,11 @@ existence. However, sometimes errors are what we want. Failing a mapping with an
 document in other ways, such as routing it to a dead-letter queue or filtering it entirely.
 
 You can read about common Wombat error handling patterns for bad data in
-the [error handling guide][configuration.error_handling], but the first step is to create the error. Luckily, Bloblang
+the [error handling guide](/pipelines/learn/error_handling), but the first step is to create the error. Luckily, Bloblang
 has a range of ways of creating errors under certain circumstances, which can be used in order to validate the data
 being mapped.
 
-There are [a few helper methods][blobl.methods.coercion] that make validating and coercing fields nice and easy, try
+There are [a few helper methods](/reference/bloblang/methods/#coercion) that make validating and coercing fields nice and easy, try
 this mapping out:
 
 ```coffee
@@ -489,10 +489,10 @@ With some of these sample inputs:
 ```
 
 However, these methods don't cover all use cases. The general purpose error throwing technique is the [
-`throw` function][blobl.functions.throw], which takes an argument string that describes the error. When it's called it
+`throw` function](/reference/bloblang/functions/#throw), which takes an argument string that describes the error. When it's called it
 will throw a mapping error that abandons the mapping (unless it's caught, psych!)
 
-For example, we can check the type of a field with the [method `type`][blobl.methods.type], and then throw an error if
+For example, we can check the type of a field with the [method `type`](/reference/bloblang/methods/#type), and then throw an error if
 it's not the type we expected:
 
 ```coffee
@@ -635,7 +635,7 @@ off the stage. What happens when you need to map all of the elements of an array
 their values? What if the fellowship just used the eagles to fly to mount doom?
 
 Bloblang offers a bunch of advanced methods
-for [manipulating structured data types][blobl.methods.object-array-manipulation], let's take a quick tour of some of
+for [manipulating structured data types](/reference/bloblang/methods/#object--array-manipulation), let's take a quick tour of some of
 the cooler ones. Set your input document to this list of things:
 
 ```json
@@ -667,7 +667,7 @@ the cooler ones. Set your input document to this list of things:
 ```
 
 Let's say we wanted to reduce the `things` in our input document to only those that are cool and where we have enough of
-them to share with our friends. We can do this with a [`filter` method][blobl.methods.filter]:
+them to share with our friends. We can do this with a [`filter` method](/reference/bloblang/methods/#filter):
 
 ```coffee
 root = this.things.filter(thing -> thing.is_cool && thing.quantity > this.num_friends)
@@ -685,7 +685,7 @@ Being able to express a query argument to be applied to a range in this way is o
 Bloblang, and when mapping complex structured data these advanced methods will likely be a common tool that you'll reach
 for.
 
-Another such method is [`map_each`][blobl.methods.map_each], which allows you to mutate each element of an array, or
+Another such method is [`map_each`](/reference/bloblang/methods/#map_each), which allows you to mutate each element of an array, or
 each value of an object. Change your input document to the following:
 
 ```json
@@ -733,7 +733,7 @@ Try updating that map so that only opinions that mention Pokemon are kept
 :::
 
 Cool. To find more methods for manipulating structured data types check out
-the [methods page][blobl.methods.object-array-manipulation].
+the [methods page](/reference/bloblang/methods/#object--array-manipulation).
 
 ## Reusable Mappings
 
@@ -755,7 +755,7 @@ The body of a named map, encapsulated with squiggly brackets, is a totally isola
 new value being created for each invocation of the map, and `this` refers to the root of the context provided to the
 map.
 
-Named maps are executed with the [method `apply`][blobl.methods.apply], which has a string parameter identifying the map
+Named maps are executed with the [method `apply`](/reference/bloblang/methods/#apply), which has a string parameter identifying the map
 to execute, this means it's possible to dynamically select the target map.
 
 As you can see in the above example we were able to use a custom map in order to create our talking head objects without
@@ -814,7 +814,7 @@ mapping that you're particularly proud of. Well, I'm sorry to inform you that yo
 without unit tests is like a Twitter session, with the progression of time it will inevitably descend into madness.
 
 However, if you act now there is still time to spare your mapping from this fate, as Wombat has it's
-own [unit testing capabilities][configuration.unit_testing] that you can also use for your mappings. To start with save
+own [unit testing capabilities](/pipelines/test) that you can also use for your mappings. To start with save
 a mapping into a file called something like `naughty_man.blobl`, we can use the example above from the reusable mappings
 section:
 
@@ -906,56 +906,10 @@ Test 'naughty_man_test.yaml' succeeded
 
 And now our mapping, should we need to expand it in the future, is better protected against regressions. You can read
 more about the Wombat unit test specification, including alternative output predicates,
-in [this document][configuration.unit_testing].
+in [this document](/pipelines/test).
 
 ## Final Words
 
 That's it for this walkthrough, if you're hungry for more then I suggest you re-evaluate your priorities in life. If you
-have feedback then please [get in touch][community], despite being terrible people the Wombat community are very
+have feedback then please get in touch, despite being terrible people the Wombat community are very
 welcoming.
-
-[guides.getting_started]: /docs/guides/getting_started
-
-[blobl.methods]: /docs/guides/bloblang/methods
-
-[blobl.methods.uppercase]: /docs/guides/bloblang/methods#uppercase
-
-[blobl.methods.replace_all]: /docs/guides/bloblang/methods#replace_all
-
-[blobl.methods.catch]: /docs/guides/bloblang/methods#catch
-
-[blobl.methods.without]: /docs/guides/bloblang/methods#without
-
-[blobl.methods.type]: /docs/guides/bloblang/methods#type
-
-[blobl.methods.coercion]: /docs/guides/bloblang/methods#type-coercion
-
-[blobl.methods.object-array-manipulation]: /docs/guides/bloblang/methods#object--array-manipulation
-
-[blobl.methods.filter]: /docs/guides/bloblang/methods#filter
-
-[blobl.methods.map_each]: /docs/guides/bloblang/methods#map_each
-
-[blobl.methods.apply]: /docs/guides/bloblang/methods#apply
-
-[blobl.functions]: /docs/guides/bloblang/functions
-
-[blobl.functions.deleted]: /docs/guides/bloblang/functions#deleted
-
-[blobl.functions.content]: /docs/guides/bloblang/functions#content
-
-[blobl.functions.env]: /docs/guides/bloblang/functions#env
-
-[blobl.functions.now]: /docs/guides/bloblang/functions#now
-
-[blobl.functions.uuid_v4]: /docs/guides/bloblang/functions#uuid_v4
-
-[blobl.functions.throw]: /docs/guides/bloblang/functions#throw
-
-[blobl.literals]: /docs/guides/bloblang/about#literals
-
-[configuration.error_handling]: /docs/configuration/error_handling
-
-[configuration.unit_testing]: /docs/configuration/unit_testing
-
-[community]: /community
