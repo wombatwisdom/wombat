@@ -10,8 +10,6 @@ WORKDIR /go/src/github.com/wombatwisdom/wombat/
 COPY go.* /go/src/github.com/wombatwisdom/wombat/
 RUN go mod download
 
-# Build
-COPY resources/docker /go/src/github.com/wombatwisdom/wombat/
 # Tag timetzdata required for busybox base image:
 # https://github.com/benthosdev/benthos/issues/897
 RUN task build TAGS="timetzdata"
