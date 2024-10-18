@@ -1,8 +1,6 @@
 ---
 title: Templating
 description: Learn how templates work.
-sidebar:
-    order: 4
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
@@ -46,17 +44,13 @@ The stability of the template describing the likelihood that the configuration s
 
 *Default*: `"stable"`
 
-|===
-| Option | Summary
 
-| `stable`
-| This template is stable and will therefore not change in a breaking way outside of major version releases.
-| `beta`
-| This template is beta and will therefore not change in a breaking way unless a major problem is found.
-| `experimental`
-| This template is experimental and therefore subject to breaking changes outside of major version releases.
+| Option | Summary |
+| ------ | ------- |
+| `stable` | This template is stable and will therefore not change in a breaking way outside of major version releases. |
+| `beta` | This template is beta and will therefore not change in a breaking way unless a major problem is found. |
+| `experimental` | This template is experimental and therefore subject to breaking changes outside of major version releases. |
 
-|===
 
 ### `categories`
 
@@ -118,21 +112,15 @@ The scalar type of the field.
 *Type*: `string`
 
 
-|===
-| Option | Summary
 
-| `string`
-| standard string type
-| `int`
-| standard integer type
-| `float`
-| standard float type
-| `bool`
-| a boolean true/false
-| `unknown`
-| allows for nesting arbitrary configuration inside of a field
+| Option | Summary |
+| ------ | ------- |
+| `string` | standard string type |
+| `int` | standard integer type |
+| `float` | standard float type |
+| `bool` | a boolean true/false |
+| `unknown` | allows for nesting arbitrary configuration inside of a field |
 
-|===
 
 ### `fields[].kind`
 

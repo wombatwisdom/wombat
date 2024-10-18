@@ -187,10 +187,10 @@ curl -H "Authorization: Bearer ${JWT_TOKEN}" "https://<account>.snowflakecomputi
 ```
 
 If you need to pass in a valid `requestId` to any of these Snowpipe REST API endpoints, you can set a
-)([`log`](/reference/bloblang/functions#uuid_v4) string in a metadata field called
-`request_id`, log it via the )([here](/reference/components/processors/log) processor and
+)(/bloblang/functions#uuid_v4) string in a metadata field called
+`request_id`, log it via the [`log`](/reference/components/processors/log) processor and
 then configure `request_id: ${ @request_id }` ). Alternatively, you can enable debug logging as described
-)(/docs/components/logger/about) and Bento will print the Request IDs that it sends to Snowpipe.
+[here](/reference/configuration/logger) and Bento will print the Request IDs that it sends to Snowpipe.
 
 ### General Troubleshooting
 
