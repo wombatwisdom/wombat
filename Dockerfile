@@ -7,7 +7,7 @@ RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/loc
 
 WORKDIR /go/src/github.com/wombatwisdom/wombat/
 # Update dependencies: On unchanged dependencies, cached layer will be reused
-COPY .. /go/src/github.com/wombatwisdom/wombat/
+COPY . /go/src/github.com/wombatwisdom/wombat/
 RUN go mod tidy
 
 # Tag timetzdata required for busybox base image:
