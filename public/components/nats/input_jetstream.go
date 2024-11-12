@@ -81,6 +81,10 @@ This input adds the following metadata fields to each message:
 		Field(service.NewDurationField("flush_wait").
 			Description("the amount of time to wait for a new message before closing an incomplete batch").
 			Default("100ms")).
+		Field(service.NewDurationField("nak_delay").
+			Description("The amount of time to wait before reattempting to deliver a message that was NAK'd").
+			Optional().
+			Advanced()).
 		Fields(connectionTailFields()...).
 		Field(inputTracingDocs())
 }
@@ -110,6 +114,7 @@ type jetStreamReader struct {
 	cfg       jetstream.ConsumerConfig
 	batchSize int
 	flushWait time.Duration
+	nakDelay  *time.Duration
 
 	log *service.Logger
 
@@ -218,6 +223,15 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 	if j.flushWait, err = conf.FieldDuration("flush_wait"); err != nil {
 		return nil, err
 	}
+
+	if conf.Contains("nak_delay") {
+		delay, err := conf.FieldDuration("nak_delay")
+		if err != nil {
+			return nil, err
+		}
+		j.nakDelay = &delay
+	}
+
 	return &j, nil
 }
 
@@ -293,20 +307,26 @@ func (j *jetStreamReader) ReadBatch(ctx context.Context) (service.MessageBatch, 
 		return nil, nil, msgs.Error()
 	}
 
-	var ackers []func() error
+	var ackers []service.AckFunc
 	var batch service.MessageBatch
 	for msg := range msgs.Messages() {
-		ackers = append(ackers, msg.Ack)
+		ackers = append(ackers, func(ctx context.Context, res error) error {
+			if res == nil {
+				return msg.Ack()
+			}
+
+			if j.nakDelay != nil {
+				return msg.NakWithDelay(*j.nakDelay)
+			} else {
+				return msg.Nak()
+			}
+		})
 		batch = append(batch, convertMessage(msg))
 	}
 
 	return batch, func(ctx context.Context, res error) error {
-		if res != nil {
-			return res
-		}
-
 		for _, msg := range ackers {
-			if err := msg(); err != nil {
+			if err := msg(ctx, res); err != nil {
 				return fmt.Errorf("failed to ack message: %v", err)
 			}
 		}

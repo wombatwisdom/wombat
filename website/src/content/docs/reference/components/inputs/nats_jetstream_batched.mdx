@@ -45,6 +45,7 @@ input:
     max_ack_pending: 1024
     batch_size: 1
     flush_wait: 100ms
+    nak_delay: "" # No default (optional)
     tls:
       enabled: false
       skip_cert_verify: false
@@ -265,6 +266,14 @@ the amount of time to wait for a new message before closing an incomplete batch
 *Type*: `string`
 
 *Default*: `"100ms"`
+
+### `nak_delay`
+
+The amount of time to wait before reattempting to deliver a message that was NAK'd
+
+
+*Type*: `string`
+
 
 ### `tls`
 
