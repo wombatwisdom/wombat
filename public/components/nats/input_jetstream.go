@@ -43,6 +43,10 @@ This input adds the following metadata fields to each message:
 ` + connectionNameDescription() + authDescription()).
 		Fields(connectionHeadFields()...).
 		Field(service.NewStringField("name").Description("The name of the consumer")).
+		Field(service.NewBoolField("bind").
+			Description("Indicates whether the input should use an existing consumer").
+			Default(false).
+			Optional()).
 		Field(service.NewStringField("stream").
 			Description("The stream to consume from")).
 		Field(service.NewStringListField("filter_subjects").
@@ -101,6 +105,7 @@ func init() {
 type jetStreamReader struct {
 	connDetails connectionDetails
 
+	bind      bool
 	stream    string
 	cfg       jetstream.ConsumerConfig
 	batchSize int
@@ -128,6 +133,11 @@ func newJetStreamReaderFromConfig(conf *service.ParsedConfig, mgr *service.Resou
 	}
 
 	j.cfg.Name, err = conf.FieldString("name")
+	if err != nil {
+		return nil, err
+	}
+
+	j.bind, err = conf.FieldBool("bind")
 	if err != nil {
 		return nil, err
 	}
@@ -240,10 +250,16 @@ func (j *jetStreamReader) Connect(ctx context.Context) (err error) {
 		return err
 	}
 
-	j.consumer, err = jCtx.CreateOrUpdateConsumer(ctx, j.stream, j.cfg)
-	if err != nil {
-		fmt.Println("Error creating consumer", err)
-		return err
+	if j.bind {
+		j.consumer, err = jCtx.Consumer(ctx, j.stream, j.cfg.Name)
+		if err != nil {
+			return fmt.Errorf("failed to bind consumer %q: %w", j.cfg.Name, err)
+		}
+	} else {
+		j.consumer, err = jCtx.CreateOrUpdateConsumer(ctx, j.stream, j.cfg)
+		if err != nil {
+			return fmt.Errorf("failed to create consumer %q: %w", j.cfg.Name, err)
+		}
 	}
 
 	j.natsConn = natsConn

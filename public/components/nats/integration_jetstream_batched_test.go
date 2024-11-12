@@ -2,6 +2,7 @@ package nats
 
 import (
 	"context"
+	"fmt"
 	"github.com/nats-io/nats.go/jetstream"
 	"os"
 	"strings"
@@ -77,6 +78,71 @@ input:
 				Subjects: []string{"subject-" + vars.ID},
 			})
 			require.NoError(t, err)
+		}),
+		integration.StreamTestOptSleepAfterInput(100*time.Millisecond),
+		integration.StreamTestOptSleepAfterOutput(100*time.Millisecond),
+	)
+}
+
+func TestJetStreamBatchedBoundConsumer(t *testing.T) {
+	integration.CheckSkip(t)
+
+	var err error
+	opts := test.DefaultTestOptions
+	opts.Port = -1
+	opts.JetStream = true
+	opts.StoreDir, err = os.MkdirTemp("", "wombat-nats-test-")
+	assert.NoError(t, err)
+
+	srv := test.RunServer(&opts)
+	t.Cleanup(func() {
+		srv.Shutdown()
+		os.RemoveAll(opts.StoreDir)
+	})
+
+	natsConn, err := nats.Connect(srv.ClientURL())
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		natsConn.Close()
+	})
+
+	js, err := jetstream.New(natsConn)
+	require.NoError(t, err)
+
+	template := strings.ReplaceAll(`
+output:
+  nats_jetstream_batched:
+    urls: 
+      - $URL
+    subject: subject-$ID
+
+input:
+  nats_jetstream_batched:
+    name: $ID
+    bind: true
+    urls: [ $URL ]
+    stream: stream-$ID
+`, "$URL", srv.ClientURL())
+
+	suite := integration.StreamTests(
+		integration.StreamTestOpenClose(),
+		integration.StreamTestSendBatch(10),
+	)
+	suite.Run(
+		t, template,
+		integration.StreamTestOptPreTest(func(t testing.TB, ctx context.Context, vars *integration.StreamTestConfigVars) {
+			streamName := "stream-" + vars.ID
+
+			_, err = js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
+				Name:     streamName,
+				Subjects: []string{"subject-" + vars.ID},
+			})
+			require.NoError(t, err)
+
+			_, err = js.CreateConsumer(context.Background(), streamName, jetstream.ConsumerConfig{
+				Name:          vars.ID,
+				FilterSubject: fmt.Sprintf("subject-%s", vars.ID),
+			})
 		}),
 		integration.StreamTestOptSleepAfterInput(100*time.Millisecond),
 		integration.StreamTestOptSleepAfterOutput(100*time.Millisecond),
