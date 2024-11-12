@@ -17,6 +17,7 @@ input:
   nats_jetstream_batched:
     urls: [] # No default (required)
     name: "" # No default (required)
+    bind: false
     stream: "" # No default (required)
     filter_subjects: [] # No default (optional)
     deliver: all
@@ -34,6 +35,7 @@ input:
   nats_jetstream_batched:
     urls: [] # No default (required)
     name: "" # No default (required)
+    bind: false
     stream: "" # No default (required)
     filter_subjects: [] # No default (optional)
     deliver: all
@@ -146,6 +148,15 @@ The name of the consumer
 
 *Type*: `string`
 
+
+### `bind`
+
+Indicates whether the input should use an existing consumer
+
+
+*Type*: `bool`
+
+*Default*: `false`
 
 ### `stream`
 
