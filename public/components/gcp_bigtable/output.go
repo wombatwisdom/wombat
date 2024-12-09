@@ -55,15 +55,10 @@ var GCPBigTableConfig = service.NewConfigSpec().
 	).
 	Fields(
 		service.NewStringField("table").Description("The Bigtable table to write to."),
-		service.NewInterpolatedStringField("row_key").Description("The row key to write to. This field supports interpolation functions."),
+		service.NewStringField("row_key_path").Description("The path to the field in the message containing the row key."),
 	)
 
 func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*GCPBigTableOutput, error) {
-	credentialsJSON, err := conf.FieldString("credentials_json")
-	if err != nil {
-		return nil, err
-	}
-
 	project, err := conf.FieldString("project")
 	if err != nil {
 		return nil, err
@@ -79,9 +74,17 @@ func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*
 		return nil, err
 	}
 
-	rk, err := conf.FieldInterpolatedString("row_key")
+	rk, err := conf.FieldString("row_key_path")
 	if err != nil {
 		return nil, err
+	}
+
+	credentialsJSON := ""
+	if conf.Contains("credentials") {
+		credentialsJSON, err = conf.FieldString("credentials_json")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return &GCPBigTableOutput{
@@ -98,10 +101,10 @@ type GCPBigTableOutput struct {
 	instance        string
 	credentialsJSON string
 	table           string
+	rk              string
 
-	c  *bigtable.Client
-	t  *bigtable.Table
-	rk *service.InterpolatedString
+	c *bigtable.Client
+	t *bigtable.Table
 }
 
 func (g *GCPBigTableOutput) Connect(ctx context.Context) error {
@@ -161,7 +164,7 @@ func (g *GCPBigTableOutput) Close(ctx context.Context) error {
 	return nil
 }
 
-func asRowKeys(batch service.MessageBatch, expr *service.InterpolatedString) ([]string, error) {
+func asRowKeys(batch service.MessageBatch, keyPath string) ([]string, error) {
 	var result []string
 	for _, msg := range batch {
 		s, err := expr.TryString(msg)
