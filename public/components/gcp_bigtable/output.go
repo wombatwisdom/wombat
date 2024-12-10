@@ -7,8 +7,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-multierror"
+	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func init() {
@@ -55,7 +58,9 @@ var GCPBigTableConfig = service.NewConfigSpec().
 	).
 	Fields(
 		service.NewStringField("table").Description("The Bigtable table to write to."),
-		service.NewStringField("row_key_path").Description("The path to the field in the message containing the row key."),
+		service.NewStringField("key").Description("The expression that results in the row key.").Default("this.key"),
+		service.NewStringField("data").Description("The expression that results in the row data.").Default("this.without(\"key\")"),
+		service.NewStringField("emulated_host_port").Advanced().Description("Connect to an emulated Bigtable instance.").Default(""),
 	)
 
 func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*GCPBigTableOutput, error) {
@@ -74,7 +79,27 @@ func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*
 		return nil, err
 	}
 
-	rk, err := conf.FieldString("row_key_path")
+	rkp, err := conf.FieldString("key")
+	if err != nil {
+		return nil, err
+	}
+
+	rke, err := bloblang.Parse(rkp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse row key bloblang query: %w", err)
+	}
+
+	rdp, err := conf.FieldString("data")
+	if err != nil {
+		return nil, err
+	}
+
+	rde, err := bloblang.Parse(rdp)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse row data bloblang query: %w", err)
+	}
+
+	emulated, err := conf.FieldString("emulated_host_port")
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +117,9 @@ func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*
 		instance:        instance,
 		credentialsJSON: credentialsJSON,
 		table:           table,
-		rk:              rk,
+		rke:             rke,
+		rde:             rde,
+		emulated:        emulated,
 	}, nil
 }
 
@@ -101,45 +128,63 @@ type GCPBigTableOutput struct {
 	instance        string
 	credentialsJSON string
 	table           string
-	rk              string
+	rke             *bloblang.Executor
+	rde             *bloblang.Executor
+	emulated        string
 
 	c *bigtable.Client
 	t *bigtable.Table
 }
 
 func (g *GCPBigTableOutput) Connect(ctx context.Context) error {
-	opts := &credentials.DetectOptions{
-		Scopes: []string{
-			bigtable.Scope,
-		},
+	if g.emulated != "" {
+		conn, err := grpc.NewClient(
+			g.emulated,
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return err
+		}
+
+		g.c, err = bigtable.NewClient(context.Background(),
+			"fake-project", "fake-instance", option.WithGRPCConn(conn))
+		if err != nil {
+			return err
+		}
+	} else {
+		opts := &credentials.DetectOptions{
+			Scopes: []string{
+				bigtable.Scope,
+			},
+		}
+
+		if g.credentialsJSON != "" {
+			opts.CredentialsJSON = []byte(g.credentialsJSON)
+		}
+
+		creds, err := credentials.DetectDefault(opts)
+		if err != nil {
+			return err
+		}
+
+		client, err := bigtable.NewClient(ctx, g.project, g.instance, option.WithAuthCredentials(creds))
+		if err != nil {
+			return err
+		}
+
+		g.c = client
 	}
 
-	if g.credentialsJSON != "" {
-		opts.CredentialsJSON = []byte(g.credentialsJSON)
-	}
-
-	creds, err := credentials.DetectDefault(opts)
-	if err != nil {
-		return err
-	}
-
-	client, err := bigtable.NewClient(ctx, g.project, g.instance, option.WithAuthCredentials(creds))
-	if err != nil {
-		return err
-	}
-
-	g.c = client
 	g.t = g.c.Open(g.table)
 	return nil
 }
 
 func (g *GCPBigTableOutput) WriteBatch(ctx context.Context, batch service.MessageBatch) error {
-	rks, err := asRowKeys(batch, g.rk)
+	rks, err := asRowKeys(batch, g.rke)
 	if err != nil {
 		return fmt.Errorf("failed to extract row keys: %w", err)
 	}
 
-	muts, err := asMutations(batch)
+	muts, err := asMutations(batch, g.rde)
 	if err != nil {
 		return fmt.Errorf("failed to extract mutations: %w", err)
 	}
@@ -164,25 +209,39 @@ func (g *GCPBigTableOutput) Close(ctx context.Context) error {
 	return nil
 }
 
-func asRowKeys(batch service.MessageBatch, keyPath string) ([]string, error) {
+func asRowKeys(batch service.MessageBatch, rke *bloblang.Executor) ([]string, error) {
 	var result []string
 	for _, msg := range batch {
-		s, err := expr.TryString(msg)
+		st, err := msg.AsStructured()
 		if err != nil {
 			return nil, err
 		}
 
-		result = append(result, s)
+		s, err := rke.Query(st)
+		if err != nil {
+			return nil, err
+		}
+
+		if s == nil {
+			continue
+		}
+
+		ss, ok := s.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to extract row key: expected string but got %T", s)
+		}
+
+		result = append(result, ss)
 	}
 
 	return result, nil
 }
 
-func asMutations(batch service.MessageBatch) ([]*bigtable.Mutation, error) {
+func asMutations(batch service.MessageBatch, rde *bloblang.Executor) ([]*bigtable.Mutation, error) {
 	var result []*bigtable.Mutation
 
 	for _, msg := range batch {
-		mut, err := asMutation(msg)
+		mut, err := asMutation(msg, rde)
 		if err != nil {
 			return nil, err
 		}
@@ -195,8 +254,13 @@ func asMutations(batch service.MessageBatch) ([]*bigtable.Mutation, error) {
 	return result, nil
 }
 
-func asMutation(msg *service.Message) (*bigtable.Mutation, error) {
-	m, err := msg.AsStructured()
+func asMutation(msg *service.Message, rde *bloblang.Executor) (*bigtable.Mutation, error) {
+	st, err := msg.AsStructured()
+	if err != nil {
+		return nil, err
+	}
+
+	m, err := rde.Query(st)
 	if err != nil {
 		return nil, err
 	}
