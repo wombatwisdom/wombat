@@ -3,11 +3,8 @@ package docs
 import (
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	"regexp"
 	"strings"
 )
-
-var regexHeading = regexp.MustCompile(`^==\s+`)
 
 type PluginDocView struct {
 	Kind        string `json:"kind"`
@@ -25,8 +22,8 @@ type PluginDocView struct {
 	Fields []Field `json:"fields,omitempty"`
 
 	// Params on the other hand are only available on bloblang methods and functions.
-	Params             Param `json:"params,omitempty"`
-	VariadicParameters bool  `json:"variadic_parameters,omitempty"`
+	Params             []Param `json:"params,omitempty"`
+	VariadicParameters bool    `json:"variadic_parameters,omitempty"`
 }
 
 type Param struct {
@@ -144,7 +141,7 @@ func ParseDocViewFromMethodView(mv *bloblang.MethodView) (*PluginDocView, error)
 		Status:             td.Status,
 		Categories:         categories,
 		Examples:           examples,
-		Params:             Param{},
+		Params:             params,
 		VariadicParameters: false,
 	}, nil
 }
@@ -176,7 +173,7 @@ func ParseDocViewFromFunctionView(fv *bloblang.FunctionView) (*PluginDocView, er
 		Status:             td.Status,
 		Categories:         []string{td.Category},
 		Examples:           examples,
-		Params:             Param{},
+		Params:             params,
 		VariadicParameters: false,
 	}, nil
 }

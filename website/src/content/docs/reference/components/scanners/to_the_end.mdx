@@ -1,0 +1,21 @@
+---
+title: to_the_end
+kind: scanner
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Read the input stream all the way until the end and deliver it as a single message.
+
+```yml
+# Config fields, showing default values
+to_the_end: {}
+```
+
+[CAUTION]
+====
+Some sources of data may not have a logical end, therefore caution should be made to exclusively use this scanner when the end of an input stream is clearly defined (and well within memory).
+====
+
+
+
