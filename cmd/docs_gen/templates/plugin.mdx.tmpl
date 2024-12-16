@@ -63,7 +63,9 @@ Introduced in version {{.Version}}.
 {{$example.Summary}}
 {{end}}
 {{if gt (len $example.Config) 0 -}}
-```yaml{{$example.Config}}```
+```
+yaml{{$example.Config}}
+```
 {{end}}
 </TabItem>
 {{end -}}

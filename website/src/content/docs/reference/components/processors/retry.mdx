@@ -55,7 +55,8 @@ Here we have a config where I generate animal noises and send them to Taz via HT
 
 I even go as far as to zero-out the maximum elapsed time field, which means that for each animal noise I will wait indefinitely, because I really really want Taz to receive every single animal noise that he is entitled to.
 
-```yaml
+```
+yaml
 input:
   generate:
     interval: 1s
@@ -76,6 +77,7 @@ pipeline:
 output:
   # Drop everything because it's junk data, I don't want it lol
   drop: {}
+
 ```
 
 </TabItem>

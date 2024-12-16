@@ -71,7 +71,8 @@ args_mapping: '[ "-c", this.script_path ]'
 <TabItem label="Cron Scheduled Command">
 This example uses a `generate` input to trigger a command on a cron schedule:
 
-```yaml
+```
+yaml
 input:
   generate:
     interval: '0,30 */2 * * * *'
@@ -80,18 +81,21 @@ input:
     - command:
         name: df
         args_mapping: '[ "-h" ]'
+
 ```
 
 </TabItem>
 <TabItem label="Dynamic Command Execution">
 This example config takes structured messages of the form `{"command":"echo","args":["foo"]}` and uses their contents to execute the contained command and arguments dynamically, replacing its contents with the command result printed to stdout:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - command:
         name: ${! this.command }
         args_mapping: 'this.args'
+
 ```
 
 </TabItem>

@@ -82,7 +82,8 @@ This output benefits from sending messages as a batch for improved performance. 
 <TabItem label="Basic Inserts">
 If we were to create a table with some basic columns with `CREATE TABLE foo.bar (id int primary key, content text, created_at timestamp);`, and were processing JSON documents of the form `{"id":"342354354","content":"hello world","timestamp":1605219406}` using logged batches, we could populate our table with the following config:
 
-```yaml
+```
+yaml
 output:
   cassandra:
     addresses:
@@ -97,13 +98,15 @@ output:
     batching:
       count: 500
       period: 1s
+
 ```
 
 </TabItem>
 <TabItem label="Insert JSON Documents">
 The following example inserts JSON documents into the table `footable` of the keyspace `foospace` using INSERT JSON (https://cassandra.apache.org/doc/latest/cql/json.html#insert-json).
 
-```yaml
+```
+yaml
 output:
   cassandra:
     addresses:
@@ -113,6 +116,7 @@ output:
     batching:
       count: 500
       period: 1s
+
 ```
 
 </TabItem>

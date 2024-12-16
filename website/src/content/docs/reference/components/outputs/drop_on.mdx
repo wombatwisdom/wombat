@@ -80,7 +80,8 @@ A child output to wrap with this drop mechanism.
 <TabItem label="Dropping failed HTTP requests">
 In this example we have a fan_out broker, where we guarantee delivery to our Kafka output, but drop messages if they fail our secondary HTTP client output.
 
-```yaml
+```
+yaml
 output:
   broker:
     pattern: fan_out
@@ -94,19 +95,22 @@ output:
             http_client:
               url: http://example.com/foo/messages
               verb: POST
+
 ```
 
 </TabItem>
 <TabItem label="Dropping from outputs that cannot connect">
 Most outputs that attempt to establish and long-lived connection will apply back-pressure when the connection is lost. The following example has a websocket output where if it takes longer than 10 seconds to establish a connection, or recover a lost one, pending messages are dropped.
 
-```yaml
+```
+yaml
 output:
   drop_on:
     back_pressure: 10s
     output:
       websocket:
         url: ws://example.com/foo/messages
+
 ```
 
 </TabItem>

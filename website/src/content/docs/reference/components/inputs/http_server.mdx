@@ -126,7 +126,8 @@ You can access these metadata fields using function interpolation.
 <TabItem label="Path Switching">
 This example shows an `http_server` input that captures all requests and processes them by switching on that path:
 
-```yaml
+```
+yaml
 input:
   http_server:
     path: /
@@ -148,13 +149,15 @@ input:
           - mapping: 'root.title = "Bar Is Slow"'
           - sleep: # Simulate a slow endpoint
               duration: 1s
+
 ```
 
 </TabItem>
 <TabItem label="Mock OAuth 2.0 Server">
 This example shows an `http_server` input that mocks an OAuth 2.0 Client Credentials flow server at the endpoint `/oauth2_test`:
 
-```yaml
+```
+yaml
 input:
   http_server:
     path: /oauth2_test
@@ -178,6 +181,7 @@ input:
 
     - sync_response: {}
     - mapping: 'root = deleted()'
+
 ```
 
 </TabItem>

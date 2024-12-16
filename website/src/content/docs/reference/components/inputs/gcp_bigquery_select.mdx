@@ -36,7 +36,8 @@ Once the rows from the query are exhausted, this input shuts down, allowing the 
 
 Here we query the public corpus of Shakespeare's works to generate a stream of the top 10 words that are 3 or more characters long:
 
-```yaml
+```
+yaml
 input:
   gcp_bigquery_select:
     project: sample-project
@@ -51,6 +52,7 @@ input:
       LIMIT 10
     args_mapping: |
       root = [ 3 ]
+
 ```
 
 </TabItem>

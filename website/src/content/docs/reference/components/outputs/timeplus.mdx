@@ -65,43 +65,50 @@ unstructured message such as string, please refer to the "Unstructured message" 
 <TabItem label="To Timeplus Enterprise Cloud">
 You will need to create API Key on Timeplus Enterprise Cloud Web console first and then set the `apikey` field.
 
-```yaml
+```
+yaml
 output:
   timeplus:
     workspace: my_workspace_id
     stream: mystream
-    apikey: <Your API Key>```
+    apikey: <Your API Key>
+```
 
 </TabItem>
 <TabItem label="To Timeplus Enterprise (self-hosted)">
 For self-housted Timeplus Enterprise, you will need to specify the username and password as well as the URL of the App server
 
-```yaml
+```
+yaml
 output:
   timeplus:
     url: http://localhost:8000
     workspace: my_workspace_id
     stream: mystream
     username: username
-    password: pw```
+    password: pw
+```
 
 </TabItem>
 <TabItem label="To Timeplusd">
 This output writes to Timeplusd via HTTP so make sure you specify the HTTP port of the Timeplusd.
 
-```yaml
+```
+yaml
 output:
   timeplus:
     url: http://localhost:3218
     stream: mystream
     username: username
-    password: pw```
+    password: pw
+```
 
 </TabItem>
 <TabItem label="Unstructured message">
 If the upstream source or pipeline returns unstructured message such as string, you can leverage the output processors to wrap it into a stucture message and then pass it to the output. This example create a strcutre mesasge with `raw` field and store the original string content into this field. You can modify the name of this `raw` field to whatever you want. Please make sure the destiation stream contains such field
 
-```yaml
+```
+yaml
 output:
   timeplus:
     workspace: my_workspace_id
@@ -111,7 +118,8 @@ output:
   processors:
     - mapping: |
         root = {}
-        root.raw = content().string()```
+        root.raw = content().string()
+```
 
 </TabItem>
 </Tabs>

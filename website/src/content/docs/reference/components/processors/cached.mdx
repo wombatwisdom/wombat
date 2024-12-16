@@ -30,7 +30,8 @@ In the following example we want to we enrich messages consumed from Kafka with 
 
 However, it would be inefficient to make this HTTP request for every single message as the result is consistent for all data of a given topic partition. We can solve this by placing our enrichment call within a `cached` processor where the key contains the topic and partition, resulting in messages that originate from the same topic/partition combination using the cached result of the prior.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -50,13 +51,15 @@ cache_resources:
     memory:
       # Disable compaction so that cached items never expire
       compaction_interval: ""
+
 ```
 
 </TabItem>
 <TabItem label="Periodic Global Enrichment">
 In the following example we enrich all messages with the same data obtained from a static URL with an `http` processor within a `branch`. However, we expect the data from this URL to change roughly every 10 minutes, so we configure a `cached` processor with a static key (since this request is consistent for all messages) and a TTL of `10m`.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -75,6 +78,7 @@ pipeline:
 cache_resources:
   - label: foo_cache
     memory: {}
+
 ```
 
 </TabItem>

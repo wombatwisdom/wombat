@@ -103,7 +103,8 @@ This output benefits from sending messages as a batch for improved performance. 
 <TabItem label="Elastic Cloud Serverless">
 This is an example of writing data to [Elastic Cloud serverless](https://www.elastic.co/docs/current/serverless).
 
-```yaml
+```
+yaml
 output:
   elasticsearch:
     urls: ["https://${ELASTIC_CLOUD_CLUSTER_ID}.es.us-east-1.aws.elastic.cloud:443"]
@@ -112,6 +113,7 @@ output:
     index: "my-elasticsearch-index"
     id: my-document-id-${!counter()}-${!timestamp_unix()}
     api_key: "${ELASTIC_CLOUD_API_KEY}"
+
 ```
 
 </TabItem>

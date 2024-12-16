@@ -23,7 +23,8 @@ The routing of messages rejected by this output depends on the type of input it 
 
 The most straight forward use case for this output type is to nack messages that have failed their processing steps. In this example our mapping might fail, in which case the messages that failed are rejected and will be nacked by our input:
 
-```yaml
+```
+yaml
 input:
   nats_jetstream:
     urls: [ nats://127.0.0.1:4222 ]
@@ -38,6 +39,7 @@ output:
     nats_jetstream:
       urls: [ nats://127.0.0.1:4222 ]
       subject: foos.processed
+
 ```
 
 </TabItem>
@@ -45,7 +47,8 @@ output:
 
 Another use case for this output is to send failed messages straight into a dead-letter queue. You use it within a fallback output that allows you to specify where these failed messages should go to next.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - mutation: 'root.age = this.fuzzy.age.int64()'
@@ -61,6 +64,7 @@ output:
         url: http://bar:4196/somewhere/else
         retries: 3
         retry_period: 1s
+
 ```
 
 </TabItem>

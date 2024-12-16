@@ -59,7 +59,8 @@ An optional list of processors to apply to messages after they are consumed from
 <TabItem label="Batching for optimization">
 Batching at the input level greatly increases the throughput of this buffer. If logical batches aren't needed for processing add a `split` processor to the `post_processors`.
 
-```yaml
+```
+yaml
 input:
   batched:
     child:
@@ -77,6 +78,7 @@ buffer:
     path: ./foo.db
     post_processors:
       - split: {}
+
 ```
 
 </TabItem>

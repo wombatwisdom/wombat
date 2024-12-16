@@ -72,13 +72,15 @@ And a stream of JSON documents of the form:
 
 We can convert the documents into protobuf messages with the following config:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - protobuf:
         operator: from_json
         message: testing.Person
         import_paths: [ testing/schema ]
+
 ```
 
 </TabItem>
@@ -116,13 +118,15 @@ And a stream of protobuf messages of the type `Person`, we could convert them in
 
 With the following config:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - protobuf:
         operator: to_json
         message: testing.Person
         import_paths: [ testing/schema ]
+
 ```
 
 </TabItem>

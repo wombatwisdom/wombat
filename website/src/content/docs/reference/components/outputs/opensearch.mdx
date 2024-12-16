@@ -87,7 +87,8 @@ This output benefits from sending messages as a batch for improved performance. 
 <TabItem label="Updating Documents">
 When [updating documents](https://opensearch.org/docs/latest/api-reference/document-apis/update-document/) the request body should contain a combination of a `doc`, `upsert`, and/or `script` fields at the top level, this should be done via mapping processors.
 
-```yaml
+```
+yaml
 output:
   processors:
     - mapping: |
@@ -98,6 +99,7 @@ output:
     index: foo
     id: ${! @id }
     action: update
+
 ```
 
 </TabItem>

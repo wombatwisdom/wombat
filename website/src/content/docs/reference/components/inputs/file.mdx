@@ -93,12 +93,14 @@ Whether messages that are rejected (nacked) at the output level should be automa
 <TabItem label="Read a Bunch of CSVs">
 If we wished to consume a directory of CSV files as structured documents we can use a glob pattern and the `csv` scanner:
 
-```yaml
+```
+yaml
 input:
   file:
     paths: [ ./data/*.csv ]
     scanner:
       csv: {}
+
 ```
 
 </TabItem>

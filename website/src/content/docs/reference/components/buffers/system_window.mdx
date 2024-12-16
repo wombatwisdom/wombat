@@ -75,7 +75,8 @@ We can use a window buffer in order to create periodic messages summarizing the 
 
 With the following config:
 
-```yaml
+```
+yaml
 buffer:
   system_window:
     timestamp_mapping: root = this.created_at
@@ -98,6 +99,7 @@ pipeline:
             "passengers": json("passengers").from_all().sum(),
           }
         } else { deleted() }
+
 ```
 
 </TabItem>
