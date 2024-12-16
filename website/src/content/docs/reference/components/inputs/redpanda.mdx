@@ -1,13 +1,11 @@
 ---
-title: redpanda_migrator
+title: redpanda
 kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Redpanda Migrator input using the [Franz Kafka client library](https://github.com/twmb/franz-go).
-
-Introduced in version 4.37.0.
+A Kafka input using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
 
 <Tabs>
@@ -16,7 +14,7 @@ Introduced in version 4.37.0.
 # Common config fields, showing default values
 input:
   label: ""
-  redpanda_migrator:
+  redpanda:
     seed_brokers: [] # No default (required)
     topics: [] # No default (required)
     regexp_topics: false
@@ -29,17 +27,9 @@ input:
 # Advanced config fields, showing default values
 input:
   label: ""
-  redpanda_migrator:
+  redpanda:
     seed_brokers: [] # No default (required)
-    topics: [] # No default (required)
-    regexp_topics: false
-    consumer_group: "" # No default (optional)
     client_id: benthos
-    rack_id: ""
-    batch_size: 1024
-    auto_replay_nacks: true
-    commit_period: 5s
-    start_from_oldest: true
     tls:
       enabled: false
       skip_cert_verify: false
@@ -48,33 +38,54 @@ input:
       root_cas_file: ""
       client_certs: []
     sasl: [] # No default (optional)
-    multi_header: false
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
-      processors: [] # No default (optional)
-    topic_lag_refresh_period: 5s
-    output_resource: redpanda_migrator_output
-    replication_factor_override: true
-    replication_factor: 3
     metadata_max_age: 5m
+    topics: [] # No default (required)
+    regexp_topics: false
+    rack_id: ""
+    start_from_oldest: true
+    fetch_max_bytes: 50MiB
+    fetch_min_bytes: 1B
+    fetch_max_partition_bytes: 1MiB
+    consumer_group: "" # No default (optional)
+    commit_period: 5s
+    partition_buffer_bytes: 1MB
+    auto_replay_nacks: true
 ```
 </TabItem>
 </Tabs>
 
-Reads a batch of messages from a Kafka broker and waits for the output to acknowledge the writes before updating the Kafka consumer group offset.
-
-This input should be used in combination with a `redpanda_migrator` output which it can query for existing topics.
-
 When a consumer group is specified this input consumes one or more topics where partitions will automatically balance across any other connected clients with the same consumer group. When a consumer group is not specified topics can either be consumed in their entirety or with explicit partitions.
 
-It attempts to create all selected topics it along with their associated ACLs in the broker that the `redpanda_migrator` output points to identified by the label specified in `output_resource`.
+## Delivery Guarantees
 
-## Metrics
+When using consumer groups the offsets of "delivered" records will be committed automatically and continuously, and in the event of restarts these committed offsets will be used in order to resume from where the input left off. Redpanda Connect guarantees at least once delivery by ensuring that records are only considerd to be delivered when all configured outputs that the record is routed to have confirmed delivery.
 
-Emits a `input_redpanda_migrator_lag` metric with `topic` and `partition` labels for each consumed topic.
+## Ordering
+
+In order to preserve ordering of topic partitions, records consumed from each partition are processed and delivered in the order that they are received, and only one batch of records of a given partition will ever be processed at a time. This means that parallel processing can only occur when multiple topic partitions are being consumed, but ensures that data is processed in a sequential order as determined from the source partition.
+
+However, one way in which the order of records can be mixed is when delivery errors occur and error handling mechanisms kick in. Redpanda Connect always leans towards at least once delivery unless instructed otherwise, and this includes reattempting delivery of data when the ordering of that data can no longer be guaranteed.
+
+For example, a batch of records may have been sent to an output broker and only a subset of records were delivered, in this case Redpanda Connect by default will reattempt to deliver the records that failed, even though these failed records may have come before records that were previously delivered successfully.
+
+In order to avoid this scenario you must specify in your configuration an alternative way to handle delivery errors in the form of a `fallback` output. It is good practice to also disable the field `auto_retry_nacks` by setting it to `false` when you've added an explicit fallback output as this will improve the throughput of your pipeline. For example, the following config avoids ordering issues by specifying a fallback output into a DLQ topic, which is also retried indefinitely as a way to apply back pressure during connectivity issues:
+
+```yaml
+output:
+  fallback:
+    - redpanda:
+        seed_brokers: [ localhost:9092 ]
+        topic: foo
+    - retry:
+        output:
+          redpanda:
+            seed_brokers: [ localhost:9092 ]
+            topic: foo_dlq
+```
+
+## Batching
+
+Records are processed and delivered from each partition in batches as received from brokers. These batch sizes are therefore dynamically sized in order to optimise throughput, but can be tuned with the config fields `fetch_max_partition_bytes` and `fetch_max_bytes`. Batches can be further broken down using the `split` processor.
 
 ## Metadata
 
@@ -85,7 +96,7 @@ This input adds the following metadata fields to each message:
 - kafka_topic
 - kafka_partition
 - kafka_offset
-- kafka_lag
+- kafka_timestamp_ms
 - kafka_timestamp_unix
 - kafka_tombstone_message
 - All record headers
@@ -116,60 +127,6 @@ seed_brokers:
   - foo:9092,bar:9092
 ```
 
-### `topics`
-
-A list of topics to consume from. Multiple comma separated topics can be listed in a single element. When a `consumer_group` is specified partitions are automatically distributed across consumers of a topic, otherwise all partitions are consumed.
-
-Alternatively, it's possible to specify explicit partitions to consume from with a colon after the topic name, e.g. `foo:0` would consume the partition 0 of the topic foo. This syntax supports ranges, e.g. `foo:0-10` would consume partitions 0 through to 10 inclusive.
-
-Finally, it's also possible to specify an explicit offset to consume from by adding another colon after the partition, e.g. `foo:0:10` would consume the partition 0 of the topic foo starting from the offset 10. If the offset is not present (or remains unspecified) then the field `start_from_oldest` determines which offset to start from.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-topics:
-  - foo
-  - bar
-
-topics:
-  - things.*
-
-topics:
-  - foo,bar
-
-topics:
-  - foo:0
-  - bar:1
-  - bar:3
-
-topics:
-  - foo:0,bar:1,bar:3
-
-topics:
-  - foo:0-5
-```
-
-### `regexp_topics`
-
-Whether listed topics should be interpreted as regular expression patterns for matching multiple topics. When topics are specified with explicit partitions this field must remain set to `false`.
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `consumer_group`
-
-An optional consumer group to consume as. When specified the partitions of specified topics are automatically distributed across consumers sharing a consumer group, and partition offsets are automatically committed and resumed under this name. Consumer groups are not supported when specifying explicit partitions to consume from in the `topics` field.
-
-
-*Type*: `string`
-
-
 ### `client_id`
 
 An identifier for the client connection.
@@ -178,51 +135,6 @@ An identifier for the client connection.
 *Type*: `string`
 
 *Default*: `"benthos"`
-
-### `rack_id`
-
-A rack identifier for this client.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `batch_size`
-
-The maximum number of messages that should be accumulated into each batch.
-
-
-*Type*: `int`
-
-*Default*: `1024`
-
-### `auto_replay_nacks`
-
-Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `commit_period`
-
-The period of time between each commit of the current partition offsets. Offsets are always committed during shutdown.
-
-
-*Type*: `string`
-
-*Default*: `"5s"`
-
-### `start_from_oldest`
-
-Determines whether to consume from the oldest available offset, otherwise messages are consumed from the latest offset. The setting is applied when creating a new consumer group or the saved offset no longer exists.
-
-
-*Type*: `bool`
-
-*Default*: `true`
 
 ### `tls`
 
@@ -558,153 +470,6 @@ An external ID to provide when assuming a role.
 
 *Default*: `""`
 
-### `multi_header`
-
-Decode headers into lists to allow handling of multiple values with the same key
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `batching`
-
-Allows you to configure a batching policy that applies to individual topic partitions in order to batch messages together before flushing them for processing. Batching can be beneficial for performance as well as useful for windowed processing, and doing so this way preserves the ordering of topic partitions.
-
-
-*Type*: `object`
-
-
-```yml
-# Examples
-
-batching:
-  byte_size: 5000
-  count: 0
-  period: 1s
-
-batching:
-  count: 10
-  period: 1s
-
-batching:
-  check: this.contains("END BATCH")
-  count: 0
-  period: 1m
-```
-
-### `batching.count`
-
-A number of messages at which the batch should be flushed. If `0` disables count based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.byte_size`
-
-An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.period`
-
-A period in which an incomplete batch should be flushed regardless of its size.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-```yml
-# Examples
-
-period: 1s
-
-period: 1m
-
-period: 500ms
-```
-
-### `batching.check`
-
-A Bloblang query that should return a boolean value indicating whether a message should end a batch.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-```yml
-# Examples
-
-check: this.type == "end_of_transaction"
-```
-
-### `batching.processors`
-
-A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-processors:
-  - archive:
-      format: concatenate
-
-processors:
-  - archive:
-      format: lines
-
-processors:
-  - archive:
-      format: json_array
-```
-
-### `topic_lag_refresh_period`
-
-The period of time between each topic lag refresh cycle.
-
-
-*Type*: `string`
-
-*Default*: `"5s"`
-
-### `output_resource`
-
-The label of the redpanda_migrator output in which the currently selected topics need to be created before attempting to read messages.
-
-
-*Type*: `string`
-
-*Default*: `"redpanda_migrator_output"`
-
-### `replication_factor_override`
-
-Use the specified replication factor when creating topics.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `replication_factor`
-
-Replication factor for created topics. This is only used when `replication_factor_override` is set to `true`.
-
-
-*Type*: `int`
-
-*Default*: `3`
-
 ### `metadata_max_age`
 
 The maximum age of metadata before it is refreshed.
@@ -713,5 +478,131 @@ The maximum age of metadata before it is refreshed.
 *Type*: `string`
 
 *Default*: `"5m"`
+
+### `topics`
+
+A list of topics to consume from. Multiple comma separated topics can be listed in a single element. When a `consumer_group` is specified partitions are automatically distributed across consumers of a topic, otherwise all partitions are consumed.
+
+Alternatively, it's possible to specify explicit partitions to consume from with a colon after the topic name, e.g. `foo:0` would consume the partition 0 of the topic foo. This syntax supports ranges, e.g. `foo:0-10` would consume partitions 0 through to 10 inclusive.
+
+Finally, it's also possible to specify an explicit offset to consume from by adding another colon after the partition, e.g. `foo:0:10` would consume the partition 0 of the topic foo starting from the offset 10. If the offset is not present (or remains unspecified) then the field `start_from_oldest` determines which offset to start from.
+
+
+*Type*: `array`
+
+
+```yml
+# Examples
+
+topics:
+  - foo
+  - bar
+
+topics:
+  - things.*
+
+topics:
+  - foo,bar
+
+topics:
+  - foo:0
+  - bar:1
+  - bar:3
+
+topics:
+  - foo:0,bar:1,bar:3
+
+topics:
+  - foo:0-5
+```
+
+### `regexp_topics`
+
+Whether listed topics should be interpreted as regular expression patterns for matching multiple topics. When topics are specified with explicit partitions this field must remain set to `false`.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `rack_id`
+
+A rack specifies where the client is physically located and changes fetch requests to consume from the closest replica as opposed to the leader replica.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `start_from_oldest`
+
+Determines whether to consume from the oldest available offset, otherwise messages are consumed from the latest offset. The setting is applied when creating a new consumer group or the saved offset no longer exists.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `fetch_max_bytes`
+
+Sets the maximum amount of bytes a broker will try to send during a fetch. Note that brokers may not obey this limit if it has records larger than this limit. This is the equivalent to the Java fetch.max.bytes setting.
+
+
+*Type*: `string`
+
+*Default*: `"50MiB"`
+
+### `fetch_min_bytes`
+
+Sets the minimum amount of bytes a broker will try to send during a fetch. This is the equivalent to the Java fetch.min.bytes setting.
+
+
+*Type*: `string`
+
+*Default*: `"1B"`
+
+### `fetch_max_partition_bytes`
+
+Sets the maximum amount of bytes that will be consumed for a single partition in a fetch request. Note that if a single batch is larger than this number, that batch will still be returned so the client can make progress. This is the equivalent to the Java fetch.max.partition.bytes setting.
+
+
+*Type*: `string`
+
+*Default*: `"1MiB"`
+
+### `consumer_group`
+
+An optional consumer group to consume as. When specified the partitions of specified topics are automatically distributed across consumers sharing a consumer group, and partition offsets are automatically committed and resumed under this name. Consumer groups are not supported when specifying explicit partitions to consume from in the `topics` field.
+
+
+*Type*: `string`
+
+
+### `commit_period`
+
+The period of time between each commit of the current partition offsets. Offsets are always committed during shutdown.
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
+
+### `partition_buffer_bytes`
+
+A buffer size (in bytes) for each consumed partition, allowing records to be queued internally before flushing. Increasing this may improve throughput at the cost of higher memory utilisation. Note that each buffer can grow slightly beyond this value.
+
+
+*Type*: `string`
+
+*Default*: `"1MB"`
+
+### `auto_replay_nacks`
+
+Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
+
+
+*Type*: `bool`
+
+*Default*: `true`
 
 

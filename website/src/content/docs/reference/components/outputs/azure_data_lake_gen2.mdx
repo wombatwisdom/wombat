@@ -1,51 +1,29 @@
 ---
-title: azure_blob_storage
+title: azure_data_lake_gen2
 kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Sends message parts as objects to an Azure Blob Storage Account container. Each object is uploaded with the filename specified with the `container` field.
+Sends message parts as files to an Azure Data Lake Gen2 filesystem. Each file is uploaded with the filename specified with the `path` field.
 
-Introduced in version 3.36.0.
+Introduced in version 4.38.0.
 
-
-<Tabs>
-<TabItem label="Common">
 ```yml
-# Common config fields, showing default values
+# Config fields, showing default values
 output:
   label: ""
-  azure_blob_storage:
+  azure_data_lake_gen2:
     storage_account: ""
     storage_access_key: ""
     storage_connection_string: ""
     storage_sas_token: ""
-    container: messages-${!timestamp("2006")} # No default (required)
+    filesystem: messages-${!timestamp("2006")} # No default (required)
     path: ${!counter()}-${!timestamp_unix_nano()}.txt
     max_in_flight: 64
 ```
-</TabItem>
-<TabItem label="Advanced">
-```yml
-# Advanced config fields, showing default values
-output:
-  label: ""
-  azure_blob_storage:
-    storage_account: ""
-    storage_access_key: ""
-    storage_connection_string: ""
-    storage_sas_token: ""
-    container: messages-${!timestamp("2006")} # No default (required)
-    path: ${!counter()}-${!timestamp_unix_nano()}.txt
-    blob_type: BLOCK
-    public_access_level: PRIVATE
-    max_in_flight: 64
-```
-</TabItem>
-</Tabs>
 
-In order to have a different path for each object you should use function
+In order to have a different path for each file you should use function
 interpolations described here, which are
 calculated per message of a batch.
 
@@ -103,9 +81,9 @@ The storage account SAS token. This field is ignored if `storage_connection_stri
 
 *Default*: `""`
 
-### `container`
+### `filesystem`
 
-The container for uploading the messages to.
+The data lake storage filesystem name for uploading the messages to.
 This field supports interpolation functions.
 
 
@@ -115,12 +93,12 @@ This field supports interpolation functions.
 ```yml
 # Examples
 
-container: messages-${!timestamp("2006")}
+filesystem: messages-${!timestamp("2006")}
 ```
 
 ### `path`
 
-The path of each message to upload.
+The path of each message to upload within the filesystem.
 This field supports interpolation functions.
 
 
@@ -137,37 +115,6 @@ path: ${!meta("kafka_key")}.json
 
 path: ${!json("doc.namespace")}/${!json("doc.id")}.json
 ```
-
-### `blob_type`
-
-Block and Append blobs are comprized of blocks, and each blob can support up to 50,000 blocks. The default value is `+"`BLOCK`"+`.`
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-*Default*: `"BLOCK"`
-
-Options:
-`BLOCK`
-, `APPEND`
-.
-
-### `public_access_level`
-
-The container's public access level. The default value is `PRIVATE`.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-*Default*: `"PRIVATE"`
-
-Options:
-`PRIVATE`
-, `BLOB`
-, `CONTAINER`
-.
 
 ### `max_in_flight`
 

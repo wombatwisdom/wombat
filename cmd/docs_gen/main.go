@@ -27,12 +27,13 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
 
-	"github.com/redpanda-data/connect/v4/public/schema"
-
 	_ "github.com/wombatwisdom/wombat/public/components/all"
 
 	_ "embed"
 )
+
+var Version = "0.0.1"
+var DateBuilt = "1970-01-01T00:00:00Z"
 
 //go:embed templates/bloblang_functions.mdx.tmpl
 var templateBloblFunctionsRaw string
@@ -96,7 +97,14 @@ func create(t, path string, resBytes []byte) {
 }
 
 func getSchema() *service.ConfigSchema {
-	return schema.Standard("", "")
+	env := service.GlobalEnvironment()
+	s := env.FullConfigSchema(Version, DateBuilt)
+
+	s.SetFieldDefault(map[string]any{
+		"@service": "wombat",
+	}, "logger", "static_fields")
+
+	return s
 }
 
 func main() {
@@ -104,17 +112,19 @@ func main() {
 	flag.StringVar(&docsDir, "dir", docsDir, "The directory to write docs to")
 	flag.Parse()
 
+	env := getSchema().Environment()
+
 	refDir := path.Join(docsDir, "./reference")
 
-	getSchema().Environment().WalkInputs(viewForDir(path.Join(refDir, "./components/inputs")))
-	getSchema().Environment().WalkBuffers(viewForDir(path.Join(refDir, "./components/buffers")))
-	getSchema().Environment().WalkCaches(viewForDir(path.Join(refDir, "./components/caches")))
-	getSchema().Environment().WalkMetrics(viewForDir(path.Join(refDir, "./components/metrics")))
-	getSchema().Environment().WalkOutputs(viewForDir(path.Join(refDir, "./components/outputs")))
-	getSchema().Environment().WalkProcessors(viewForDir(path.Join(refDir, "./components/processors")))
-	getSchema().Environment().WalkRateLimits(viewForDir(path.Join(refDir, "./components/rate_limits")))
-	getSchema().Environment().WalkTracers(viewForDir(path.Join(refDir, "./components/tracers")))
-	getSchema().Environment().WalkScanners(viewForDir(path.Join(refDir, "./components/scanners")))
+	env.WalkInputs(viewForDir(path.Join(refDir, "./components/inputs")))
+	env.WalkBuffers(viewForDir(path.Join(refDir, "./components/buffers")))
+	env.WalkCaches(viewForDir(path.Join(refDir, "./components/caches")))
+	env.WalkMetrics(viewForDir(path.Join(refDir, "./components/metrics")))
+	env.WalkOutputs(viewForDir(path.Join(refDir, "./components/outputs")))
+	env.WalkProcessors(viewForDir(path.Join(refDir, "./components/processors")))
+	env.WalkRateLimits(viewForDir(path.Join(refDir, "./components/rate_limits")))
+	env.WalkTracers(viewForDir(path.Join(refDir, "./components/tracers")))
+	env.WalkScanners(viewForDir(path.Join(refDir, "./components/scanners")))
 
 	// Bloblang stuff
 	doBloblangMethods(refDir)

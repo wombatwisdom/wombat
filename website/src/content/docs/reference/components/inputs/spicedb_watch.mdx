@@ -1,11 +1,11 @@
 ---
-title: mqtt
+title: spicedb_watch
 kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Subscribe to topics on MQTT brokers.
+Consume messages from the Watch API from SpiceDB.
 
 
 <Tabs>
@@ -14,12 +14,10 @@ Subscribe to topics on MQTT brokers.
 # Common config fields, showing default values
 input:
   label: ""
-  mqtt:
-    urls: [] # No default (required)
-    client_id: ""
-    connect_timeout: 30s
-    topics: [] # No default (required)
-    auto_replay_nacks: true
+  spicedb_watch:
+    endpoint: grpc.authzed.com:443 # No default (required)
+    bearer_token: ""
+    cache: "" # No default (required)
 ```
 </TabItem>
 <TabItem label="Advanced">
@@ -27,20 +25,12 @@ input:
 # Advanced config fields, showing default values
 input:
   label: ""
-  mqtt:
-    urls: [] # No default (required)
-    client_id: ""
-    dynamic_client_id_suffix: "" # No default (optional)
-    connect_timeout: 30s
-    will:
-      enabled: false
-      qos: 0
-      retained: false
-      topic: ""
-      payload: ""
-    user: ""
-    password: ""
-    keepalive: 30
+  spicedb_watch:
+    endpoint: grpc.authzed.com:443 # No default (required)
+    bearer_token: ""
+    max_receive_message_bytes: 4MB
+    cache: "" # No default (required)
+    cache_key: authzed.com/spicedb/watch/last_zed_token
     tls:
       enabled: false
       skip_cert_verify: false
@@ -48,149 +38,42 @@ input:
       root_cas: ""
       root_cas_file: ""
       client_certs: []
-    topics: [] # No default (required)
-    qos: 1
-    clean_session: true
-    auto_replay_nacks: true
 ```
 </TabItem>
 </Tabs>
 
-## Metadata
+The SpiceDB input allows you to consume messages from the Watch API of a SpiceDB instance.
+This input is useful for applications that need to react to changes in the data managed by SpiceDB in real-time.
 
-This input adds the following metadata fields to each message:
+## Credentials
 
-- mqtt_duplicate
-- mqtt_qos
-- mqtt_retained
-- mqtt_topic
-- mqtt_message_id
+You need to provide the endpoint of your SpiceDB instance and a Bearer token for authentication.
 
-You can access these metadata fields using function interpolation.
+## Cache
+
+The zed token of the newest update consumed and acked is stored in a cache in order to start reading from it each time the input is initialised.
+Ideally this cache should be persisted across restarts.
+
 
 ## Fields
 
-### `urls`
+### `endpoint`
 
-A list of URLs to connect to. The format should be `scheme://host:port` where `scheme` is one of `tcp`, `ssl`, or `ws`, `host` is the ip-address (or hostname) and `port` is the port on which the broker is accepting connections. If an item of the list contains commas it will be expanded into multiple URLs.
+The SpiceDB endpoint.
 
 
-*Type*: `array`
+*Type*: `string`
 
 
 ```yml
 # Examples
 
-urls:
-  - tcp://localhost:1883
+endpoint: grpc.authzed.com:443
 ```
 
-### `client_id`
+### `bearer_token`
 
-An identifier for the client connection.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `dynamic_client_id_suffix`
-
-Append a dynamically generated suffix to the specified `client_id` on each run of the pipeline. This can be useful when clustering Redpanda Connect producers.
-
-
-*Type*: `string`
-
-
-
-| Option | Summary |
-| ------ | ------- |
-| `nanoid` | append a nanoid of length 21 characters |
-
-
-### `connect_timeout`
-
-The maximum amount of time to wait in order to establish a connection before the attempt is abandoned.
-
-
-*Type*: `string`
-
-*Default*: `"30s"`
-Requires version 3.58.0 or newer
-
-```yml
-# Examples
-
-connect_timeout: 1s
-
-connect_timeout: 500ms
-```
-
-### `will`
-
-Set last will message in case of Redpanda Connect failure
-
-
-*Type*: `object`
-
-
-### `will.enabled`
-
-Whether to enable last will messages.
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `will.qos`
-
-Set QoS for last will message. Valid values are: 0, 1, 2.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `will.retained`
-
-Set retained for last will message.
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `will.topic`
-
-Set topic for last will message.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `will.payload`
-
-Set payload for last will message.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `user`
-
-A username to connect with.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `password`
-
-A password to connect with.
+The SpiceDB Bearer token used to authenticate against the SpiceDB instance.
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -201,14 +84,45 @@ A password to connect with.
 
 *Default*: `""`
 
-### `keepalive`
+```yml
+# Examples
 
-Max seconds of inactivity before a keepalive message is sent.
+bearer_token: t_your_token_here_1234567deadbeef
+```
+
+### `max_receive_message_bytes`
+
+Maximum message size in bytes the SpiceDB client can receive.
 
 
-*Type*: `int`
+*Type*: `string`
 
-*Default*: `30`
+*Default*: `"4MB"`
+
+```yml
+# Examples
+
+max_receive_message_bytes: 100MB
+
+max_receive_message_bytes: 50mib
+```
+
+### `cache`
+
+A cache resource to use for performing unread message backfills, the ID of the last message received will be stored in this cache and used for subsequent requests.
+
+
+*Type*: `string`
+
+
+### `cache_key`
+
+The key identifier used when storing the ID of the last message received.
+
+
+*Type*: `string`
+
+*Default*: `"authzed.com/spicedb/watch/last_zed_token"`
 
 ### `tls`
 
@@ -366,40 +280,5 @@ password: foo
 
 password: ${KEY_PASSWORD}
 ```
-
-### `topics`
-
-A list of topics to consume from.
-
-
-*Type*: `array`
-
-
-### `qos`
-
-The level of delivery guarantee to enforce. Has options 0, 1, 2.
-
-
-*Type*: `int`
-
-*Default*: `1`
-
-### `clean_session`
-
-Set whether the connection is non-persistent.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `auto_replay_nacks`
-
-Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
-
-
-*Type*: `bool`
-
-*Default*: `true`
 
 

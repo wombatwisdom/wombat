@@ -1,0 +1,137 @@
+---
+title: timeplus
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Executes a query on Timeplus Enterprise and creates a message from each row received
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  timeplus:
+    query: select * from iot # No default (required)
+    url: tcp://localhost:8463
+    workspace: "" # No default (optional)
+    apikey: "" # No default (optional)
+    username: "" # No default (optional)
+    password: "" # No default (optional)
+```
+
+This input can execute a query on Timeplus Enterprise Cloud, Timeplus Enterprise (self-hosted) or Timeplusd. A structured message will be created
+from each row received.
+
+If it is a streaming query, this input will keep running until the query is terminated. If it is a table query, this input will shut down once the rows from the query are exhausted.
+
+## Examples
+
+<Tabs>
+<TabItem label="From Timeplus Enterprise Cloud via HTTP">
+You will need to create API Key on Timeplus Enterprise Cloud Web console first and then set the `apikey` field.
+
+```yaml
+input:
+  timeplus:
+    url: https://us-west-2.timeplus.cloud
+    workspace: my_workspace_id
+    query: select * from iot
+    apikey: <Your API Key>```
+
+</TabItem>
+<TabItem label="From Timeplus Enterprise (self-hosted) via HTTP">
+For self-housted Timeplus Enterprise, you will need to specify the username and password as well as the URL of the App server
+
+```yaml
+input:
+  timeplus:
+    url: http://localhost:8000
+    workspace: my_workspace_id
+    query: select * from iot
+    username: username
+    password: pw```
+
+</TabItem>
+<TabItem label="From Timeplus Enterprise (self-hosted) via TCP">
+Make sure the the schema of url is tcp
+
+```yaml
+input:
+  timeplus:
+    url: tcp://localhost:8463
+    query: select * from iot
+    username: timeplus
+    password: timeplus```
+
+</TabItem>
+</Tabs>
+
+## Fields
+
+### `query`
+
+The query to run
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+query: select * from iot
+
+query: select count(*) from table(iot)
+```
+
+### `url`
+
+The url should always include schema and host.
+
+
+*Type*: `string`
+
+*Default*: `"tcp://localhost:8463"`
+
+### `workspace`
+
+ID of the workspace. Required when reads from Timeplus Enterprise.
+
+
+*Type*: `string`
+
+
+### `apikey`
+
+The API key. Required when reads from Timeplus Enterprise Cloud
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+
+### `username`
+
+The username. Required when reads from Timeplus Enterprise (self-hosted) or Timeplusd
+
+
+*Type*: `string`
+
+
+### `password`
+
+The password. Required when reads from Timeplus Enterprise (self-hosted) or Timeplusd
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+
+
