@@ -1,0 +1,231 @@
+---
+title: gcp_bigtable
+kind: output
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Write data to a Google Cloud Bigtable table.
+
+
+<Tabs>
+<TabItem label="Common">
+```yml
+# Common config fields, showing default values
+output:
+  label: ""
+  gcp_bigtable:
+    max_in_flight: 1024
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+    project: "" # No default (required)
+    instance: "" # No default (required)
+    credentials_json: "" # No default (optional)
+    table: "" # No default (required)
+    key: this.key
+    data: this.without("key")
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
+output:
+  label: ""
+  gcp_bigtable:
+    max_in_flight: 1024
+    batching:
+      count: 0
+      byte_size: 0
+      period: ""
+      check: ""
+      processors: [] # No default (optional)
+    project: "" # No default (required)
+    instance: "" # No default (required)
+    credentials_json: "" # No default (optional)
+    table: "" # No default (required)
+    key: this.key
+    data: this.without("key")
+    emulated_host_port: ""
+```
+</TabItem>
+</Tabs>
+
+
+
+
+## Fields
+
+### `max_in_flight`
+
+The maximum number of messages to have in flight at a given time. Increase this to improve throughput.
+
+
+*Type*: `int`
+
+*Default*: `1024`
+
+### `batching`
+
+Allows you to configure a batching policy.
+
+
+*Type*: `object`
+
+
+```yml
+# Examples
+
+batching:
+  byte_size: 5000
+  count: 0
+  period: 1s
+
+batching:
+  count: 10
+  period: 1s
+
+batching:
+  check: this.contains("END BATCH")
+  count: 0
+  period: 1m
+```
+
+### `batching.count`
+
+A number of messages at which the batch should be flushed. If `0` disables count based batching.
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `batching.byte_size`
+
+An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `batching.period`
+
+A period in which an incomplete batch should be flushed regardless of its size.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+period: 1s
+
+period: 1m
+
+period: 500ms
+```
+
+### `batching.check`
+
+A Bloblang query that should return a boolean value indicating whether a message should end a batch.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+check: this.type == "end_of_transaction"
+```
+
+### `batching.processors`
+
+A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
+
+
+*Type*: `array`
+
+
+```yml
+# Examples
+
+processors:
+  - archive:
+      format: concatenate
+
+processors:
+  - archive:
+      format: lines
+
+processors:
+  - archive:
+      format: json_array
+```
+
+### `project`
+
+The Google Cloud project to write to.
+
+
+*Type*: `string`
+
+
+### `instance`
+
+The Bigtable instance to write to.
+
+
+*Type*: `string`
+
+
+### `credentials_json`
+
+The json credentials used for connecting to the Bigtable instance.
+
+
+*Type*: `string`
+
+
+### `table`
+
+The Bigtable table to write to.
+
+
+*Type*: `string`
+
+
+### `key`
+
+The expression that results in the row key.
+
+
+*Type*: `string`
+
+*Default*: `"this.key"`
+
+### `data`
+
+The expression that results in the row data.
+
+
+*Type*: `string`
+
+*Default*: `"this.without(\"key\")"`
+
+### `emulated_host_port`
+
+Connect to an emulated Bigtable instance.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+

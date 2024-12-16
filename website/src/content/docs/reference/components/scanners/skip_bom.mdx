@@ -1,0 +1,28 @@
+---
+title: skip_bom
+kind: scanner
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Skip one or more byte order marks for each opened child scanner.
+
+```yml
+# Config fields, showing default values
+skip_bom:
+  into:
+    to_the_end: {}
+```
+
+## Fields
+
+### `into`
+
+The child scanner to feed the resulting stream into.
+
+
+*Type*: `scanner`
+
+*Default*: `{"to_the_end":{}}`
+
+

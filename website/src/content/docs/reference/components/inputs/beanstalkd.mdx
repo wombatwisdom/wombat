@@ -1,0 +1,36 @@
+---
+title: beanstalkd
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Reads messages from a Beanstalkd queue.
+
+Introduced in version 4.7.0.
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  beanstalkd:
+    address: 127.0.0.1:11300 # No default (required)
+```
+
+## Fields
+
+### `address`
+
+An address to connect to.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+address: 127.0.0.1:11300
+```
+
+
