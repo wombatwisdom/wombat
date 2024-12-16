@@ -80,12 +80,14 @@ We can reduce the documents down to just the ID and only those fans with an obse
 
 With the following config:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - mutation: |
         root.description = deleted()
         root.fans = this.fans.filter(fan -> fan.obsession > 0.5)
+
 ```
 
 </TabItem>
@@ -112,7 +114,8 @@ We could collapse the location names from the state of Washington into a field `
 
 With the following config:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - mutation: |
@@ -120,6 +123,7 @@ pipeline:
                         filter(loc -> loc.state == "WA").
                         map_each(loc -> loc.name).
                         sort().join(", ")
+
 ```
 
 </TabItem>

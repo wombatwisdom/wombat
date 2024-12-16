@@ -52,7 +52,8 @@ A list of processors to execute on the newly formed group.
 <TabItem label="Grouped Processing">
 Imagine we have a batch of messages that we wish to split into a group of foos and everything else, which should be sent to different output destinations based on those groupings. We also need to send the foos as a tar gzip archive. For this purpose we can use the `group_by` processor with a `switch` output:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - group_by:
@@ -76,6 +77,7 @@ output:
           gcp_pubsub:
             project: somewhere_else
             topic: no_foos_here
+
 ```
 
 </TabItem>

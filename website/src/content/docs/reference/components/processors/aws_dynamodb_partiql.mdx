@@ -50,7 +50,8 @@ Both writes or reads are supported, when the query is a read the contents of the
 <TabItem label="Insert">
 The following example inserts rows into the table footable with the columns foo, bar and baz populated with values extracted from messages:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - aws_dynamodb_partiql:
@@ -61,6 +62,7 @@ pipeline:
             { "S": meta("kafka_topic") },
             { "S": this.document.content },
           ]
+
 ```
 
 </TabItem>

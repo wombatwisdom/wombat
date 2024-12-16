@@ -58,7 +58,8 @@ If the query fails to execute then the message will remain unchanged and the err
 <TabItem label="Table Insert (MySQL)">
 The following example inserts rows into the table footable with the columns foo, bar and baz populated with values extracted from messages.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - sql_raw:
@@ -67,13 +68,15 @@ pipeline:
         query: "INSERT INTO footable (foo, bar, baz) VALUES (?, ?, ?);"
         args_mapping: '[ document.foo, document.bar, meta("kafka_topic") ]'
         exec_only: true
+
 ```
 
 </TabItem>
 <TabItem label="Table Query (PostgreSQL)">
 Here we query a database for columns of footable that share a `user_id` with the message field `user.id`. A `branch` processor is used in order to insert the resulting array into the original message at the path `foo_rows`.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -84,6 +87,7 @@ pipeline:
               query: "SELECT * FROM footable WHERE user_id = $1;"
               args_mapping: '[ this.user.id ]'
         result_map: 'root.foo_rows = this'
+
 ```
 
 </TabItem>

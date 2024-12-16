@@ -74,12 +74,14 @@ If we had JSON messages in a batch each of the form:
 And we wished to tar archive them, setting their filenames to their respective unique IDs (with the extension `.json`), our config might look like
 this:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - archive:
         format: tar
         path: ${!json("doc.id")}.json
+
 ```
 
 </TabItem>

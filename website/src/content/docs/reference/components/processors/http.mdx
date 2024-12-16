@@ -114,7 +114,8 @@ When all retry attempts for a message are exhausted the processor cancels the at
 <TabItem label="Branched Request">
 This example uses a `branch` processor to strip the request message into an empty body, grab an HTTP payload, and place the result back into the original message at the path `repo.status`:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -126,6 +127,7 @@ pipeline:
               headers:
                 Content-Type: application/json
         result_map: 'root.repo.status = this'
+
 ```
 
 </TabItem>

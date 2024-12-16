@@ -19,7 +19,8 @@ multilevel: [] # No default (required)
 <TabItem label="Hot and cold cache">
 The multilevel cache is useful for reducing traffic against a remote cache by routing it through a local cache. In the following example requests will only go through to the memcached server if the local memory cache is missing the key.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -44,6 +45,7 @@ cache_resources:
     memcached:
       addresses: [ TODO:11211 ]
       default_ttl: 60s
+
 ```
 
 </TabItem>

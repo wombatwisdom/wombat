@@ -108,7 +108,8 @@ result_map: |-
 
 This example strips the request message into an empty body, grabs an HTTP payload, and places the result back into the original message at the path `image.pull_count`:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -123,6 +124,7 @@ pipeline:
 
 # Example input:  {"id":"foo","some":"pre-existing data"}
 # Example output: {"id":"foo","some":"pre-existing data","image":{"pull_count":1234}}
+
 ```
 
 </TabItem>
@@ -130,7 +132,8 @@ pipeline:
 
 When the result of your branch processors is unstructured and you wish to simply set a resulting field to the raw output use the content function to obtain the raw bytes of the resulting message and then coerce it into your value type of choice:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -144,6 +147,7 @@ pipeline:
 
 # Example input:  {"document":{"id":"foo","content":"hello world"}}
 # Example output: {"document":{"id":"foo","content":"hello world","description":"this is a cool doc"}}
+
 ```
 
 </TabItem>
@@ -151,7 +155,8 @@ pipeline:
 
 This example maps a new payload for triggering a lambda function with an ID and username from the original message, and the result of the lambda is discarded, meaning the original message is unchanged.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -162,6 +167,7 @@ pipeline:
 
 # Example input: {"doc":{"id":"foo","body":"hello world"},"user":{"name":"fooey"}}
 # Output matches the input, which is unchanged
+
 ```
 
 </TabItem>
@@ -169,7 +175,8 @@ pipeline:
 
 This example caches a document by a message ID only when the type of the document is a foo:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -186,6 +193,7 @@ pipeline:
               operator: set
               key: ${! @id }
               value: ${! content() }
+
 ```
 
 </TabItem>

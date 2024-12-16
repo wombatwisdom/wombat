@@ -114,7 +114,8 @@ This input supports interpolation functions in the `url` and `headers` fields wh
 <TabItem label="Basic Pagination">
 Interpolation functions within the `url` and `headers` fields can be used to reference the previously consumed message, which allows simple pagination.
 
-```yaml
+```
+yaml
 input:
   http_client:
     url: >-
@@ -134,6 +135,7 @@ rate_limit_resources:
     local:
       count: 1
       interval: 30s
+
 ```
 
 </TabItem>

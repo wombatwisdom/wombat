@@ -70,13 +70,15 @@ If we specify the stdin output, the result will look like:
 This configuration also works for Scylla.
 
 
-```yaml
+```
+yaml
 input:
   cassandra:
     addresses:
       - 172.17.0.2
     query:
       'SELECT * FROM learn_cassandra.users_by_country'
+
 ```
 
 </TabItem>

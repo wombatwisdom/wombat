@@ -103,11 +103,13 @@ We could collapse the location names from the state of Washington into a field `
 
 With the following config:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - jq:
         query: '{Cities: .locations | map(select(.state == "WA").name) | sort | join(", ") }'
+
 ```
 
 </TabItem>

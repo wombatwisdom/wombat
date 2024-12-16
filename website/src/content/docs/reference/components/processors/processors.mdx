@@ -21,7 +21,8 @@ This processor is useful in situations where you want to collect several process
 <TabItem label="Grouped Processing">
 Imagine we have a collection of processors who cover a specific functionality. We could use this processor to group them together and make it easier to read and mock during testing by giving the whole block a label:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - label: my_super_feature
@@ -31,6 +32,7 @@ pipeline:
         - archive:
             format: json_array
         - mapping: root.items = this
+
 ```
 
 </TabItem>

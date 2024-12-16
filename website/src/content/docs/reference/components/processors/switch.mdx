@@ -61,7 +61,8 @@ We have a system where we're counting a metric for all messages that pass throug
 
 For George's messages we want to instead emit a metric that gauges how angry he is about being ignored and then we drop it.
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - switch:
@@ -77,6 +78,7 @@ pipeline:
                 name: GeorgesAnger
                 value: ${! json("user.anger") }
             - mapping: root = deleted()
+
 ```
 
 </TabItem>

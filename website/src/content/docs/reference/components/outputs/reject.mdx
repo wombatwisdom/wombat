@@ -25,7 +25,8 @@ To learn when this output could be useful, see [the examples.
 
 This input is particularly useful for routing messages that have failed during processing, where instead of routing them to some sort of dead letter queue we wish to push the error upstream. We can do this with a switch broker:
 
-```yaml
+```
+yaml
 output:
   switch:
     retry_until_success: false
@@ -38,6 +39,7 @@ output:
 
       - output:
           reject: "processing failed due to: ${! error() }"
+
 ```
 
 </TabItem>

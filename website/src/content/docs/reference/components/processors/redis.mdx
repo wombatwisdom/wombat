@@ -49,7 +49,8 @@ redis:
 <TabItem label="Querying Cardinality">
 If given payloads containing a metadata field `set_key` it's possible to query and store the cardinality of the set for each message using a `branch` processor in order to augment rather than replace the message contents:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -59,6 +60,7 @@ pipeline:
               command: scard
               args_mapping: 'root = [ meta("set_key") ]'
         result_map: 'root.cardinality = this'
+
 ```
 
 </TabItem>
@@ -83,7 +85,8 @@ We can add a field that contains the running total number of friends visited:
 
 Using the `incrby` command:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - branch:
@@ -93,6 +96,7 @@ pipeline:
               command: incrby
               args_mapping: 'root = [ this.name, this.friends_visited ]'
         result_map: 'root.total = this'
+
 ```
 
 </TabItem>

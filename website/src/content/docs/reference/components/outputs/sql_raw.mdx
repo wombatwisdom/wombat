@@ -70,7 +70,8 @@ output:
 
 Here we insert rows into a database by populating the columns id, name and topic with values extracted from messages and metadata:
 
-```yaml
+```
+yaml
 output:
   sql_raw:
     driver: mysql
@@ -82,6 +83,7 @@ output:
         this.user.name,
         meta("kafka_topic"),
       ]
+
 ```
 
 </TabItem>

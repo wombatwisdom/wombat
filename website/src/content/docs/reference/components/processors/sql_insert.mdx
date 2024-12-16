@@ -61,7 +61,8 @@ If the insert fails to execute then the message will still remain unchanged and 
 
 Here we insert rows into a database by populating the columns id, name and topic with values extracted from messages and metadata:
 
-```yaml
+```
+yaml
 pipeline:
   processors:
     - sql_insert:
@@ -75,6 +76,7 @@ pipeline:
             this.user.name,
             meta("kafka_topic"),
           ]
+
 ```
 
 </TabItem>
