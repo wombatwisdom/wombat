@@ -1,0 +1,40 @@
+---
+title: benchmark
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Logs basic throughput statistics of messages that pass through this processor.
+
+```yml
+# Config fields, showing default values
+label: ""
+benchmark:
+  interval: 5s
+  count_bytes: true
+```
+
+Logs messages per second and bytes per second of messages that are processed at a regular interval. A summary of the amount of messages processed over the entire lifetime of the processor will also be printed when the processor shuts down.
+
+## Fields
+
+### `interval`
+
+How often to emit rolling statistics. If set to 0, only a summary will be logged when the processor shuts down.
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
+
+### `count_bytes`
+
+Whether or not to measure the number of bytes per second of throughput. Counting the number of bytes requires serializing structured data, which can cause an unnecessary performance hit if serialization is not required elsewhere in the pipeline.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+

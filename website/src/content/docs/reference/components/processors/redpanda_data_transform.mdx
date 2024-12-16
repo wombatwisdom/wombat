@@ -194,7 +194,7 @@ This field supports interpolation functions.
 
 timestamp: ${! timestamp_unix() }
 
-timestamp: ${! metadata("kafka_timestamp_unix") }
+timestamp: ${! metadata("kafka_timestamp_ms") }
 ```
 
 ### `timeout`

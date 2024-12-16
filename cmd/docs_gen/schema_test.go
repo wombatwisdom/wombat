@@ -21,11 +21,12 @@ import (
 
 	"github.com/redpanda-data/benthos/v4/public/service"
 
-	_ "github.com/wombatwisdom/wombat/public/components/all"
+	_ "github.com/redpanda-data/connect/v4/public/components/community"
 )
 
 func TestComponentExamples(t *testing.T) {
 	env := service.GlobalEnvironment()
+	//env := service.NewEmptyEnvironment()
 	linter := env.FullConfigSchema("", "").NewStreamConfigLinter()
 	linter.SetRejectDeprecated(true)
 	linter.SetSkipEnvVarCheck(true)

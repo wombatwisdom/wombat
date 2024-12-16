@@ -140,6 +140,7 @@ Options:
 , `add`
 , `get`
 , `delete`
+, `exists`
 .
 
 ### `key`
@@ -203,4 +204,9 @@ can be detected with processor error handling.
 
 Delete a key and its contents from the cache. If the key does not exist the
 action is a no-op and will not fail with an error.
+
+### `exists`
+
+Check if a given key exists in the cache and replace the original message payload
+with `true` or `false`.
 
