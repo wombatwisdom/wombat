@@ -1,0 +1,6 @@
+input:
+  mongodb_change_stream:
+    uri: mongodb://root:example@localhost:27017
+
+output:
+  stdout: {}
