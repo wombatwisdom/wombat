@@ -1,0 +1,64 @@
+---
+title: mongodb_change_stream
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Consume the MongoDB ChangeStream.
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  mongodb_change_stream:
+    uri: "" # No default (required)
+    database: ""
+    collection: ""
+    auto_replay_nacks: true
+```
+
+This input is capable of reading change events from a MongoDB client, database, or collection.
+When a database as well as a collection is provided, only changes to that collection will be read.
+When only a database is provided, changes to all collections in that database will be read.
+When neither a database nor a collection is provided, changes to all databases and collections will be read.
+
+
+## Fields
+
+### `uri`
+
+MongoDB connection URI
+
+
+*Type*: `string`
+
+
+### `database`
+
+The database to watch.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `collection`
+
+The collection to watch.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `auto_replay_nacks`
+
+Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+
