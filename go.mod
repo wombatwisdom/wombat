@@ -21,9 +21,11 @@ require (
 	github.com/snowflakedb/gosnowflake v1.12.1
 	github.com/stretchr/testify v1.10.0
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
+	go.mongodb.org/mongo-driver v1.17.2
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/trace v1.33.0
 	golang.org/x/crypto v0.32.0
+
 	google.golang.org/api v0.217.0
 	google.golang.org/grpc v1.69.4
 )
