@@ -105,7 +105,7 @@ func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*
 	}
 
 	credentialsJSON := ""
-	if conf.Contains("credentials") {
+	if conf.Contains("credentials_json") {
 		credentialsJSON, err = conf.FieldString("credentials_json")
 		if err != nil {
 			return nil, err
