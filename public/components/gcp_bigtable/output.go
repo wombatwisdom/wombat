@@ -160,19 +160,20 @@ func (g *GCPBigTableOutput) Connect(ctx context.Context) error {
 			},
 		}
 
+		var copts []option.ClientOption
 		if len(g.credentialsJSON) > 0 {
 			log.Infof("Using provided credentials")
-			opts.CredentialsJSON = []byte(g.credentialsJSON)
+			copts = append(copts, option.WithCredentialsJSON([]byte(g.credentialsJSON)))
 		} else {
 			log.Infof("Using default credentials")
+			creds, err := credentials.DetectDefault(opts)
+			if err != nil {
+				return err
+			}
+			copts = append(copts, option.WithAuthCredentials(creds))
 		}
 
-		creds, err := credentials.DetectDefault(opts)
-		if err != nil {
-			return err
-		}
-
-		client, err := bigtable.NewClient(ctx, g.project, g.instance, option.WithAuthCredentials(creds))
+		client, err := bigtable.NewClient(ctx, g.project, g.instance, copts...)
 		if err != nil {
 			return err
 		}
