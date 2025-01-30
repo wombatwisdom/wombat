@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/go-multierror"
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
@@ -120,6 +121,7 @@ func NewGCPBigTableOutput(conf *service.ParsedConfig, mgr *service.Resources) (*
 		rke:             rke,
 		rde:             rde,
 		emulated:        emulated,
+		log:             mgr.Logger(),
 	}, nil
 }
 
@@ -132,8 +134,9 @@ type GCPBigTableOutput struct {
 	rde             *bloblang.Executor
 	emulated        string
 
-	c *bigtable.Client
-	t *bigtable.Table
+	c   *bigtable.Client
+	t   *bigtable.Table
+	log *service.Logger
 }
 
 func (g *GCPBigTableOutput) Connect(ctx context.Context) error {
@@ -157,16 +160,20 @@ func (g *GCPBigTableOutput) Connect(ctx context.Context) error {
 			},
 		}
 
-		if g.credentialsJSON != "" {
-			opts.CredentialsJSON = []byte(g.credentialsJSON)
+		var copts []option.ClientOption
+		if len(g.credentialsJSON) > 0 {
+			log.Infof("Using provided credentials")
+			copts = append(copts, option.WithCredentialsJSON([]byte(g.credentialsJSON)))
+		} else {
+			log.Infof("Using default credentials")
+			creds, err := credentials.DetectDefault(opts)
+			if err != nil {
+				return err
+			}
+			copts = append(copts, option.WithAuthCredentials(creds))
 		}
 
-		creds, err := credentials.DetectDefault(opts)
-		if err != nil {
-			return err
-		}
-
-		client, err := bigtable.NewClient(ctx, g.project, g.instance, option.WithAuthCredentials(creds))
+		client, err := bigtable.NewClient(ctx, g.project, g.instance, copts...)
 		if err != nil {
 			return err
 		}

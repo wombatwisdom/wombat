@@ -58,7 +58,7 @@ tasks:
 
   docker:
     cmds:
-      - docker build -f ./resources/docker/Dockerfile . -t {{.DOCKER_IMAGE}}:{{.VER_CUT}}
+      - docker build -f ./Dockerfile . -t {{.DOCKER_IMAGE}}:{{.VER_CUT}}
       - docker tag {{.DOCKER_IMAGE}}:{{.VER_CUT}} {{.DOCKER_IMAGE}}:latest
 
   fmt:
