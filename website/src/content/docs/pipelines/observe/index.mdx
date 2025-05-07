@@ -10,7 +10,7 @@ need to monitor it, trace it, and make sure it's healthy. This section will expl
 Wombat serves two HTTP endpoints for health checks:
 
 - `/ping` can be used as a liveness probe as it always returns a 200.
-- `/read` can be used as a readiness probe as it serves a 200 only when both the input and output are connected, otherwise a 503 is returned.
+- `/ready` can be used as a readiness probe as it serves a 200 only when both the input and output are connected, otherwise a 503 is returned.
 
 The [http section](http) of the configuration file can be used to configure the health check endpoints as well as the
 http server itself.
