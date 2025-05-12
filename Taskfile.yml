@@ -8,6 +8,8 @@ vars:
   LD_FLAGS: -w -s
   GO_FLAGS: ""
   GOMAXPROCS: 1
+  GOEXE:
+    sh: go env GOEXE
   DATE:
     sh: 'date +"%Y-%m-%dT%H:%M:%SZ"'
   VERSION:
@@ -36,7 +38,7 @@ tasks:
     desc: Build the application
     deps:
       - deps
-    cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}} ./cmd/{{.APP_NAME}}/*.go
+    cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}}{{.GOEXE}} ./cmd/{{.APP_NAME}}/*.go
 
   tools:
     desc: Build the tools
