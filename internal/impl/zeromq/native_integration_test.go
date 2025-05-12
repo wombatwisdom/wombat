@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: Copyright (c) 2025 Peter Magnusson <me@kmpm.se>
+// SPDX-License-Identifier: MIT
 package zeromq
 
 import (
