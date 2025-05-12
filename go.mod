@@ -6,6 +6,7 @@ require (
 	cloud.google.com/go/auth v0.14.0
 	cloud.google.com/go/bigtable v1.34.0
 	github.com/Jeffail/shutdown v1.0.0
+	github.com/go-zeromq/zmq4 v0.17.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/martian/v3 v3.3.3
@@ -177,6 +178,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
+	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gocql/gocql v1.6.0 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
