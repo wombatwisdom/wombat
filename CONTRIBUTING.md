@@ -33,12 +33,15 @@ You can help us out by doing the following before raising a new issue:
 
 Pull requests are always welcome. However, before going through the trouble of implementing a change it's worth creating an issue. This allows us to discuss the changes and make sure they are a good fit for the project.
 
+This project uses [task](https://taskfile.dev/) as a build tool.
 Please always make sure a pull request has been:
 
-- Unit tested with `make test`
-- Linted with `make lint`
-- Formatted with `make fmt`
+- Unit tested with `task test`
+- Formatted with `task fmt`
+- Linted with `task lint`. This uses [golangci-lint](https://golangci-lint.run/) which you need to have installed.
 
-If your change impacts inputs, outputs or other connectors then try to test them with `make test-integration`. If the integration tests aren't working on your machine then don't panic, just mention it in your PR.
+If your change impacts inputs, outputs or other connectors then try to test them with `task test-integration`. If the integration tests aren't working on your machine then don't panic, just mention it in your PR.
 
-If your change has an impact on documentation then make sure it is generated with `make docs`. You can test out the documentation site locally by running `yarn && yarn start` in the `./website` directory.
+If your change has an impact on documentation then make sure it is generated with `task docs`. You can test out the documentation site locally by running `yarn && yarn start` in the `./website` directory.
+
+Make sure all your commits are [signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits).
