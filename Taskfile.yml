@@ -70,11 +70,13 @@ tasks:
       - go mod tidy
 
   lint:
+    desc: Vet and lint the code
     cmds:
       - go vet {{.GO_FLAGS}} ./...
-      - golangci-lint -j 10 run --timeout 1h --verbose cmd/... internal/... public/...
+      - golangci-lint run --timeout 1h --verbose cmd/... internal/... public/...
 
   test:
+    desc: Run the unit tests
     deps:
       - build
     cmds:
