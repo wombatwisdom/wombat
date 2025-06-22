@@ -84,6 +84,15 @@ tasks:
       - build
     cmd: go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m -race ./...
 
+  test-coverage:
+    desc: Run tests with coverage report
+    deps:
+      - build
+    cmds:
+      - go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m -coverprofile=coverage.out -covermode=atomic ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+
   test-integration:
     prompt: |-
       WARNING! Running the integration tests in their entirety consumes a huge amount of computing resources and is 
