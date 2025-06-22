@@ -36,7 +36,7 @@ func TestFunctionExamples(t *testing.T) {
 	tmpJSONFile, err := os.CreateTemp("", "benthos_bloblang_functions_test")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		os.Remove(tmpJSONFile.Name())
+		_ = os.Remove(tmpJSONFile.Name())
 	})
 
 	_, err = tmpJSONFile.WriteString(`{"foo":"bar"}`)
@@ -94,7 +94,7 @@ func TestMethodExamples(t *testing.T) {
 	tmpJSONFile, err := os.CreateTemp("", "benthos_bloblang_methods_test")
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		os.Remove(tmpJSONFile.Name())
+		_ = os.Remove(tmpJSONFile.Name())
 	})
 
 	_, err = tmpJSONFile.WriteString(`
