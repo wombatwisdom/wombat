@@ -2,7 +2,6 @@ package nats
 
 import (
 	"errors"
-	"testing"
 
 	"github.com/nats-io/nats.go"
 	. "github.com/onsi/ginkgo/v2"
@@ -48,7 +47,4 @@ var _ = Describe("NATS Error Handler", func() {
 	})
 })
 
-func TestNATSErrors(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "NATS Errors Suite")
-}
+// Tests are run via the main nats_suite_test.go

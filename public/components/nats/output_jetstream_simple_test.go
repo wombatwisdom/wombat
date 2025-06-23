@@ -1,8 +1,6 @@
 package nats
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/redpanda-data/benthos/v4/public/service"
@@ -159,7 +157,4 @@ urls: ["nats://localhost:4222"]
 	})
 })
 
-func TestJetStreamOutputSimple(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "JetStream Output Simple Suite")
-}
+// Tests are run via the main nats_suite_test.go

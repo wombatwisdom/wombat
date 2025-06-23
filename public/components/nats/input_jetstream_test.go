@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"testing"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -331,8 +330,12 @@ stream: test-stream
 deliver: by_start_time
 `
 				spec := natsJetStreamInputConfig()
-				_, err := spec.ParseYAML(confStr, service.NewEnvironment())
+				conf, err := spec.ParseYAML(confStr, service.NewEnvironment())
+				Expect(err).NotTo(HaveOccurred())
+
+				_, err = newJetStreamReaderFromConfig(conf, mgr)
 				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("start_time"))
 			})
 
 			It("should fail with invalid start_time format", func() {
@@ -585,7 +588,4 @@ ack_wait: "invalid-duration"
 	})
 })
 
-func TestJetStreamInput(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "JetStream Input Suite")
-}
+// Tests are run via the main nats_suite_test.go
