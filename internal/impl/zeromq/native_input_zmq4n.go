@@ -150,7 +150,7 @@ func (z *zmqInputN) Connect(ctx context.Context) (err error) {
 
 	defer func() {
 		if err != nil && socket != nil {
-			socket.Close()
+			_ = socket.Close()
 		}
 	}()
 	if z.hwm > 0 {
@@ -212,7 +212,7 @@ func (z *zmqInputN) ReadBatch(ctx context.Context) (service.MessageBatch, servic
 // Close shuts down the zmqInput input and stops processing requests.
 func (z *zmqInputN) Close(ctx context.Context) error {
 	if z.socket != nil {
-		z.socket.Close()
+		_ = z.socket.Close()
 		z.socket = nil
 	}
 	return nil
