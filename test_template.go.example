@@ -1,0 +1,186 @@
+// test_template.go.example - Copy this template when creating new tests
+// Rename to match your component: component_test.go
+package yourpackage_test
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+// TestComponent_BasicFunctionality demonstrates table-driven testing
+func TestComponent_BasicFunctionality(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   interface{}
+		want    interface{}
+		wantErr bool
+	}{
+		{
+			name:    "valid input",
+			input:   "test",
+			want:    "expected",
+			wantErr: false,
+		},
+		{
+			name:    "empty input",
+			input:   "",
+			want:    nil,
+			wantErr: true,
+		},
+		// Add more test cases here
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ProcessFunction(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+// TestComponent_Lifecycle demonstrates lifecycle testing
+func TestComponent_Lifecycle(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	t.Run("successful connection and operation", func(t *testing.T) {
+		component := NewComponent(ValidConfig())
+
+		// Test connection
+		err := component.Connect(ctx)
+		require.NoError(t, err)
+
+		// Ensure cleanup
+		t.Cleanup(func() {
+			_ = component.Close(ctx)
+		})
+
+		// Test operation
+		result, err := component.Process(ctx, "test-data")
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+	})
+
+	t.Run("handles connection failure", func(t *testing.T) {
+		component := NewComponent(InvalidConfig())
+
+		err := component.Connect(ctx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "expected error message")
+	})
+
+	t.Run("handles operation without connection", func(t *testing.T) {
+		component := NewComponent(ValidConfig())
+
+		// Try to use without connecting
+		_, err := component.Process(ctx, "test-data")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not connected")
+	})
+}
+
+// TestComponent_ErrorHandling demonstrates error scenario testing
+func TestComponent_ErrorHandling(t *testing.T) {
+	tests := []struct {
+		name        string
+		setup       func() *Component
+		operation   func(*Component) error
+		errContains string
+	}{
+		{
+			name: "nil input error",
+			setup: func() *Component {
+				return NewComponent(ValidConfig())
+			},
+			operation: func(c *Component) error {
+				_, err := c.Process(context.Background(), nil)
+				return err
+			},
+			errContains: "input cannot be nil",
+		},
+		// Add more error scenarios
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			component := tt.setup()
+			if component.RequiresConnection() {
+				err := component.Connect(context.Background())
+				require.NoError(t, err)
+				defer component.Close(context.Background())
+			}
+
+			err := tt.operation(component)
+			assert.Error(t, err)
+			assert.Contains(t, err.Error(), tt.errContains)
+		})
+	}
+}
+
+// TestComponent_Concurrency demonstrates concurrent access testing
+func TestComponent_Concurrency(t *testing.T) {
+	t.Run("handles concurrent operations", func(t *testing.T) {
+		component := NewComponent(ValidConfig())
+		ctx := context.Background()
+
+		err := component.Connect(ctx)
+		require.NoError(t, err)
+		defer component.Close(ctx)
+
+		// Run multiple operations concurrently
+		done := make(chan bool, 10)
+		for i := 0; i < 10; i++ {
+			go func(id int) {
+				defer func() { done <- true }()
+				
+				result, err := component.Process(ctx, fmt.Sprintf("data-%d", id))
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			}(i)
+		}
+
+		// Wait for all operations to complete
+		for i := 0; i < 10; i++ {
+			<-done
+		}
+	})
+
+	t.Run("handles concurrent close calls", func(t *testing.T) {
+		component := NewComponent(ValidConfig())
+
+		// Multiple goroutines trying to close
+		var wg sync.WaitGroup
+		for i := 0; i < 5; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				err := component.Close(context.Background())
+				assert.NoError(t, err)
+			}()
+		}
+		wg.Wait()
+	})
+}
+
+// Helper functions for test data
+func ValidConfig() Config {
+	return Config{
+		URI:     "valid://localhost:1234",
+		Timeout: 30 * time.Second,
+	}
+}
+
+func InvalidConfig() Config {
+	return Config{
+		URI: "", // Invalid: empty URI
+	}
+}
