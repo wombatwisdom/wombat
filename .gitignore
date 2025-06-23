@@ -2,4 +2,5 @@
 target
 coverage.out
 coverage.html
+*.out
 .claude/
