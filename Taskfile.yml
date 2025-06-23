@@ -8,6 +8,8 @@ vars:
   LD_FLAGS: -w -s
   GO_FLAGS: ""
   GOMAXPROCS: 1
+  GOEXE:
+    sh: go env GOEXE
   DATE:
     sh: 'date +"%Y-%m-%dT%H:%M:%SZ"'
   VERSION:
@@ -36,7 +38,7 @@ tasks:
     desc: Build the application
     deps:
       - deps
-    cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}} ./cmd/{{.APP_NAME}}/*.go
+    cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}}{{.GOEXE}} ./cmd/{{.APP_NAME}}/*.go
 
   tools:
     desc: Build the tools
@@ -68,11 +70,13 @@ tasks:
       - go mod tidy
 
   lint:
+    desc: Vet and lint the code
     cmds:
       - go vet {{.GO_FLAGS}} ./...
-      - golangci-lint -j 10 run --timeout 1h --verbose cmd/... internal/... public/...
+      - golangci-lint run --timeout 1h --verbose cmd/... internal/... public/...
 
   test:
+    desc: Run the unit tests
     deps:
       - build
     cmds:
@@ -83,6 +87,15 @@ tasks:
     deps:
       - build
     cmd: go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m -race ./...
+
+  test-coverage:
+    desc: Run tests with coverage report
+    deps:
+      - build
+    cmds:
+      - go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m -coverprofile=coverage.out -covermode=atomic ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
 
   test-integration:
     prompt: |-

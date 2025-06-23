@@ -1,0 +1,17 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+
+output:
+  formats:
+    colored-line:
+      path: stdout

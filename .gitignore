@@ -1,2 +1,5 @@
 .idea
 target
+coverage.out
+coverage.html
+.claude/
