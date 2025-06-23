@@ -31,7 +31,7 @@ func TestIntegrationNatsPullConsumer(t *testing.T) {
 	srv := test.RunServer(&opts)
 	t.Cleanup(func() {
 		srv.Shutdown()
-		os.RemoveAll(opts.StoreDir)
+		_ = os.RemoveAll(opts.StoreDir)
 	})
 
 	natsConn, err := nats.Connect(srv.ClientURL())
@@ -97,7 +97,7 @@ func TestJetStreamBatchedBoundConsumer(t *testing.T) {
 	srv := test.RunServer(&opts)
 	t.Cleanup(func() {
 		srv.Shutdown()
-		os.RemoveAll(opts.StoreDir)
+		_ = os.RemoveAll(opts.StoreDir)
 	})
 
 	natsConn, err := nats.Connect(srv.ClientURL())

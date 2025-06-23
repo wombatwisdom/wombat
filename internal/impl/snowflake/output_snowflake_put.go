@@ -764,7 +764,9 @@ func (s *snowflakeWriter) callSnowpipe(ctx context.Context, snowpipe, requestID,
 	if err != nil {
 		return fmt.Errorf("failed to execute Snowpipe HTTP request: %s", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("received unexpected Snowpipe response status: %d", resp.StatusCode)

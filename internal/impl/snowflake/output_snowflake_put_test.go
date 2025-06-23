@@ -73,7 +73,7 @@ func (c *MockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Body.Close()
+	_ = req.Body.Close()
 	req.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	c.Payloads = append(c.Payloads, strings.TrimSpace(string(bodyBytes)))

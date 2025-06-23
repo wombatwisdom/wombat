@@ -137,7 +137,7 @@ func (z *zmqOutputN) Connect(ctx context.Context) (err error) {
 
 	defer func() {
 		if err != nil && socket != nil {
-			socket.Close()
+			_ = socket.Close()
 		}
 	}()
 
@@ -183,7 +183,7 @@ func (z *zmqOutputN) WriteBatch(_ context.Context, batch service.MessageBatch) e
 
 func (z *zmqOutputN) Close(ctx context.Context) error {
 	if z.socket != nil {
-		z.socket.Close()
+		_ = z.socket.Close()
 		z.socket = nil
 	}
 	return nil
