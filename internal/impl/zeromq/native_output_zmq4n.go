@@ -82,6 +82,10 @@ func zmqOutputNFromConfig(conf *service.ParsedConfig, mgr *service.Resources) (*
 		}
 	}
 
+	if len(z.urls) == 0 {
+		return nil, errors.New("at least one URL must be provided")
+	}
+
 	if z.bind, err = conf.FieldBool("bind"); err != nil {
 		return nil, err
 	}
