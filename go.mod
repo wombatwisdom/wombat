@@ -31,6 +31,7 @@ require (
 	golang.org/x/crypto v0.39.0
 	google.golang.org/api v0.217.0
 	google.golang.org/grpc v1.69.4
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -407,7 +408,6 @@ require (
 	gopkg.in/jcmturner/gokrb5.v6 v6.1.1 // indirect
 	gopkg.in/jcmturner/rpc.v1 v1.1.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240107210532-573471604cb6 // indirect
 	modernc.org/libc v1.55.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
