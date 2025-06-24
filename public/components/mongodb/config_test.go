@@ -2,10 +2,12 @@ package mongodb_test
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -162,5 +164,60 @@ var _ = Describe("MongoDB Client Options", func() {
 		
 		// In actual implementation, we might want to verify specific options
 		// like timeouts, pool sizes, etc.
+	})
+
+	Describe("ConfigFromParsed", func() {
+		Context("with valid configuration", func() {
+			It("should parse URI correctly", func() {
+				spec := service.NewConfigSpec().Field(service.NewStringField("uri"))
+				env := service.NewEnvironment()
+				parsedConf, err := spec.ParseYAML("uri: mongodb://localhost:27017", env)
+				Expect(err).NotTo(HaveOccurred())
+
+				config, err := mongodb.ConfigFromParsed(parsedConf)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config).NotTo(BeNil())
+				Expect(config.Uri).To(Equal("mongodb://localhost:27017"))
+			})
+
+			It("should parse complex URI with auth and options", func() {
+				spec := service.NewConfigSpec().Field(service.NewStringField("uri"))
+				env := service.NewEnvironment()
+				complexURI := "mongodb://user:pass@localhost:27017/mydb?authSource=admin&ssl=true"
+				parsedConf, err := spec.ParseYAML(fmt.Sprintf("uri: %s", complexURI), env)
+				Expect(err).NotTo(HaveOccurred())
+
+				config, err := mongodb.ConfigFromParsed(parsedConf)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config).NotTo(BeNil())
+				Expect(config.Uri).To(Equal(complexURI))
+			})
+		})
+
+		Context("with invalid configuration", func() {
+			It("should fail when URI field is missing", func() {
+				spec := service.NewConfigSpec().Field(service.NewStringField("other_field"))
+				env := service.NewEnvironment()
+				parsedConf, err := spec.ParseYAML("other_field: value", env)
+				Expect(err).NotTo(HaveOccurred())
+
+				config, err := mongodb.ConfigFromParsed(parsedConf)
+				Expect(err).To(HaveOccurred())
+				Expect(config).To(BeNil())
+				Expect(err.Error()).To(ContainSubstring("uri"))
+			})
+
+			It("should handle empty configuration", func() {
+				spec := service.NewConfigSpec().Field(service.NewStringField("uri"))
+				env := service.NewEnvironment()
+				parsedConf, err := spec.ParseYAML("uri: \"\"", env)
+				Expect(err).NotTo(HaveOccurred())
+
+				config, err := mongodb.ConfigFromParsed(parsedConf)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(config).NotTo(BeNil())
+				Expect(config.Uri).To(Equal(""))
+			})
+		})
 	})
 })

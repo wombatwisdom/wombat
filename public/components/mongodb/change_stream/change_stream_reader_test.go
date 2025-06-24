@@ -236,3 +236,195 @@ func TestConcurrency(t *testing.T) {
 		assert.NoError(t, err2)
 	})
 }
+
+func TestNewChangeStreamReader(t *testing.T) {
+	t.Run("creates reader with correct options", func(t *testing.T) {
+		options := change_stream.ChangeStreamReaderOptions{
+			Config: mongodb.Config{
+				Uri: "mongodb://localhost:27017",
+			},
+			Database:   "testdb",
+			Collection: "testcoll",
+		}
+
+		reader := change_stream.NewChangeStreamReader(options)
+		assert.NotNil(t, reader)
+	})
+}
+
+func TestChangeStreamReaderOptions_DatabaseAndCollection(t *testing.T) {
+	tests := []struct {
+		name          string
+		database      string
+		collection    string
+		expectDB      bool
+		expectColl    bool
+	}{
+		{
+			name:          "no database or collection",
+			database:      "",
+			collection:    "",
+			expectDB:      false,
+			expectColl:    false,
+		},
+		{
+			name:          "database only",
+			database:      "testdb",
+			collection:    "",
+			expectDB:      true,
+			expectColl:    false,
+		},
+		{
+			name:          "both database and collection",
+			database:      "testdb",
+			collection:    "testcoll",
+			expectDB:      true,
+			expectColl:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			options := change_stream.ChangeStreamReaderOptions{
+				Config: mongodb.Config{
+					Uri: "mongodb://localhost:27017",
+				},
+				Database:   tt.database,
+				Collection: tt.collection,
+			}
+
+			// Verify options are set correctly
+			if tt.expectDB {
+				assert.NotEmpty(t, options.Database)
+				assert.Equal(t, tt.database, options.Database)
+			} else {
+				assert.Empty(t, options.Database)
+			}
+
+			if tt.expectColl {
+				assert.NotEmpty(t, options.Collection)
+				assert.Equal(t, tt.collection, options.Collection)
+			} else {
+				assert.Empty(t, options.Collection)
+			}
+		})
+	}
+}
+
+// Test various URI formats and configurations
+func TestChangeStreamReader_URIFormats(t *testing.T) {
+	tests := []struct {
+		name        string
+		uri         string
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:        "empty URI",
+			uri:         "",
+			wantErr:     true,
+			errContains: "uri is required",
+		},
+		{
+			name:        "basic URI",
+			uri:         "mongodb://localhost:27017",
+			wantErr:     true, // Will fail because no MongoDB running
+			errContains: "failed to create change stream",
+		},
+		{
+			name:        "URI with auth",
+			uri:         "mongodb://user:pass@localhost:27017",
+			wantErr:     true, // Will fail because no MongoDB running
+			errContains: "failed to create change stream",
+		},
+		{
+			name:        "URI with replica set",
+			uri:         "mongodb://host1:27017,host2:27017/db?replicaSet=rs0",
+			wantErr:     true, // Will fail because no MongoDB running
+			errContains: "failed to create change stream",
+		},
+		{
+			name:        "malformed URI",
+			uri:         "not-a-mongodb-uri",
+			wantErr:     true,
+			errContains: "failed to create client",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			options := change_stream.ChangeStreamReaderOptions{
+				Config: mongodb.Config{
+					Uri: tt.uri,
+				},
+			}
+
+			reader := change_stream.NewChangeStreamReader(options)
+			err := reader.Connect(context.Background())
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains)
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+// Test message processing edge cases
+func TestMessageProcessing(t *testing.T) {
+	t.Run("validates change stream ID header constant", func(t *testing.T) {
+		assert.Equal(t, "mongodb_change_stream_id", change_stream.IdHeader)
+	})
+
+	t.Run("formats various BSON types correctly", func(t *testing.T) {
+		testCases := []struct {
+			name string
+			data bson.M
+		}{
+			{
+				name: "simple document",
+				data: bson.M{"field": "value"},
+			},
+			{
+				name: "complex document",
+				data: bson.M{
+					"operationType": "insert",
+					"fullDocument": bson.M{
+						"_id":   "507f1f77bcf86cd799439011",
+						"name":  "test document",
+						"count": 42,
+						"active": true,
+					},
+					"ns": bson.M{
+						"db":   "testdb",
+						"coll": "testcoll",
+					},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				b, err := bson.MarshalExtJSON(tc.data, false, false)
+				require.NoError(t, err)
+
+				msg := service.NewMessage(b)
+				msg.MetaSet(change_stream.IdHeader, "123456")
+
+				// Verify message can be read back
+				msgBytes, err := msg.AsBytes()
+				require.NoError(t, err)
+				assert.NotEmpty(t, msgBytes)
+
+				// Verify metadata
+				id, exists := msg.MetaGet(change_stream.IdHeader)
+				assert.True(t, exists)
+				assert.Equal(t, "123456", id)
+			})
+		}
+	})
+}

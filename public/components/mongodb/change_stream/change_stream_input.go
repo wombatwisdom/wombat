@@ -6,6 +6,13 @@ import (
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 
+// ChangeStreamReaderInterface defines the interface for change stream readers
+type ChangeStreamReaderInterface interface {
+	Connect(ctx context.Context) error
+	Read(ctx context.Context) (*service.Message, error)
+	Close(ctx context.Context) error
+}
+
 func inputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
@@ -38,6 +45,11 @@ func init() {
 	}
 }
 
+// NewChangeStreamInput creates a new change stream input from configuration
+func NewChangeStreamInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
+	return newChangeStreamInput(conf, mgr)
+}
+
 func newChangeStreamInput(conf *service.ParsedConfig, mgr *service.Resources) (*changeStreamInput, error) {
 	mcfg, err := mongodb.ConfigFromParsed(conf)
 	if err != nil {
@@ -64,7 +76,7 @@ func newChangeStreamInput(conf *service.ParsedConfig, mgr *service.Resources) (*
 }
 
 type changeStreamInput struct {
-	reader *ChangeStreamReader
+	reader ChangeStreamReaderInterface
 }
 
 func (c *changeStreamInput) Connect(ctx context.Context) error {
