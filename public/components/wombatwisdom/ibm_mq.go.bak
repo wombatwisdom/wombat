@@ -12,7 +12,7 @@ import (
 
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/framework/spec"
-	ibm_mq "github.com/wombatwisdom/components/mq"
+	ibm_mq "github.com/wombatwisdom/components/ibm-mq"
 )
 
 func init() {

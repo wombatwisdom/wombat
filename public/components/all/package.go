@@ -7,6 +7,6 @@ import (
 	_ "github.com/wombatwisdom/wombat/public/components/redpanda"
 	_ "github.com/wombatwisdom/wombat/public/components/snowflake"
 	_ "github.com/wombatwisdom/wombat/public/components/splunk"
-	_ "github.com/wombatwisdom/wombat/public/components/wombatwisdom"
+	// _ "github.com/wombatwisdom/wombat/public/components/wombatwisdom" // Temporarily disabled for CI
 	_ "github.com/wombatwisdom/wombat/public/components/zeromq"
 )

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
-	eventbridge "github.com/wombatwisdom/components/eventbridge"
+	eventbridge "github.com/wombatwisdom/components/aws-eventbridge"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 

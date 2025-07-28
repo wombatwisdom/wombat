@@ -26,12 +26,6 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.37.0
-	github.com/wombatwisdom/components/aws-s3 v0.0.0
-	github.com/wombatwisdom/components/eventbridge v0.0.0
-	github.com/wombatwisdom/components/framework v0.0.0
-	github.com/wombatwisdom/components/mq v0.0.0
-	github.com/wombatwisdom/components/mqtt v0.0.0
-	github.com/wombatwisdom/components/nats v0.0.0
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	go.mongodb.org/mongo-driver v1.17.2
 	go.opentelemetry.io/otel v1.36.0
@@ -41,18 +35,6 @@ require (
 	google.golang.org/grpc v1.69.4
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-replace github.com/wombatwisdom/components/aws-s3 => ../components/components/aws-s3
-
-replace github.com/wombatwisdom/components/eventbridge => ../components/components/aws-eventbridge
-
-replace github.com/wombatwisdom/components/framework => ../components/framework
-
-replace github.com/wombatwisdom/components/mq => ../components/components/ibm-mq
-
-replace github.com/wombatwisdom/components/mqtt => ../components/components/mqtt
-
-replace github.com/wombatwisdom/components/nats => ../components/components/nats
 
 require (
 	cel.dev/expr v0.16.2 // indirect
@@ -129,7 +111,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.40.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.22.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.36.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/firehose v1.32.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
@@ -138,7 +119,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kinesis v1.29.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.56.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/pipes v1.19.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.31.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.8 // indirect
@@ -201,7 +181,6 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.5.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.13.1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.1.0 // indirect
-	github.com/expr-lang/expr v1.17.4 // indirect
 	github.com/fatih/color v1.18.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
@@ -217,7 +196,6 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.4+incompatible // indirect
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/gocql/gocql v1.6.0 // indirect
@@ -256,7 +234,6 @@ require (
 	github.com/hashicorp/golang-lru/arc/v2 v2.0.7 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/raft v1.7.1 // indirect
-	github.com/ibm-messaging/mq-golang/v5 v5.6.2 // indirect
 	github.com/influxdata/go-syslog/v3 v3.0.0 // indirect
 	github.com/influxdata/influxdb1-client v0.0.0-20220302092344-a9ab5670611c // indirect
 	github.com/itchyny/gojq v0.12.17 // indirect
@@ -359,6 +336,7 @@ require (
 	github.com/rickb777/plural v1.4.2 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
+	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/samber/lo v1.47.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
