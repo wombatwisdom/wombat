@@ -1,0 +1,157 @@
+---
+title: ww_s3
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Lists and reads S3 objects using wombatwisdom components
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  ww_s3:
+    bucket: "" # No default (required)
+    prefix: ""
+    max_keys: 1000
+    region: us-east-1
+    force_path_style_urls: false
+    endpoint_url: ""
+    aws:
+      access_key_id: ""
+      secret_access_key: ""
+      session_token: ""
+      profile: ""
+      role_arn: ""
+```
+
+Seamless integration of wombatwisdom S3 input component into Wombat.
+
+This component uses the wombatwisdom S3 implementation under the hood while providing
+a native Benthos interface. It supports listing and reading objects from S3 buckets
+with full AWS authentication and configuration options.
+
+## Authentication
+
+The component supports various AWS authentication methods including:
+- IAM roles
+- Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+- EC2 instance profiles  
+- AWS profiles
+
+## Usage
+
+This input will list objects in the specified S3 bucket and read their contents.
+For trigger-retrieval pattern, use this component with the ww_s3_retrieval processor.
+
+
+## Fields
+
+### `bucket`
+
+S3 bucket name
+
+
+*Type*: `string`
+
+
+### `prefix`
+
+Object key prefix to filter objects
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `max_keys`
+
+Maximum number of keys to list per API call
+
+
+*Type*: `int`
+
+*Default*: `1000`
+
+### `region`
+
+AWS region
+
+
+*Type*: `string`
+
+*Default*: `"us-east-1"`
+
+### `force_path_style_urls`
+
+Force path-style URLs for S3-compatible services
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `endpoint_url`
+
+Custom S3 endpoint URL for S3-compatible services
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws`
+
+AWS authentication configuration
+
+
+*Type*: `object`
+
+
+### `aws.access_key_id`
+
+AWS access key ID
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.secret_access_key`
+
+AWS secret access key
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.session_token`
+
+AWS session token
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.profile`
+
+AWS profile name
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.role_arn`
+
+IAM role ARN to assume
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+

@@ -1,0 +1,288 @@
+---
+title: ww_eventbridge
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Reads trigger events from AWS EventBridge using wombatwisdom components
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  ww_eventbridge:
+    mode: sqs
+    region: us-east-1
+    event_bus_name: default
+    rule_name: ""
+    event_source: "" # No default (required)
+    detail_type: ""
+    event_filters: {}
+    max_batch_size: 10
+    enable_dead_letter: false
+    sqs:
+      queue_url: ""
+      max_messages: 10
+      wait_time_seconds: 20
+      visibility_timeout: 30
+    pipes:
+      name: ""
+      source_arn: ""
+      target_arn: ""
+      batch_size: 10
+    aws:
+      access_key_id: ""
+      secret_access_key: ""
+      session_token: ""
+      profile: ""
+      role_arn: ""
+```
+
+Seamless integration of wombatwisdom EventBridge trigger input component into Wombat.
+
+This component uses the wombatwisdom EventBridge implementation under the hood while providing
+a native Benthos interface. It supports multiple integration modes for consuming EventBridge events:
+
+- **SQS Mode**: Uses EventBridge Rules to route events to SQS, then polls SQS
+- **Pipes Mode**: Uses EventBridge Pipes for direct streaming integration  
+- **Simulation Mode**: Generates fake events for testing purposes
+
+## Authentication
+
+The component supports various AWS authentication methods including:
+- IAM roles
+- Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+- EC2 instance profiles
+- AWS profiles
+
+## Trigger Pattern
+
+This input implements the trigger-retrieval pattern, emitting lightweight trigger events
+that reference data locations (like S3 objects) without fetching the actual data.
+
+
+## Fields
+
+### `mode`
+
+Integration mode: sqs, pipes, or simulation
+
+
+*Type*: `string`
+
+*Default*: `"sqs"`
+
+### `region`
+
+AWS region for EventBridge
+
+
+*Type*: `string`
+
+*Default*: `"us-east-1"`
+
+### `event_bus_name`
+
+Name of the EventBridge event bus
+
+
+*Type*: `string`
+
+*Default*: `"default"`
+
+### `rule_name`
+
+EventBridge rule name (required for SQS mode)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `event_source`
+
+Event source to filter on (e.g., aws.s3)
+
+
+*Type*: `string`
+
+
+### `detail_type`
+
+Detail type to filter on (e.g., Object Created)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `event_filters`
+
+Additional event filters as key-value pairs
+
+
+*Type*: `object`
+
+*Default*: `{}`
+
+### `max_batch_size`
+
+Maximum number of triggers per batch
+
+
+*Type*: `int`
+
+*Default*: `10`
+
+### `enable_dead_letter`
+
+Enable dead letter queue for failed events
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `sqs`
+
+SQS mode configuration
+
+
+*Type*: `object`
+
+
+### `sqs.queue_url`
+
+SQS queue URL
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `sqs.max_messages`
+
+Max messages per SQS receive
+
+
+*Type*: `int`
+
+*Default*: `10`
+
+### `sqs.wait_time_seconds`
+
+SQS long polling wait time
+
+
+*Type*: `int`
+
+*Default*: `20`
+
+### `sqs.visibility_timeout`
+
+SQS visibility timeout
+
+
+*Type*: `int`
+
+*Default*: `30`
+
+### `pipes`
+
+Pipes mode configuration
+
+
+*Type*: `object`
+
+
+### `pipes.name`
+
+EventBridge Pipe name
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `pipes.source_arn`
+
+Pipe source ARN
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `pipes.target_arn`
+
+Pipe target ARN
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `pipes.batch_size`
+
+Pipe batch size
+
+
+*Type*: `int`
+
+*Default*: `10`
+
+### `aws`
+
+AWS authentication configuration
+
+
+*Type*: `object`
+
+
+### `aws.access_key_id`
+
+AWS access key ID
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.secret_access_key`
+
+AWS secret access key
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.session_token`
+
+AWS session token
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.profile`
+
+AWS profile name
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.role_arn`
+
+IAM role ARN to assume
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+

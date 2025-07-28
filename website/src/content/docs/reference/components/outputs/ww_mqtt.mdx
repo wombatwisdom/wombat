@@ -1,0 +1,213 @@
+---
+title: ww_mqtt
+kind: output
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Publishes messages to MQTT topics using wombatwisdom components
+
+```yml
+# Config fields, showing default values
+output:
+  label: ""
+  ww_mqtt:
+    urls:
+      - tcp://localhost:1883
+    client_id: ""
+    topic: "" # No default (required)
+    qos: 0
+    retained: false
+    write_timeout: 5s
+    connect_timeout: 30s
+    keepalive: 60s
+    auth:
+      username: ""
+      password: ""
+    tls:
+      enabled: false
+      skip_cert_verify: false
+    will:
+      topic: ""
+      payload: ""
+      qos: 0
+      retained: false
+```
+
+Seamless integration of wombatwisdom MQTT output component into Wombat.
+
+This component uses the wombatwisdom MQTT implementation under the hood while providing
+a native Benthos interface. All wombatwisdom features are available including advanced
+connection management, authentication, and quality of service settings.
+
+
+## Fields
+
+### `urls`
+
+List of MQTT broker URLs to connect to.
+
+
+*Type*: `array`
+
+*Default*: `["tcp://localhost:1883"]`
+
+### `client_id`
+
+Unique client identifier. If empty, one will be generated.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `topic`
+
+Topic to publish to. Can contain interpolation functions.
+
+
+*Type*: `string`
+
+
+### `qos`
+
+Quality of Service level (0, 1, or 2)
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `retained`
+
+Set the retained flag on published messages
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `write_timeout`
+
+Timeout for write operations
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
+
+### `connect_timeout`
+
+Connection timeout
+
+
+*Type*: `string`
+
+*Default*: `"30s"`
+
+### `keepalive`
+
+Keep alive interval
+
+
+*Type*: `string`
+
+*Default*: `"60s"`
+
+### `auth`
+
+Authentication configuration
+
+
+*Type*: `object`
+
+
+### `auth.username`
+
+Username for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `auth.password`
+
+Password for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls`
+
+TLS configuration
+
+
+*Type*: `object`
+
+
+### `tls.enabled`
+
+Enable TLS
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `tls.skip_cert_verify`
+
+Skip certificate verification
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `will`
+
+Last will and testament configuration
+
+
+*Type*: `object`
+
+
+### `will.topic`
+
+Will message topic
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `will.payload`
+
+Will message payload
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `will.qos`
+
+Will message QoS
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `will.retained`
+
+Will message retained flag
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+
