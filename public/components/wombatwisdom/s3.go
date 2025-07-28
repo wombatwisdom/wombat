@@ -159,10 +159,10 @@ func newWWS3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.I
 	}
 
 	// TODO: Add AWS config support when implementing full authentication
-	_, err = conf.FieldString("region")
-	if err != nil {
-		// Default region handling would go here
-	}
+	// _, err = conf.FieldString("region")
+	// if err != nil {
+	//     // Default region handling would go here
+	// }
 
 	forcePathStyle, err := conf.FieldBool("force_path_style_urls")
 	if err != nil {
@@ -198,10 +198,10 @@ func newWWS3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.I
 func newWWS3Retrieval(conf *service.ParsedConfig, mgr *service.Resources) (service.Processor, error) {
 	// Extract configuration
 	// TODO: Add AWS config support when implementing full authentication
-	_, err := conf.FieldString("region")
-	if err != nil {
-		// Default region handling would go here
-	}
+	// _, err := conf.FieldString("region")
+	// if err != nil {
+	//     // Default region handling would go here
+	// }
 
 	forcePathStyle, err := conf.FieldBool("force_path_style_urls")
 	if err != nil {
