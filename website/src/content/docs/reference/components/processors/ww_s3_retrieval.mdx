@@ -1,0 +1,160 @@
+---
+title: ww_s3_retrieval
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Retrieves S3 objects based on trigger events using wombatwisdom components
+
+```yml
+# Config fields, showing default values
+label: ""
+ww_s3_retrieval:
+  region: us-east-1
+  force_path_style_urls: false
+  endpoint_url: ""
+  max_concurrent_retrievals: 10
+  filter_prefix: ""
+  filter_suffix: ""
+  aws:
+    access_key_id: ""
+    secret_access_key: ""
+    session_token: ""
+    profile: ""
+    role_arn: ""
+```
+
+Seamless integration of wombatwisdom S3 retrieval processor into Wombat.
+
+This processor implements the trigger-retrieval pattern by fetching S3 objects based on
+trigger events from EventBridge or other sources. It provides high-performance concurrent
+retrieval with filtering capabilities.
+
+## Trigger-Retrieval Pattern
+
+This processor works with trigger inputs like ww_eventbridge to:
+1. Receive lightweight trigger events containing S3 object references
+2. Filter triggers based on object key patterns  
+3. Fetch the actual S3 object data concurrently
+4. Return the retrieved data as standard Benthos messages
+
+## Authentication
+
+The component supports various AWS authentication methods including:
+- IAM roles  
+- Environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+- EC2 instance profiles
+- AWS profiles
+
+
+## Fields
+
+### `region`
+
+AWS region
+
+
+*Type*: `string`
+
+*Default*: `"us-east-1"`
+
+### `force_path_style_urls`
+
+Force path-style URLs for S3-compatible services
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `endpoint_url`
+
+Custom S3 endpoint URL for S3-compatible services
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `max_concurrent_retrievals`
+
+Maximum number of concurrent S3 retrievals
+
+
+*Type*: `int`
+
+*Default*: `10`
+
+### `filter_prefix`
+
+Only retrieve objects with keys starting with this prefix
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `filter_suffix`
+
+Only retrieve objects with keys ending with this suffix
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws`
+
+AWS authentication configuration
+
+
+*Type*: `object`
+
+
+### `aws.access_key_id`
+
+AWS access key ID
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.secret_access_key`
+
+AWS secret access key
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.session_token`
+
+AWS session token
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.profile`
+
+AWS profile name
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `aws.role_arn`
+
+IAM role ARN to assume
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+

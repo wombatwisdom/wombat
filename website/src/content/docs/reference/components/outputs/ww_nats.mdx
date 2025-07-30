@@ -1,0 +1,113 @@
+---
+title: ww_nats
+kind: output
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Publishes messages to NATS subjects using wombatwisdom components
+
+```yml
+# Config fields, showing default values
+output:
+  label: ""
+  ww_nats:
+    url: nats://localhost:4222
+    subject: "" # No default (required)
+    name: wombat
+    auth:
+      jwt: ""
+      seed: ""
+    metadata:
+      invert: false
+      patterns: []
+```
+
+Seamless integration of wombatwisdom NATS output component into Wombat.
+
+This component uses the wombatwisdom NATS implementation under the hood while providing
+a native Benthos interface. All wombatwisdom features are available including advanced
+connection management, authentication, and monitoring capabilities.
+
+
+## Fields
+
+### `url`
+
+URL of the NATS server to connect to. Multiple URLs can be specified by separating them with commas.
+
+
+*Type*: `string`
+
+*Default*: `"nats://localhost:4222"`
+
+### `subject`
+
+The subject to publish to. May contain interpolation functions.
+
+
+*Type*: `string`
+
+
+### `name`
+
+Optional connection name for monitoring.
+
+
+*Type*: `string`
+
+*Default*: `"wombat"`
+
+### `auth`
+
+Authentication configuration
+
+
+*Type*: `object`
+
+
+### `auth.jwt`
+
+User JWT token for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `auth.seed`
+
+User seed for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `metadata`
+
+Metadata filtering configuration
+
+
+*Type*: `object`
+
+
+### `metadata.invert`
+
+Invert metadata field matching
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `metadata.patterns`
+
+Regex patterns for metadata fields
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+
