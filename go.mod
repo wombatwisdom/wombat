@@ -26,12 +26,12 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.37.0
-	github.com/wombatwisdom/components/aws-eventbridge v0.1.0-rc2
-	github.com/wombatwisdom/components/aws-s3 v0.1.0-rc2
-	github.com/wombatwisdom/components/framework v0.1.0-rc2
-	github.com/wombatwisdom/components/ibm-mq v0.1.0-rc2
-	github.com/wombatwisdom/components/mqtt v0.1.0-rc2
-	github.com/wombatwisdom/components/nats v0.1.0-rc2
+	github.com/wombatwisdom/components/aws-eventbridge v0.1.0-rc4
+	github.com/wombatwisdom/components/aws-s3 v0.1.0-rc4
+	github.com/wombatwisdom/components/framework v0.1.0-rc4
+	github.com/wombatwisdom/components/ibm-mq v0.1.0-rc4
+	github.com/wombatwisdom/components/mqtt v0.1.0-rc4
+	github.com/wombatwisdom/components/nats v0.1.0-rc4
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	go.mongodb.org/mongo-driver v1.17.2
 	go.opentelemetry.io/otel v1.36.0
