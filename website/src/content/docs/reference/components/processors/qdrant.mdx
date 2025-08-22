@@ -1,69 +1,66 @@
 ---
-title: socket
-kind: input
+title: qdrant
+kind: processor
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Connects to a tcp or unix socket and consumes a continuous stream of messages.
+Query items within a [Qdrant](https://qdrant.tech/) collection.
 
 
 <Tabs>
 <TabItem label="Common">
 ```yml
 # Common config fields, showing default values
-input:
-  label: ""
-  socket:
-    network: "" # No default (required)
-    address: /tmp/benthos.sock # No default (required)
-    auto_replay_nacks: true
-    open_message_mapping: root = "username,password" # No default (optional)
-    scanner:
-      lines: {}
+label: ""
+qdrant:
+  grpc_host: localhost:6334 # No default (required)
+  api_token: ""
+  collection_name: "" # No default (required)
+  vector_mapping: root = [1.2, 0.5, 0.76] # No default (required)
+  filter: | # No default (optional)
+    root.must = [
+    	{"has_id":{"has_id":[{"num": 8}, { "uuid":"1234-5678-90ab-cdef" }]}},
+    	{"field":{"key": "city", "match": {"text": "London"}}},
+    ]
+  payload_fields: []
+  payload_filter: include
+  limit: 10
 ```
 </TabItem>
 <TabItem label="Advanced">
 ```yml
 # Advanced config fields, showing default values
-input:
-  label: ""
-  socket:
-    network: "" # No default (required)
-    address: /tmp/benthos.sock # No default (required)
-    auto_replay_nacks: true
-    open_message_mapping: root = "username,password" # No default (optional)
-    tls:
-      enabled: false
-      skip_cert_verify: false
-      enable_renegotiation: false
-      root_cas: ""
-      root_cas_file: ""
-      client_certs: []
-    scanner:
-      lines: {}
+label: ""
+qdrant:
+  grpc_host: localhost:6334 # No default (required)
+  api_token: ""
+  tls:
+    enabled: false
+    skip_cert_verify: false
+    enable_renegotiation: false
+    root_cas: ""
+    root_cas_file: ""
+    client_certs: []
+  collection_name: "" # No default (required)
+  vector_mapping: root = [1.2, 0.5, 0.76] # No default (required)
+  filter: | # No default (optional)
+    root.must = [
+    	{"has_id":{"has_id":[{"num": 8}, { "uuid":"1234-5678-90ab-cdef" }]}},
+    	{"field":{"key": "city", "match": {"text": "London"}}},
+    ]
+  payload_fields: []
+  payload_filter: include
+  limit: 10
 ```
 </TabItem>
 </Tabs>
 
 ## Fields
 
-### `network`
+### `grpc_host`
 
-A network type to assume (unix|tcp).
-
-
-*Type*: `string`
-
-
-Options:
-`unix`
-, `tcp`
-.
-
-### `address`
-
-The address to connect to.
+The gRPC host of the Qdrant server.
 
 
 *Type*: `string`
@@ -72,37 +69,27 @@ The address to connect to.
 ```yml
 # Examples
 
-address: /tmp/benthos.sock
+grpc_host: localhost:6334
 
-address: 127.0.0.1:6000
+grpc_host: xyz-example.eu-central.aws.cloud.qdrant.io:6334
 ```
 
-### `auto_replay_nacks`
+### `api_token`
 
-Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
+The Qdrant API token for authentication. Defaults to an empty string.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
 
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `open_message_mapping`
-
-An optional Bloblang mapping which should evaluate to a string which will be sent upstream before the downstream data flow starts.
 
 
 *Type*: `string`
 
-
-```yml
-# Examples
-
-open_message_mapping: root = "username,password"
-```
+*Default*: `""`
 
 ### `tls`
 
-Custom TLS settings can be used to override system defaults.
+TLS(HTTPS) config to use when connecting
 
 
 *Type*: `object`
@@ -257,14 +244,97 @@ password: foo
 password: ${KEY_PASSWORD}
 ```
 
-### `scanner`
+### `collection_name`
 
-The scanner by which the stream of bytes consumed will be broken out into individual messages. Scanners are useful for processing large sources of data without holding the entirety of it within memory. For example, the `csv` scanner allows you to process individual CSV rows without loading the entire CSV file in memory at once.
+The name of the collection in Qdrant.
+This field supports interpolation functions.
 
 
-*Type*: `scanner`
+*Type*: `string`
 
-*Default*: `{"lines":{}}`
-Requires version 4.25.0 or newer
+
+### `vector_mapping`
+
+The mapping to extract the search vector from the document.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+vector_mapping: root = [1.2, 0.5, 0.76]
+
+vector_mapping: root = this.vector
+
+vector_mapping: root = [[0.352,0.532,0.532,0.234],[0.352,0.532,0.532,0.234]]
+
+vector_mapping: 'root = {"some_sparse": {"indices":[23,325,532],"values":[0.352,0.532,0.532]}}'
+
+vector_mapping: 'root = {"some_multi": [[0.352,0.532,0.532,0.234],[0.352,0.532,0.532,0.234]]}'
+
+vector_mapping: 'root = {"some_dense": [0.352,0.532,0.532,0.234]}'
+```
+
+### `filter`
+
+Additional filtering to perform on the results. The mapping should return a valid filter (using the proto3 encoded form) in qdrant. See the [^Qdrant documentation](https://qdrant.tech/documentation/concepts/filtering/) for examples.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+filter: |2
+  root.must = [
+  	{"has_id":{"has_id":[{"num": 8}, { "uuid":"1234-5678-90ab-cdef" }]}},
+  	{"field":{"key": "city", "match": {"text": "London"}}},
+  ]
+
+filter: |2
+  root.must = [
+  	{"field":{"key": "city", "match": {"text": "London"}}},
+  ]
+  root.must_not = [
+  	{"field":{"color": "city", "match": {"text": "red"}}},
+  ]
+```
+
+### `payload_fields`
+
+The fields to include or exclude in returned result based on the `payload_filter`.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+### `payload_filter`
+
+The way the fields in `payload_fields` are filtered in the result.
+
+
+*Type*: `string`
+
+*Default*: `"include"`
+
+
+| Option | Summary |
+| ------ | ------- |
+| `exclude` | Exclude the payload fields specified in `payload_fields`. |
+| `include` | Include the payload fields specified in `payload_fields`. |
+
+
+### `limit`
+
+The maximum number of points to return.
+
+
+*Type*: `int`
+
+*Default*: `10`
 
 

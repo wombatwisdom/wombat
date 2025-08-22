@@ -1,11 +1,13 @@
 ---
-title: cassandra
+title: schema_registry
 kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Executes a find query and creates a message for each row received.
+Reads schemas from SchemaRegistry.
+
+Introduced in version 4.32.2.
 
 
 <Tabs>
@@ -14,10 +16,8 @@ Executes a find query and creates a message for each row received.
 # Common config fields, showing default values
 input:
   label: ""
-  cassandra:
-    addresses: [] # No default (required)
-    timeout: 600ms
-    query: "" # No default (required)
+  schema_registry:
+    url: "" # No default (required)
     auto_replay_nacks: true
 ```
 </TabItem>
@@ -26,8 +26,11 @@ input:
 # Advanced config fields, showing default values
 input:
   label: ""
-  cassandra:
-    addresses: [] # No default (required)
+  schema_registry:
+    url: "" # No default (required)
+    include_deleted: false
+    subject_filter: ""
+    fetch_in_order: true
     tls:
       enabled: false
       skip_cert_verify: false
@@ -35,52 +38,54 @@ input:
       root_cas: ""
       root_cas_file: ""
       client_certs: []
-    password_authenticator:
+    auto_replay_nacks: true
+    oauth:
+      enabled: false
+      consumer_key: ""
+      consumer_secret: ""
+      access_token: ""
+      access_token_secret: ""
+    basic_auth:
       enabled: false
       username: ""
       password: ""
-    disable_initial_host_lookup: false
-    max_retries: 3
-    backoff:
-      initial_interval: 1s
-      max_interval: 5s
-    timeout: 600ms
-    host_selection_policy:
-      local_dc: "" # No default (optional)
-      local_rack: "" # No default (optional)
-    query: "" # No default (required)
-    auto_replay_nacks: true
+    jwt:
+      enabled: false
+      private_key_file: ""
+      signing_method: ""
+      claims: {}
+      headers: {}
 ```
 </TabItem>
 </Tabs>
 
+## Metadata
+
+This input adds the following metadata fields to each message:
+
+```text
+- schema_registry_subject
+- schema_registry_version
+```
+
+You can access these metadata fields using
+function interpolation.
+
+
+
 ## Examples
 
 <Tabs>
-<TabItem label="Minimal Select (Cassandra/Scylla)">
-
-Let's presume that we have 3 Cassandra nodes, like in this tutorial by Sebastian Sigl from freeCodeCamp:
-
-https://www.freecodecamp.org/news/the-apache-cassandra-beginner-tutorial/
-
-Then if we want to select everything from the table users_by_country, we should use the configuration below.
-If we specify the stdin output, the result will look like:
-
-```json
-{"age":23,"country":"UK","first_name":"Bob","last_name":"Sandler","user_email":"bob@email.com"}
-```
-
-This configuration also works for Scylla.
-
+<TabItem label="Read schemas">
+Read all schemas (including deleted) from a Schema Registry instance which are associated with subjects matching the `^foo.*` filter.
 
 ```
 yaml
 input:
-  cassandra:
-    addresses:
-      - 172.17.0.2
-    query:
-      'SELECT * FROM learn_cassandra.users_by_country'
+  schema_registry:
+    url: http://localhost:8081
+    include_deleted: true
+    subject_filter: ^foo.*
 
 ```
 
@@ -89,27 +94,41 @@ input:
 
 ## Fields
 
-### `addresses`
+### `url`
 
-A list of Cassandra nodes to connect to. Multiple comma separated addresses can be specified on a single line.
-
-
-*Type*: `array`
+The base URL of the schema registry service.
 
 
-```yml
-# Examples
+*Type*: `string`
 
-addresses:
-  - localhost:9042
 
-addresses:
-  - foo:9042
-  - bar:9042
+### `include_deleted`
 
-addresses:
-  - foo:9042,bar:9042
-```
+Include deleted entities.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `subject_filter`
+
+Include only subjects which match the regular expression filter. All subjects are selected when not set.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `fetch_in_order`
+
+Fetch all schemas on connect and sort them by ID. Should be set to `true` when schema references are used.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+Requires version 4.37.0 or newer
 
 ### `tls`
 
@@ -268,35 +287,44 @@ password: foo
 password: ${KEY_PASSWORD}
 ```
 
-### `password_authenticator`
+### `auto_replay_nacks`
 
-Optional configuration of Cassandra authentication parameters.
+Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `oauth`
+
+Allows you to specify open authentication via OAuth version 1.
 
 
 *Type*: `object`
 
 
-### `password_authenticator.enabled`
+### `oauth.enabled`
 
-Whether to use password authentication
+Whether to use OAuth version 1 in requests.
 
 
 *Type*: `bool`
 
 *Default*: `false`
 
-### `password_authenticator.username`
+### `oauth.consumer_key`
 
-The username to authenticate as.
+A value used to identify the client to the service provider.
 
 
 *Type*: `string`
 
 *Default*: `""`
 
-### `password_authenticator.password`
+### `oauth.consumer_secret`
 
-The password to authenticate with.
+A secret used to establish ownership of the consumer key.
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -307,98 +335,118 @@ The password to authenticate with.
 
 *Default*: `""`
 
-### `disable_initial_host_lookup`
+### `oauth.access_token`
 
-If enabled the driver will not attempt to get host info from the system.peers table. This can speed up queries but will mean that data_centre, rack and token information will not be available.
+A value used to gain access to the protected resources on behalf of the user.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `oauth.access_token_secret`
+
+A secret provided in order to establish ownership of a given access token.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `basic_auth`
+
+Allows you to specify basic authentication.
+
+
+*Type*: `object`
+
+
+### `basic_auth.enabled`
+
+Whether to use basic authentication in requests.
 
 
 *Type*: `bool`
 
 *Default*: `false`
 
-### `max_retries`
+### `basic_auth.username`
 
-The maximum number of retries before giving up on a request.
+A username to authenticate as.
 
 
-*Type*: `int`
+*Type*: `string`
 
-*Default*: `3`
+*Default*: `""`
 
-### `backoff`
+### `basic_auth.password`
 
-Control time intervals between retry attempts.
+A password to authenticate with.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `jwt`
+
+BETA: Allows you to specify JWT authentication.
 
 
 *Type*: `object`
 
 
-### `backoff.initial_interval`
+### `jwt.enabled`
 
-The initial period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"1s"`
-
-### `backoff.max_interval`
-
-The maximum period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"5s"`
-
-### `timeout`
-
-The client connection timeout.
-
-
-*Type*: `string`
-
-*Default*: `"600ms"`
-
-### `host_selection_policy`
-
-Optional host selection policy configurations. Highly recommended in deployments with multiple DCs. Host selection is always token aware if the token can be calculated from query. By default the underlying policy is round robin over all nodes. Users can specify a local DC and rack to use for the DC Aware & Rack Aware policies.
-
-
-*Type*: `object`
-
-
-### `host_selection_policy.local_dc`
-
-The local DC to use, enables DC aware policy.
-
-
-*Type*: `string`
-
-
-### `host_selection_policy.local_rack`
-
-The local rack to use, requires local_dc to be set, enables rack aware policy.
-
-
-*Type*: `string`
-
-
-### `query`
-
-A query to execute.
-
-
-*Type*: `string`
-
-
-### `auto_replay_nacks`
-
-Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
+Whether to use JWT authentication in requests.
 
 
 *Type*: `bool`
 
-*Default*: `true`
+*Default*: `false`
+
+### `jwt.private_key_file`
+
+A file with the PEM encoded via PKCS1 or PKCS8 as private key.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `jwt.signing_method`
+
+A method used to sign the token such as RS256, RS384, RS512 or EdDSA.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `jwt.claims`
+
+A value used to identify the claims that issued the JWT.
+
+
+*Type*: `object`
+
+*Default*: `{}`
+
+### `jwt.headers`
+
+Add optional key/value headers to the JWT.
+
+
+*Type*: `object`
+
+*Default*: `{}`
 
 

@@ -26,6 +26,7 @@ nats_kv:
 label: ""
 nats_kv:
   urls: [] # No default (required)
+  max_reconnects: 0 # No default (optional)
   bucket: my_kv_bucket # No default (required)
   tls:
     enabled: false
@@ -34,6 +35,7 @@ nats_kv:
     root_cas: ""
     root_cas_file: ""
     client_certs: []
+  tls_handshake_first: false
   auth:
     nkey_file: ./seed.nk # No default (optional)
     nkey: '!!!SECRET_SCRUBBED!!!' # No default (optional)
@@ -103,6 +105,14 @@ urls:
 urls:
   - nats://username:password@127.0.0.1:4222
 ```
+
+### `max_reconnects`
+
+The maximum number of times to attempt to reconnect to the server. If negative, it will never stop trying to reconnect.
+
+
+*Type*: `int`
+
 
 ### `bucket`
 
@@ -274,6 +284,15 @@ password: foo
 
 password: ${KEY_PASSWORD}
 ```
+
+### `tls_handshake_first`
+
+Perform a TLS handshake before sending the INFO protocol message.
+
+
+*Type*: `bool`
+
+*Default*: `false`
 
 ### `auth`
 

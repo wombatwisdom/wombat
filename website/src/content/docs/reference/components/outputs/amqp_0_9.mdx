@@ -36,6 +36,7 @@ output:
       enabled: false
       type: direct
       durable: true
+      arguments: {} # No default (optional)
     key: ""
     type: ""
     content_type: application/octet-stream
@@ -137,6 +138,7 @@ Options:
 `direct`
 , `fanout`
 , `topic`
+, `headers`
 , `x-custom`
 .
 
@@ -148,6 +150,21 @@ Whether the exchange should be durable.
 *Type*: `bool`
 
 *Default*: `true`
+
+### `exchange_declare.arguments`
+
+Optional arguments specific to the server's implementation of the exchange that can be sent for exchange types which require extra parameters.
+
+
+*Type*: `object`
+
+
+```yml
+# Examples
+
+arguments:
+  alternate-exchange: my-ae
+```
 
 ### `key`
 

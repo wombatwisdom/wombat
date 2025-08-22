@@ -1,84 +1,55 @@
 ---
-title: kafka_franz
-kind: output
+title: redpanda
+kind: cache
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Kafka output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
-
-Introduced in version 3.61.0.
+A Kafka cache using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
 
 <Tabs>
 <TabItem label="Common">
 ```yml
 # Common config fields, showing default values
-output:
-  label: ""
-  kafka_franz:
-    seed_brokers: [] # No default (required)
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
+label: ""
+redpanda:
+  seed_brokers: [] # No default (required)
+  topic: "" # No default (required)
 ```
 </TabItem>
 <TabItem label="Advanced">
 ```yml
 # Advanced config fields, showing default values
-output:
-  label: ""
-  kafka_franz:
-    seed_brokers: [] # No default (required)
-    client_id: benthos
-    tls:
-      enabled: false
-      skip_cert_verify: false
-      enable_renegotiation: false
-      root_cas: ""
-      root_cas_file: ""
-      client_certs: []
-    sasl: [] # No default (optional)
-    metadata_max_age: 5m
-    request_timeout_overhead: 10s
-    conn_idle_timeout: 20s
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    timestamp_ms: ${! timestamp_unix_milli() } # No default (optional)
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
-      processors: [] # No default (optional)
-    partitioner: "" # No default (optional)
-    idempotent_write: true
-    compression: "" # No default (optional)
-    allow_auto_topic_creation: true
-    timeout: 10s
-    max_message_bytes: 1MiB
-    broker_write_max_bytes: 100MiB
+label: ""
+redpanda:
+  seed_brokers: [] # No default (required)
+  client_id: benthos
+  tls:
+    enabled: false
+    skip_cert_verify: false
+    enable_renegotiation: false
+    root_cas: ""
+    root_cas_file: ""
+    client_certs: []
+  sasl: [] # No default (optional)
+  metadata_max_age: 5m
+  request_timeout_overhead: 10s
+  conn_idle_timeout: 20s
+  topic: "" # No default (required)
+  allow_auto_topic_creation: true
 ```
 </TabItem>
 </Tabs>
 
-Writes a batch of messages to Kafka brokers and waits for acknowledgement before propagating it back to the input.
+A cache that stores data in a Kafka topic.
 
-This output often out-performs the traditional `kafka` output as well as providing more useful logs and error messages.
+This cache is useful for data that is written frequently and queried infreqently.
+Reads of the cache require reading the entire topic partition, so if there is a need for frequent reads, it's recommended to put an in memory caching layer infront of this cache.
+
+Topics that are used as caches should be compacted so that reads are less expensive when they rescan the topic, as only the latest value is needed.
+
+This cache does not support any special TTL mechanism, any TTL should be handled by the Kafka topic itself using data retention policies.
 
 
 ## Fields
@@ -468,256 +439,11 @@ The rough amount of time to allow connections to idle before they are closed.
 
 ### `topic`
 
-A topic to write messages to.
-This field supports interpolation functions.
+The topic to store data in.
 
 
 *Type*: `string`
 
-
-### `key`
-
-An optional key to populate for each message.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-### `partition`
-
-An optional explicit partition to set for each message. This field is only relevant when the `partitioner` is set to `manual`. The provided interpolation string must be a valid integer.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-partition: ${! meta("partition") }
-```
-
-### `metadata`
-
-Determine which (if any) metadata values should be added to messages as headers.
-
-
-*Type*: `object`
-
-
-### `metadata.include_prefixes`
-
-Provide a list of explicit metadata key prefixes to match against.
-
-
-*Type*: `array`
-
-*Default*: `[]`
-
-```yml
-# Examples
-
-include_prefixes:
-  - foo_
-  - bar_
-
-include_prefixes:
-  - kafka_
-
-include_prefixes:
-  - content-
-```
-
-### `metadata.include_patterns`
-
-Provide a list of explicit metadata key regular expression (re2) patterns to match against.
-
-
-*Type*: `array`
-
-*Default*: `[]`
-
-```yml
-# Examples
-
-include_patterns:
-  - .*
-
-include_patterns:
-  - _timestamp_unix$
-```
-
-### `timestamp_ms`
-
-An optional timestamp to set for each message expressed in milliseconds. When left empty, the current timestamp is used.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-timestamp_ms: ${! timestamp_unix_milli() }
-
-timestamp_ms: ${! metadata("kafka_timestamp_ms") }
-```
-
-### `max_in_flight`
-
-The maximum number of batches to be sending in parallel at any given time.
-
-
-*Type*: `int`
-
-*Default*: `10`
-
-### `batching`
-
-Allows you to configure a batching policy.
-
-
-*Type*: `object`
-
-
-```yml
-# Examples
-
-batching:
-  byte_size: 5000
-  count: 0
-  period: 1s
-
-batching:
-  count: 10
-  period: 1s
-
-batching:
-  check: this.contains("END BATCH")
-  count: 0
-  period: 1m
-```
-
-### `batching.count`
-
-A number of messages at which the batch should be flushed. If `0` disables count based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.byte_size`
-
-An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.period`
-
-A period in which an incomplete batch should be flushed regardless of its size.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-```yml
-# Examples
-
-period: 1s
-
-period: 1m
-
-period: 500ms
-```
-
-### `batching.check`
-
-A Bloblang query that should return a boolean value indicating whether a message should end a batch.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-```yml
-# Examples
-
-check: this.type == "end_of_transaction"
-```
-
-### `batching.processors`
-
-A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-processors:
-  - archive:
-      format: concatenate
-
-processors:
-  - archive:
-      format: lines
-
-processors:
-  - archive:
-      format: json_array
-```
-
-### `partitioner`
-
-Override the default murmur2 hashing partitioner.
-
-
-*Type*: `string`
-
-
-
-| Option | Summary |
-| ------ | ------- |
-| `least_backup` | Chooses the least backed up partition (the partition with the fewest amount of buffered records). Partitions are selected per batch. |
-| `manual` | Manually select a partition for each message, requires the field `partition` to be specified. |
-| `murmur2_hash` | Kafka's default hash algorithm that uses a 32-bit murmur2 hash of the key to compute which partition the record will be on. |
-| `round_robin` | Round-robin's messages through all available partitions. This algorithm has lower throughput and causes higher CPU load on brokers, but can be useful if you want to ensure an even distribution of records to partitions. |
-
-
-### `idempotent_write`
-
-Enable the idempotent write producer option. This requires the `IDEMPOTENT_WRITE` permission on `CLUSTER` and can be disabled if this permission is not available.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `compression`
-
-Optionally set an explicit compression type. The default preference is to use snappy when the broker supports it, and fall back to none if not.
-
-
-*Type*: `string`
-
-
-Options:
-`lz4`
-, `snappy`
-, `gzip`
-, `none`
-, `zstd`
-.
 
 ### `allow_auto_topic_creation`
 
@@ -727,48 +453,5 @@ Enables topics to be auto created if they do not exist when fetching their metad
 *Type*: `bool`
 
 *Default*: `true`
-
-### `timeout`
-
-The maximum period of time to wait for message sends before abandoning the request and retrying
-
-
-*Type*: `string`
-
-*Default*: `"10s"`
-
-### `max_message_bytes`
-
-The maximum space in bytes than an individual message may take, messages larger than this value will be rejected. This field corresponds to Kafka's `max.message.bytes`.
-
-
-*Type*: `string`
-
-*Default*: `"1MiB"`
-
-```yml
-# Examples
-
-max_message_bytes: 100MB
-
-max_message_bytes: 50mib
-```
-
-### `broker_write_max_bytes`
-
-The upper bound for the number of bytes written to a broker connection in a single write. This field corresponds to Kafka's `socket.request.max.bytes`.
-
-
-*Type*: `string`
-
-*Default*: `"100MiB"`
-
-```yml
-# Examples
-
-broker_write_max_bytes: 128MB
-
-broker_write_max_bytes: 50mib
-```
 
 
