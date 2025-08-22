@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
+	"github.com/wombatwisdom/components/bundles/mqtt"
 	"github.com/wombatwisdom/components/framework/spec"
-	"github.com/wombatwisdom/components/mqtt"
 )
 
 func init() {
@@ -142,22 +142,22 @@ func newWWMQTTInput(conf *service.ParsedConfig, mgr *service.Resources) (service
 	if err != nil {
 		return nil, fmt.Errorf("failed to get urls: %w", err)
 	}
-	
+
 	clientID, err := conf.FieldString("client_id")
 	if err != nil {
 		clientID = ""
 	}
-	
+
 	cleanSession, err := conf.FieldBool("clean_session")
 	if err != nil {
 		cleanSession = true
 	}
-	
+
 	connectTimeout, err := conf.FieldDuration("connect_timeout")
 	if err != nil {
 		connectTimeout = 30 * time.Second
 	}
-	
+
 	keepalive, err := conf.FieldDuration("keepalive")
 	if err != nil {
 		keepalive = 60 * time.Second
@@ -174,7 +174,7 @@ func newWWMQTTInput(conf *service.ParsedConfig, mgr *service.Resources) (service
 		CleanSession: cleanSession,
 		Filters:      make(map[string]byte), // Default empty filters
 	}
-	
+
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
@@ -182,7 +182,7 @@ func newWWMQTTInput(conf *service.ParsedConfig, mgr *service.Resources) (service
 		inputConfig.Username = username
 		inputConfig.Password = password
 	}
-	
+
 	// Handle filters
 	if filtersRaw, err := conf.FieldAny("filters"); err == nil {
 		if filtersMap, ok := filtersRaw.(map[string]interface{}); ok {
@@ -211,37 +211,37 @@ func newWWMQTTOutput(conf *service.ParsedConfig, mgr *service.Resources) (servic
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get urls: %w", err)
 	}
-	
+
 	topic, err := conf.FieldString("topic")
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to get topic: %w", err)
 	}
-	
+
 	clientID, err := conf.FieldString("client_id")
 	if err != nil {
 		clientID = ""
 	}
-	
+
 	qos, err := conf.FieldInt("qos")
 	if err != nil {
 		qos = 0
 	}
-	
+
 	retained, err := conf.FieldBool("retained")
 	if err != nil {
 		retained = false
 	}
-	
+
 	writeTimeout, err := conf.FieldDuration("write_timeout")
 	if err != nil {
 		writeTimeout = 5 * time.Second
 	}
-	
+
 	connectTimeout, err := conf.FieldDuration("connect_timeout")
 	if err != nil {
 		connectTimeout = 30 * time.Second
 	}
-	
+
 	keepalive, err := conf.FieldDuration("keepalive")
 	if err != nil {
 		keepalive = 60 * time.Second
@@ -260,7 +260,7 @@ func newWWMQTTOutput(conf *service.ParsedConfig, mgr *service.Resources) (servic
 		QOS:          byte(qos),
 		RetainedExpr: fmt.Sprintf("%t", retained), // Convert bool to expression
 	}
-	
+
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
@@ -279,10 +279,10 @@ func newWWMQTTOutput(conf *service.ParsedConfig, mgr *service.Resources) (servic
 type wwMQTTInput struct {
 	inputConfig mqtt.InputConfig
 	logger      *service.Logger
-	
+
 	// wombatwisdom components
 	wwInput *mqtt.Input
-	
+
 	// message queue for bridging wombatwisdom messages to Benthos
 	messageQueue chan *service.Message
 }
@@ -293,7 +293,7 @@ func (w *wwMQTTInput) Connect(ctx context.Context) error {
 		ctx:    ctx,
 		logger: w.logger,
 	}
-	
+
 	// Create wombatwisdom input
 	wwInput, err := mqtt.NewInput(env, w.inputConfig)
 	if err != nil {
@@ -339,12 +339,12 @@ func (w *wwMQTTInput) Close(ctx context.Context) error {
 		}
 		w.logger.Info("wombatwisdom MQTT input closed")
 	}
-	
+
 	// Close the message queue
 	if w.messageQueue != nil {
 		close(w.messageQueue)
 	}
-	
+
 	return nil
 }
 
@@ -352,7 +352,7 @@ func (w *wwMQTTInput) Close(ctx context.Context) error {
 type wwMQTTOutput struct {
 	outputConfig mqtt.OutputConfig
 	logger       *service.Logger
-	
+
 	// wombatwisdom components
 	wwOutput *mqtt.Output
 }
@@ -363,7 +363,7 @@ func (w *wwMQTTOutput) Connect(ctx context.Context) error {
 		ctx:    ctx,
 		logger: w.logger,
 	}
-	
+
 	// Create wombatwisdom output
 	wwOutput, err := mqtt.NewOutput(env, w.outputConfig)
 	if err != nil {
@@ -385,27 +385,27 @@ func (w *wwMQTTOutput) Write(ctx context.Context, msg *service.Message) error {
 	if w.wwOutput == nil {
 		return fmt.Errorf("MQTT output not connected")
 	}
-	
+
 	// Convert Benthos message to wombatwisdom message
 	data, _ := msg.AsBytes()
 	wwMsg := &mqttMessageAdapter{
 		data: data,
 		meta: make(map[string]any),
 	}
-	
+
 	// Copy metadata
 	_ = msg.MetaWalk(func(key string, value string) error {
 		wwMsg.meta[key] = value
 		return nil
 	})
-	
+
 	// Write using wombatwisdom output
 	err := w.wwOutput.Write(ctx, wwMsg)
 	if err != nil {
 		w.logger.Errorf("Failed to write message via wombatwisdom MQTT output: %v", err)
 		return err
 	}
-	
+
 	w.logger.Debugf("Successfully published message via wombatwisdom MQTT output")
 	return nil
 }
@@ -458,7 +458,7 @@ func (e *mqttEnvironmentAdapter) GetBool(key string) bool {
 	return false
 }
 
-// DynamicFieldFactory interface method  
+// DynamicFieldFactory interface method
 func (e *mqttEnvironmentAdapter) NewDynamicField(expr string) spec.DynamicField {
 	return &mqttDynamicField{expr: expr}
 }
@@ -516,7 +516,7 @@ func (c *mqttCollectorAdapter) Write(msg spec.Message) error {
 		c.logger.Errorf("Failed to convert wombatwisdom message to Benthos: %v", err)
 		return err
 	}
-	
+
 	// Send to the input's message queue
 	select {
 	case c.input.messageQueue <- benthosMsg:
@@ -538,20 +538,20 @@ func (c *mqttCollectorAdapter) convertToBenthosMessage(msg spec.Message) (*servi
 	if err != nil {
 		return nil, fmt.Errorf("failed to get raw data from wombatwisdom message: %w", err)
 	}
-	
+
 	// Create Benthos message with the data
 	benthosMsg := service.NewMessage(data)
-	
+
 	// Copy metadata from wombatwisdom message to Benthos message
 	for key, value := range msg.Metadata() {
 		// Convert any type to string for Benthos metadata
 		benthosMsg.MetaSet(key, fmt.Sprintf("%v", value))
 	}
-	
+
 	// Add wombatwisdom-specific metadata
 	benthosMsg.MetaSet("ww_component", "mqtt")
 	benthosMsg.MetaSet("ww_source", "wombatwisdom")
-	
+
 	return benthosMsg, nil
 }
 

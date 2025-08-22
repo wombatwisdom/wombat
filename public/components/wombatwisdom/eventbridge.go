@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
-	eventbridge "github.com/wombatwisdom/components/aws-eventbridge"
+	eventbridge "github.com/wombatwisdom/components/bundles/aws-eventbridge"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
@@ -403,4 +403,3 @@ func (c *eventBridgeComponentContextAdapter) NewMessage() spec.Message {
 	// Simple placeholder implementation
 	return spec.NewBytesMessage([]byte{})
 }
-
