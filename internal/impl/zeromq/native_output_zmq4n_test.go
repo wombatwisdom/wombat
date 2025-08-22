@@ -293,11 +293,11 @@ func TestZMQOutputNConnect(t *testing.T) {
 		server := gzmq4.NewPull(context.Background())
 		err := server.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer server.Close()
+		defer func() { _ = server.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15562"
-		server.Close()
+		_ = server.Close()
 		err = server.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -358,11 +358,11 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		receiver := gzmq4.NewPull(context.Background())
 		err := receiver.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer receiver.Close()
+		defer func() { _ = receiver.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15563"
-		receiver.Close()
+		_ = receiver.Close()
 		err = receiver.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -377,7 +377,7 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		ctx := context.Background()
 		err = output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Create test message batch
 		batch := service.MessageBatch{
@@ -409,11 +409,11 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		receiver := gzmq4.NewPull(context.Background())
 		err := receiver.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer receiver.Close()
+		defer func() { _ = receiver.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15563"
-		receiver.Close()
+		_ = receiver.Close()
 		err = receiver.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -428,7 +428,7 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		ctx := context.Background()
 		err = output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Create message with metadata that will be sent as separate parts
 		msg := service.NewMessage([]byte("main content"))
@@ -467,11 +467,11 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		receiver := gzmq4.NewPull(context.Background())
 		err := receiver.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer receiver.Close()
+		defer func() { _ = receiver.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15563"
-		receiver.Close()
+		_ = receiver.Close()
 		err = receiver.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -486,7 +486,7 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		ctx := context.Background()
 		err = output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Write empty batch
 		batch := service.MessageBatch{}
@@ -500,11 +500,11 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		receiver := gzmq4.NewPull(context.Background())
 		err := receiver.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer receiver.Close()
+		defer func() { _ = receiver.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15563"
-		receiver.Close()
+		_ = receiver.Close()
 		err = receiver.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -519,7 +519,7 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		ctx := context.Background()
 		err = output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Write messages concurrently
 		numWriters := 5
@@ -632,7 +632,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 		ctx := context.Background()
 		err := output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Get the bound socket's address
 		socketAddr := output.socket.(interface { Addr() net.Addr }).Addr()
@@ -642,7 +642,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 		sub := gzmq4.NewSub(context.Background())
 		err = sub.Dial(endpoint)
 		require.NoError(t, err)
-		defer sub.Close()
+		defer func() { _ = sub.Close() }()
 
 		// Subscribe to all messages
 		err = sub.SetOption(gzmq4.OptionSubscribe, "")
@@ -688,7 +688,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 		ctx := context.Background()
 		err := output.Connect(ctx)
 		require.NoError(t, err)
-		defer output.Close(ctx)
+		defer func() { _ = output.Close(ctx) }()
 
 		// Get the bound socket's address
 		socketAddr := output.socket.(interface { Addr() net.Addr }).Addr()
@@ -704,7 +704,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 			pullers[i] = gzmq4.NewPull(context.Background())
 			err = pullers[i].Dial(endpoint)
 			require.NoError(t, err)
-			defer pullers[i].Close()
+			defer func(i int) { _ = pullers[i].Close() }(i)
 
 			// Start receiver goroutine
 			wg.Add(1)
@@ -740,7 +740,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 
 		// Close pullers to stop receiver goroutines
 		for _, puller := range pullers {
-			puller.Close()
+			_ = puller.Close()
 		}
 		wg.Wait()
 

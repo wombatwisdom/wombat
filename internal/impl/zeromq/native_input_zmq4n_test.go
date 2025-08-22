@@ -340,11 +340,11 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		server := gzmq4.NewPush(context.Background())
 		err := server.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer server.Close()
+		defer func() { _ = server.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15558"
-		server.Close()
+		_ = server.Close()
 		err = server.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -359,7 +359,7 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		ctx := context.Background()
 		err = input.Connect(ctx)
 		require.NoError(t, err)
-		defer input.Close(ctx)
+		defer func() { _ = input.Close(ctx) }()
 
 		// Send test message
 		testMsg := "test message"
@@ -389,11 +389,11 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		server := gzmq4.NewPush(context.Background())
 		err := server.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer server.Close()
+		defer func() { _ = server.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15559"
-		server.Close()
+		_ = server.Close()
 		err = server.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -408,7 +408,7 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		ctx := context.Background()
 		err = input.Connect(ctx)
 		require.NoError(t, err)
-		defer input.Close(ctx)
+		defer func() { _ = input.Close(ctx) }()
 
 		// Send multipart message
 		parts := []string{"part1", "part2", "part3"}
@@ -447,11 +447,11 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		server := gzmq4.NewPush(context.Background())
 		err := server.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer server.Close()
+		defer func() { _ = server.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15560"
-		server.Close()
+		_ = server.Close()
 		err = server.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -466,7 +466,7 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		ctx := context.Background()
 		err = input.Connect(ctx)
 		require.NoError(t, err)
-		defer input.Close(ctx)
+		defer func() { _ = input.Close(ctx) }()
 
 		// Try to read - should timeout
 		start := time.Now()
@@ -548,11 +548,11 @@ func TestZMQInputNIntegrationScenarios(t *testing.T) {
 		pub := gzmq4.NewPub(context.Background())
 		err := pub.Listen("tcp://localhost:0")
 		require.NoError(t, err)
-		defer pub.Close()
+		defer func() { _ = pub.Close() }()
 
 		// Use fixed port for testing
 		endpoint := "tcp://localhost:15561"
-		pub.Close()
+		_ = pub.Close()
 		err = pub.Listen(endpoint)
 		require.NoError(t, err)
 
@@ -568,7 +568,7 @@ func TestZMQInputNIntegrationScenarios(t *testing.T) {
 		ctx := context.Background()
 		err = input.Connect(ctx)
 		require.NoError(t, err)
-		defer input.Close(ctx)
+		defer func() { _ = input.Close(ctx) }()
 
 		// Give subscriber time to connect
 		time.Sleep(100 * time.Millisecond)

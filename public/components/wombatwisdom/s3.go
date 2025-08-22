@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
-	s3 "github.com/wombatwisdom/components/aws-s3"
+	s3 "github.com/wombatwisdom/components/bundles/aws-s3"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
@@ -334,7 +334,7 @@ func (w *wwS3Input) Close(ctx context.Context) error {
 	return nil
 }
 
-// wwS3Retrieval provides seamless integration between Benthos and wombatwisdom S3 retrieval processor  
+// wwS3Retrieval provides seamless integration between Benthos and wombatwisdom S3 retrieval processor
 type wwS3Retrieval struct {
 	retrievalConfig s3.RetrievalConfig
 	logger          *service.Logger
