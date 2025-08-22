@@ -14,6 +14,16 @@ Automatically decodes and validates messages with schemas from a Confluent Schem
 # Common config fields, showing default values
 label: ""
 schema_registry_decode:
+  avro:
+    raw_unions: false # No default (optional)
+    preserve_logical_types: false
+    translate_kafka_connect_types: false
+  protobuf:
+    use_proto_names: false
+    use_enum_numbers: false
+    emit_unpopulated: false
+    emit_default_values: false
+  cache_duration: 10m
   url: "" # No default (required)
 ```
 </TabItem>
@@ -22,7 +32,31 @@ schema_registry_decode:
 # Advanced config fields, showing default values
 label: ""
 schema_registry_decode:
-  avro_raw_json: false
+  avro:
+    raw_unions: false # No default (optional)
+    preserve_logical_types: false
+    translate_kafka_connect_types: false
+    mapping: | # No default (optional)
+      map isDebeziumTimestampType {
+        root = this.type == "long" && this."connect.name" == "io.debezium.time.Timestamp" && !this.exists("logicalType")
+      }
+      map debeziumTimestampToAvroTimestamp {
+        let mapped_fields = this.fields.or([]).map_each(item -> item.apply("debeziumTimestampToAvroTimestamp"))
+        root = match {
+          this.type == "record" => this.assign({"fields": $mapped_fields})
+          this.type.type() == "array" => this.assign({"type": this.type.map_each(item -> item.apply("debeziumTimestampToAvroTimestamp"))})
+          # Add a logical type so that it's decoded as a timestamp instead of a long.
+          this.type.type() == "object" && this.type.apply("isDebeziumTimestampType") => this.merge({"type":{"logicalType": "timestamp-millis"}})
+          _ => this
+        }
+      }
+      root = this.apply("debeziumTimestampToAvroTimestamp")
+  protobuf:
+    use_proto_names: false
+    use_enum_numbers: false
+    emit_unpopulated: false
+    emit_default_values: false
+  cache_duration: 10m
   url: "" # No default (required)
   oauth:
     enabled: false
@@ -64,8 +98,8 @@ This processor creates documents formatted as [Avro JSON](https://avro.apache.or
 For example, the union schema `["null","string","Foo"]`, where `Foo` is a record name, would encode:
 
 - `null` as `null`;
-- the string `"a"` as `\{"string": "a"}`; and
-- a `Foo` instance as `\{"Foo": {...}}`, where `{...}` indicates the JSON encoding of a `Foo` instance.
+- the string `"a"` as `{"string": "a"}`; and
+- a `Foo` instance as `{"Foo": {...}}`, where `{...}` indicates the JSON encoding of a `Foo` instance.
 
 However, it is possible to instead create documents in [standard/raw JSON format](https://pkg.go.dev/github.com/linkedin/goavro/v2#NewCodecForStandardJSONFull) by setting the field  `avro_raw_json` to `true`.
 
@@ -73,17 +107,191 @@ However, it is possible to instead create documents in [standard/raw JSON format
 
 This processor decodes protobuf messages to JSON documents, you can read more about JSON mapping of protobuf messages here: https://developers.google.com/protocol-buffers/docs/proto3#json
 
+## Metadata
+
+This processor also adds the following metadata to each outgoing message:
+
+schema_id: the ID of the schema in the schema registry that was associated with the message.
+
 
 ## Fields
 
-### `avro_raw_json`
+### `avro`
 
-Whether Avro messages should be decoded into normal JSON ("json that meets the expectations of regular internet json") rather than [Avro JSON](https://avro.apache.org/docs/current/specification/_print/#json-encoding). If `true` the schema returned from the subject should be decoded as [standard json](https://pkg.go.dev/github.com/linkedin/goavro/v2#NewCodecForStandardJSONFull) instead of as [avro json](https://pkg.go.dev/github.com/linkedin/goavro/v2#NewCodec). There is a [comment in goavro](https://github.com/linkedin/goavro/blob/5ec5a5ee7ec82e16e6e2b438d610e1cab2588393/union.go#L224-L249), the [underlining library used for avro serialization](https://github.com/linkedin/goavro), that explains in more detail the difference between the standard json and avro json.
+Configuration for how to decode schemas that are of type AVRO.
+
+
+*Type*: `object`
+
+
+### `avro.raw_unions`
+
+Whether avro messages should be decoded into normal JSON ("json that meets the expectations of regular internet json") rather than [JSON as specified in the Avro Spec](https://avro.apache.org/docs/current/specification/_print/#json-encoding).
+
+For example, if there is a union schema `["null", "string", "Foo"]` where `Foo` is a record name, with raw_unions as false (the default) you get:
+- `null` as `null`;
+- the string `"a"` as `{"string": "a"}`; and
+- a `Foo` instance as `{"Foo": {...}}`, where `{...}` indicates the JSON encoding of a `Foo` instance.
+
+When raw_unions is set to true then the above union schema is decoded as the following:
+- `null` as `null`;
+- the string `"a"` as `"a"`; and
+- a `Foo` instance as `{...}`, where `{...}` indicates the JSON encoding of a `Foo` instance.
+
+
+*Type*: `bool`
+
+
+### `avro.preserve_logical_types`
+
+Whether logical types should be preserved or transformed back into their primitive type. By default, decimals are decoded as raw bytes and timestamps are decoded as plain integers. Setting this field to true keeps decimal types as numbers in bloblang and timestamps as time values.
 
 
 *Type*: `bool`
 
 *Default*: `false`
+
+### `avro.translate_kafka_connect_types`
+
+Only valid if preserve_logical_types is true. This decodes various Kafka Connect types into their bloblang equivalents when not representable by standard logical types according to the Avro standard.
+
+Types that are currently translated:
+
+.Debezium Custom Temporal Types
+|===
+|Type Name |Bloblang Type |Description
+
+|io.debezium.time.Date
+|timestamp
+|Date without time (days since epoch)
+
+|io.debezium.time.Timestamp
+|timestamp
+|Timestamp without timezone (milliseconds since epoch)
+
+|io.debezium.time.MicroTimestamp
+|timestamp
+|Timestamp with microsecond precision
+
+|io.debezium.time.NanoTimestamp
+|timestamp
+|Timestamp with nanosecond precision
+
+|io.debezium.time.ZonedTimestamp
+|timestamp
+|Timestamp with timezone (ISO-8601 format)
+
+|io.debezium.time.Year
+|timestamp at January 1st at 00:00:00
+|Year value
+
+|io.debezium.time.Time
+|timestamp at the unix epoch
+|Time without date (milliseconds past midnight)
+
+|io.debezium.time.MicroTime
+|timestamp at the unix epoch
+|Time with microsecond precision
+
+|io.debezium.time.NanoTime
+|timestamp at the unix epoch
+|Time with nanosecond precision
+
+|===
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `avro.mapping`
+
+A custom mapping to apply to Avro schemas JSON representation. This is useful to transform custom types emitted by other tools into standard avro.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+mapping: |2
+  map isDebeziumTimestampType {
+    root = this.type == "long" && this."connect.name" == "io.debezium.time.Timestamp" && !this.exists("logicalType")
+  }
+  map debeziumTimestampToAvroTimestamp {
+    let mapped_fields = this.fields.or([]).map_each(item -> item.apply("debeziumTimestampToAvroTimestamp"))
+    root = match {
+      this.type == "record" => this.assign({"fields": $mapped_fields})
+      this.type.type() == "array" => this.assign({"type": this.type.map_each(item -> item.apply("debeziumTimestampToAvroTimestamp"))})
+      # Add a logical type so that it's decoded as a timestamp instead of a long.
+      this.type.type() == "object" && this.type.apply("isDebeziumTimestampType") => this.merge({"type":{"logicalType": "timestamp-millis"}})
+      _ => this
+    }
+  }
+  root = this.apply("debeziumTimestampToAvroTimestamp")
+```
+
+### `protobuf`
+
+Configuration for how to decode schemas that are of type PROTOBUF.
+
+
+*Type*: `object`
+
+
+### `protobuf.use_proto_names`
+
+Use proto field name instead of lowerCamelCase name.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `protobuf.use_enum_numbers`
+
+Emits enum values as numbers.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `protobuf.emit_unpopulated`
+
+Whether to emit unpopulated fields. It does not emit unpopulated oneof fields or unpopulated extension fields.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `protobuf.emit_default_values`
+
+Whether to emit default-valued primitive fields, empty lists, and empty maps. emit_unpopulated takes precedence over emit_default_values
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `cache_duration`
+
+The duration after which a schema is considered stale and will be removed from the cache.
+
+
+*Type*: `string`
+
+*Default*: `"10m"`
+
+```yml
+# Examples
+
+cache_duration: 1h
+
+cache_duration: 5m
+```
 
 ### `url`
 

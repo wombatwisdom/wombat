@@ -696,6 +696,47 @@ root.unescaped = this.value.unescape_url_query()
 # Out: {"unescaped":"foo & bar"}
 ```
 
+### `unicode_segments`
+
+<Aside type="note">
+This method is mostly stable but breaking changes could still be made outside of major version releases if a fundamental problem with it is found.
+</Aside>
+Splits text into segments from a given string based on the unicode text segmentation rules.
+
+#### Parameters
+
+*`segmentation_type`* &lt;string&gt;   
+
+#### Examples
+
+
+Splits a string into different sentences
+
+```coffeescript
+root.sentences = this.value.unicode_segments("sentence")
+
+# In:  {"value":"This is sentence 1.0. And this is sentence two."}
+# Out: {"sentences":["This is sentence 1.0. ","And this is sentence two."]}
+```
+
+Splits a string into different graphemes
+
+```coffeescript
+root.graphemes = this.value.unicode_segments("grapheme")
+
+# In:  {"value":"🐕‍🦺 🫠"}
+# Out: {"graphemes":["🐕‍🦺"," ","🫠"]}
+```
+
+Splits text into words
+
+```coffeescript
+root.words = this.value.unicode_segments("word")
+
+# In:  {"value":"Hello, world!"}
+# Out: {"words":["Hello",","," ","world","!"]}
+```
+
 ### `unquote`
 
 Unquotes a target string, expanding any escape sequences (`\t`, `\n`, `\xFF`, `\u0100`) for control characters and non-printable characters.
@@ -868,6 +909,78 @@ root.outs = this.ins.map_each(ele -> ele.abs())
 
 # In:  {"ins":[9,-18,1.23,-4.56]}
 # Out: {"outs":[9,18,1.23,4.56]}
+```
+
+### `bitwise_and`
+
+Returns the number bitwise AND-ed with the specified value.
+
+#### Parameters
+
+*`value`* &lt;integer&gt; The value to AND with  
+
+#### Examples
+
+
+```coffeescript
+root.new_value = this.value.bitwise_and(6)
+
+# In:  {"value":12}
+# Out: {"new_value":4}
+
+# In:  {"value":0}
+# Out: {"new_value":0}
+
+# In:  {"value":-4}
+# Out: {"new_value":4}
+```
+
+### `bitwise_or`
+
+Returns the number bitwise OR-ed with the specified value.
+
+#### Parameters
+
+*`value`* &lt;integer&gt; The value to OR with  
+
+#### Examples
+
+
+```coffeescript
+root.new_value = this.value.bitwise_or(6)
+
+# In:  {"value":12}
+# Out: {"new_value":14}
+
+# In:  {"value":0}
+# Out: {"new_value":6}
+
+# In:  {"value":-2}
+# Out: {"new_value":-2}
+```
+
+### `bitwise_xor`
+
+Returns the number bitwise eXclusive-OR-ed with the specified value.
+
+#### Parameters
+
+*`value`* &lt;integer&gt; The value to XOR with  
+
+#### Examples
+
+
+```coffeescript
+root.new_value = this.value.bitwise_xor(6)
+
+# In:  {"value":12}
+# Out: {"new_value":10}
+
+# In:  {"value":0}
+# Out: {"new_value":6}
+
+# In:  {"value":-2}
+# Out: {"new_value":-8}
 ```
 
 ### `ceil`
@@ -2923,6 +3036,7 @@ Serializes a target value into an XML byte array.
 
 *`indent`* &lt;string, default `"    "`&gt; Indentation string. Each element in an XML object or array will begin on a new, indented line followed by one or more copies of indent according to the indentation nesting.  
 *`no_indent`* &lt;bool, default `false`&gt; Disable indentation.  
+*`root_tag`* &lt;(optional) string&gt; Root tag. Set this if you wish to override the root tag of the document.  
 
 #### Examples
 
@@ -2938,6 +3052,21 @@ root = this.format_xml()
 #              <baz>foo bar baz</baz>
 #          </bar>
 #      </foo>
+
+# In:  {"-foo":"bar","fizz":"buzz"}
+# Out: <doc foo="bar">
+#          <fizz>buzz</fizz>
+#      </doc>
+
+# In:  {"foo":[{"bar":"baz"},{"fizz":"buzz"}]}
+# Out: <doc>
+#          <foo>
+#              <bar>baz</bar>
+#          </foo>
+#          <foo>
+#              <fizz>buzz</fizz>
+#          </foo>
+#      </doc>
 ```
 
 Pass a string to the `indent` parameter in order to customise the indentation.
@@ -2971,6 +3100,36 @@ root = this.format_xml(no_indent: true)
 # Out: <foo><bar><baz>foo bar baz</baz></bar></foo>
 ```
 
+Set a custom root tag.
+
+```coffeescript
+root = this.format_xml(root_tag: "blobfish")
+
+# In:  {"foo":{"bar":{"baz":"foo bar baz"}}}
+# Out: <blobfish>
+#          <foo>
+#              <bar>
+#                  <baz>foo bar baz</baz>
+#              </bar>
+#          </foo>
+#      </blobfish>
+
+# In:  {"-foo":"bar","fizz":"buzz"}
+# Out: <blobfish foo="bar">
+#          <fizz>buzz</fizz>
+#      </blobfish>
+
+# In:  {"foo":[{"bar":"baz"},{"fizz":"buzz"}]}
+# Out: <blobfish>
+#          <foo>
+#              <bar>baz</bar>
+#          </foo>
+#          <foo>
+#              <fizz>buzz</fizz>
+#          </foo>
+#      </blobfish>
+```
+
 ### `format_yaml`
 
 Serializes a target value into a YAML byte array.
@@ -2993,6 +3152,10 @@ root.doc = this.doc.format_yaml().string()
 # In:  {"doc":{"foo":"bar"}}
 # Out: {"doc":"foo: bar\n"}
 ```
+
+### `infer_schema`
+
+Attempt to infer the schema of a given value. The resulting schema can then be used as an input to schema conversion and enforcement methods.
 
 ### `parse_csv`
 
@@ -3383,6 +3546,29 @@ root.h2 = this.value.hash(algorithm: "crc32", polynomial: "Koopman").encode("hex
 
 # In:  {"value":"hello world"}
 # Out: {"h1":"c99465aa","h2":"df373d3c"}
+```
+
+### `uuid_v5`
+
+Returns UUID version 5 for the given string.
+
+#### Parameters
+
+*`ns`* &lt;(optional) string&gt; An optional namespace name or UUID. It supports the `dns`, `url`, `oid` and `x500` predefined namespaces and any valid RFC-9562 UUID. If empty, the nil UUID will be used.  
+
+#### Examples
+
+
+```coffeescript
+root.id = "example".uuid_v5()
+```
+
+```coffeescript
+root.id = "example".uuid_v5("x500")
+```
+
+```coffeescript
+root.id = "example".uuid_v5("77f836b7-9f61-46c0-851e-9b6ca3535e69")
 ```
 
 ## SQL

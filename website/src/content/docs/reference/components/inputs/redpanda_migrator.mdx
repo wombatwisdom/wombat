@@ -1,13 +1,13 @@
 ---
-title: kafka_franz
+title: redpanda_migrator
 kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Kafka input using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+A Redpanda Migrator input using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
-Introduced in version 3.61.0.
+Introduced in version 4.37.0.
 
 
 <Tabs>
@@ -16,7 +16,7 @@ Introduced in version 3.61.0.
 # Common config fields, showing default values
 input:
   label: ""
-  kafka_franz:
+  redpanda_migrator:
     seed_brokers: [] # No default (required)
     topics: [] # No default (required)
     regexp_topics: false
@@ -30,7 +30,7 @@ input:
 # Advanced config fields, showing default values
 input:
   label: ""
-  kafka_franz:
+  redpanda_migrator:
     seed_brokers: [] # No default (required)
     client_id: benthos
     tls:
@@ -58,24 +58,26 @@ input:
     fetch_max_partition_bytes: 1MiB
     transaction_isolation_level: read_uncommitted
     consumer_group: "" # No default (optional)
-    checkpoint_limit: 1024
     commit_period: 5s
-    multi_header: false
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
-      processors: [] # No default (optional)
+    partition_buffer_bytes: 1MB
     topic_lag_refresh_period: 5s
+    max_yield_batch_bytes: 32KB
     auto_replay_nacks: true
 ```
 </TabItem>
 </Tabs>
 
+Reads a batch of messages from a Kafka broker and waits for the output to acknowledge the writes before updating the Kafka consumer group offset.
+
+This input should be used in combination with a `redpanda_migrator` output.
+
 When a consumer group is specified this input consumes one or more topics where partitions will automatically balance across any other connected clients with the same consumer group. When a consumer group is not specified topics can either be consumed in their entirety or with explicit partitions.
 
-This input often out-performs the traditional `kafka` input as well as providing more useful logs and error messages.
+It provides the same delivery guarantees and ordering semantics as the `redpanda` input.
+
+## Metrics
+
+Emits a `redpanda_lag` metric with `topic` and `partition` labels for each consumed topic.
 
 ## Metadata
 
@@ -647,15 +649,6 @@ An optional consumer group to consume as. When specified the partitions of speci
 *Type*: `string`
 
 
-### `checkpoint_limit`
-
-Determines how many messages of the same partition can be processed in parallel before applying back pressure. When a message of a given offset is delivered to the output the offset is only allowed to be committed when all messages of prior offsets have also been delivered, this ensures at-least-once delivery guarantees. However, this mechanism also increases the likelihood of duplicates in the event of crashes or server faults, reducing the checkpoint limit will mitigate this.
-
-
-*Type*: `int`
-
-*Default*: `1024`
-
 ### `commit_period`
 
 The period of time between each commit of the current partition offsets. Offsets are always committed during shutdown.
@@ -665,116 +658,14 @@ The period of time between each commit of the current partition offsets. Offsets
 
 *Default*: `"5s"`
 
-### `multi_header`
+### `partition_buffer_bytes`
 
-Decode headers into lists to allow handling of multiple values with the same key
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `batching`
-
-Allows you to configure a batching policy that applies to individual topic partitions in order to batch messages together before flushing them for processing. Batching can be beneficial for performance as well as useful for windowed processing, and doing so this way preserves the ordering of topic partitions.
-
-
-*Type*: `object`
-
-
-```yml
-# Examples
-
-batching:
-  byte_size: 5000
-  count: 0
-  period: 1s
-
-batching:
-  count: 10
-  period: 1s
-
-batching:
-  check: this.contains("END BATCH")
-  count: 0
-  period: 1m
-```
-
-### `batching.count`
-
-A number of messages at which the batch should be flushed. If `0` disables count based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.byte_size`
-
-An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.period`
-
-A period in which an incomplete batch should be flushed regardless of its size.
+A buffer size (in bytes) for each consumed partition, allowing records to be queued internally before flushing. Increasing this may improve throughput at the cost of higher memory utilisation. Note that each buffer can grow slightly beyond this value.
 
 
 *Type*: `string`
 
-*Default*: `""`
-
-```yml
-# Examples
-
-period: 1s
-
-period: 1m
-
-period: 500ms
-```
-
-### `batching.check`
-
-A Bloblang query that should return a boolean value indicating whether a message should end a batch.
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-```yml
-# Examples
-
-check: this.type == "end_of_transaction"
-```
-
-### `batching.processors`
-
-A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-processors:
-  - archive:
-      format: concatenate
-
-processors:
-  - archive:
-      format: lines
-
-processors:
-  - archive:
-      format: json_array
-```
+*Default*: `"1MB"`
 
 ### `topic_lag_refresh_period`
 
@@ -784,6 +675,15 @@ The period of time between each topic lag refresh cycle.
 *Type*: `string`
 
 *Default*: `"5s"`
+
+### `max_yield_batch_bytes`
+
+The maximum size (in bytes) for each batch yielded by this input. When routed to a redpanda output without modification this would roughly translate to the batch.bytes config field of a traditional producer.
+
+
+*Type*: `string`
+
+*Default*: `"32KB"`
 
 ### `auto_replay_nacks`
 

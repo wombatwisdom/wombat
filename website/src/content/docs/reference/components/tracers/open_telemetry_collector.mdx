@@ -14,6 +14,7 @@ Send tracing events to an [Open Telemetry collector](https://opentelemetry.io/do
 # Common config fields, showing default values
 tracer:
   open_telemetry_collector:
+    service: benthos
     http: [] # No default (required)
     grpc: [] # No default (required)
     sampling:
@@ -26,6 +27,7 @@ tracer:
 # Advanced config fields, showing default values
 tracer:
   open_telemetry_collector:
+    service: benthos
     http: [] # No default (required)
     grpc: [] # No default (required)
     tags: {}
@@ -37,6 +39,15 @@ tracer:
 </Tabs>
 
 ## Fields
+
+### `service`
+
+The name of the service in traces.
+
+
+*Type*: `string`
+
+*Default*: `"benthos"`
 
 ### `http`
 

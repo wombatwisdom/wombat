@@ -1,13 +1,13 @@
 ---
-title: kafka_franz
+title: redpanda_migrator
 kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Kafka output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+A Redpanda Migrator output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
-Introduced in version 3.61.0.
+Introduced in version 4.37.0.
 
 
 <Tabs>
@@ -16,7 +16,7 @@ Introduced in version 3.61.0.
 # Common config fields, showing default values
 output:
   label: ""
-  kafka_franz:
+  redpanda_migrator:
     seed_brokers: [] # No default (required)
     topic: "" # No default (required)
     key: "" # No default (optional)
@@ -24,12 +24,7 @@ output:
     metadata:
       include_prefixes: []
       include_patterns: []
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
+    max_in_flight: 256
 ```
 </TabItem>
 <TabItem label="Advanced">
@@ -37,7 +32,7 @@ output:
 # Advanced config fields, showing default values
 output:
   label: ""
-  kafka_franz:
+  redpanda_migrator:
     seed_brokers: [] # No default (required)
     client_id: benthos
     tls:
@@ -58,13 +53,14 @@ output:
       include_prefixes: []
       include_patterns: []
     timestamp_ms: ${! timestamp_unix_milli() } # No default (optional)
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
-      processors: [] # No default (optional)
+    topic_prefix: ""
+    max_in_flight: 256
+    input_resource: redpanda_migrator_input
+    replication_factor_override: true
+    replication_factor: 3
+    translate_schema_ids: false
+    is_serverless: false
+    schema_registry_output_resource: schema_registry_output
     partitioner: "" # No default (optional)
     idempotent_write: true
     compression: "" # No default (optional)
@@ -76,10 +72,45 @@ output:
 </TabItem>
 </Tabs>
 
-Writes a batch of messages to Kafka brokers and waits for acknowledgement before propagating it back to the input.
+Writes a batch of messages to a Kafka broker and waits for acknowledgement before propagating it back to the input.
 
-This output often out-performs the traditional `kafka` output as well as providing more useful logs and error messages.
+This output should be used in combination with a `redpanda_migrator` input identified by the label specified in
+`input_resource` which it can query for topic and ACL configurations. Once connected, the output will attempt to
+create all topics which the input consumes from along with their ACLs.
 
+If the configured broker does not contain the current message topic, this output attempts to create it along with its
+ACLs.
+
+ACL migration adheres to the following principles:
+
+- `ALLOW WRITE` ACLs for topics are not migrated
+- `ALLOW ALL` ACLs for topics are downgraded to `ALLOW READ`
+- Only topic ACLs are migrated, group ACLs are not migrated
+
+
+## Examples
+
+<Tabs>
+<TabItem label="Transfer data">
+Writes messages to the configured broker and creates topics and topic ACLs if they don't exist. It also ensures that the message order is preserved.
+
+```
+yaml
+output:
+  redpanda_migrator:
+    seed_brokers: [ "127.0.0.1:9093" ]
+    topic: ${! metadata("kafka_topic").or(throw("missing kafka_topic metadata")) }
+    key: ${! metadata("kafka_key") }
+    partitioner: manual
+    partition: ${! metadata("kafka_partition").or(throw("missing kafka_partition metadata")) }
+    timestamp_ms: ${! metadata("kafka_timestamp_ms").or(timestamp_unix_milli()) }
+    input_resource: redpanda_migrator_input
+    max_in_flight: 1
+
+```
+
+</TabItem>
+</Tabs>
 
 ## Fields
 
@@ -566,6 +597,16 @@ timestamp_ms: ${! timestamp_unix_milli() }
 timestamp_ms: ${! metadata("kafka_timestamp_ms") }
 ```
 
+### `topic_prefix`
+
+The topic prefix.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
 ### `max_in_flight`
 
 The maximum number of batches to be sending in parallel at any given time.
@@ -573,109 +614,61 @@ The maximum number of batches to be sending in parallel at any given time.
 
 *Type*: `int`
 
-*Default*: `10`
+*Default*: `256`
 
-### `batching`
+### `input_resource`
 
-Allows you to configure a batching policy.
-
-
-*Type*: `object`
-
-
-```yml
-# Examples
-
-batching:
-  byte_size: 5000
-  count: 0
-  period: 1s
-
-batching:
-  count: 10
-  period: 1s
-
-batching:
-  check: this.contains("END BATCH")
-  count: 0
-  period: 1m
-```
-
-### `batching.count`
-
-A number of messages at which the batch should be flushed. If `0` disables count based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.byte_size`
-
-An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.period`
-
-A period in which an incomplete batch should be flushed regardless of its size.
+The label of the redpanda_migrator input from which to read the configurations for topics and ACLs which need to be created.
 
 
 *Type*: `string`
 
-*Default*: `""`
+*Default*: `"redpanda_migrator_input"`
 
-```yml
-# Examples
+### `replication_factor_override`
 
-period: 1s
+Use the specified replication factor when creating topics.
 
-period: 1m
 
-period: 500ms
-```
+*Type*: `bool`
 
-### `batching.check`
+*Default*: `true`
 
-A Bloblang query that should return a boolean value indicating whether a message should end a batch.
+### `replication_factor`
+
+Replication factor for created topics. This is only used when `replication_factor_override` is set to `true`.
+
+
+*Type*: `int`
+
+*Default*: `3`
+
+### `translate_schema_ids`
+
+Translate schema IDs.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `is_serverless`
+
+Set this to `true` when using Serverless clusters in Redpanda Cloud.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `schema_registry_output_resource`
+
+The label of the schema_registry output to use for fetching schema IDs.
 
 
 *Type*: `string`
 
-*Default*: `""`
-
-```yml
-# Examples
-
-check: this.type == "end_of_transaction"
-```
-
-### `batching.processors`
-
-A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-processors:
-  - archive:
-      format: concatenate
-
-processors:
-  - archive:
-      format: lines
-
-processors:
-  - archive:
-      format: json_array
-```
+*Default*: `"schema_registry_output"`
 
 ### `partitioner`
 

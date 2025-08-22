@@ -1,11 +1,11 @@
 ---
-title: cassandra
+title: elasticsearch_v8
 kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Runs a query against a Cassandra database for each message in order to insert data.
+Publishes messages into an Elasticsearch index. If the index does not exist then it is created with a dynamic mapping.
 
 
 <Tabs>
@@ -14,11 +14,11 @@ Runs a query against a Cassandra database for each message in order to insert da
 # Common config fields, showing default values
 output:
   label: ""
-  cassandra:
-    addresses: [] # No default (required)
-    timeout: 600ms
-    query: "" # No default (required)
-    args_mapping: "" # No default (optional)
+  elasticsearch_v8:
+    urls: [] # No default (required)
+    index: "" # No default (required)
+    action: "" # No default (required)
+    id: ${!counter()}-${!timestamp_unix()} # No default (required)
     max_in_flight: 64
     batching:
       count: 0
@@ -32,8 +32,14 @@ output:
 # Advanced config fields, showing default values
 output:
   label: ""
-  cassandra:
-    addresses: [] # No default (required)
+  elasticsearch_v8:
+    urls: [] # No default (required)
+    index: "" # No default (required)
+    action: "" # No default (required)
+    id: ${!counter()}-${!timestamp_unix()} # No default (required)
+    pipeline: ""
+    routing: ""
+    retry_on_conflict: 0
     tls:
       enabled: false
       skip_cert_verify: false
@@ -41,24 +47,11 @@ output:
       root_cas: ""
       root_cas_file: ""
       client_certs: []
-    password_authenticator:
+    max_in_flight: 64
+    basic_auth:
       enabled: false
       username: ""
       password: ""
-    disable_initial_host_lookup: false
-    max_retries: 3
-    backoff:
-      initial_interval: 1s
-      max_interval: 5s
-    timeout: 600ms
-    host_selection_policy:
-      local_dc: "" # No default (optional)
-      local_rack: "" # No default (optional)
-    query: "" # No default (required)
-    args_mapping: "" # No default (optional)
-    consistency: QUORUM
-    logged_batch: true
-    max_in_flight: 64
     batching:
       count: 0
       byte_size: 0
@@ -69,9 +62,7 @@ output:
 </TabItem>
 </Tabs>
 
-Query arguments can be set using a bloblang array for the fields using the `args_mapping` field.
-
-When populating timestamp columns the value must either be a string in ISO 8601 format (2006-01-02T15:04:05Z07:00), or an integer representing unix time in seconds.
+Both the `id` and `index` fields can be dynamically set using function interpolations described here. When sending batched messages these interpolations are performed per message part.
 
 ## Performance
 
@@ -82,43 +73,131 @@ This output benefits from sending messages as a batch for improved performance. 
 ## Examples
 
 <Tabs>
-<TabItem label="Basic Inserts">
-If we were to create a table with some basic columns with `CREATE TABLE foo.bar (id int primary key, content text, created_at timestamp);`, and were processing JSON documents of the form `{"id":"342354354","content":"hello world","timestamp":1605219406}` using logged batches, we could populate our table with the following config:
+<TabItem label="Updating Documents">
+When updating documents, the request body should contain a combination of a `doc`, `upsert`, and/or `script` fields at the top level, this should be done via mapping processors. `doc` updates using a partial document, `script` performs an update using a scripting language such as the built in Painless language, and `upsert` updates an existing document or inserts a new one if it doesn’t exist. For more information on the structures and behaviors of these fields, please see the [Elasticsearch Update API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html)
 
 ```
 yaml
+# Partial document update
 output:
-  cassandra:
-    addresses:
-      - localhost:9042
-    query: 'INSERT INTO foo.bar (id, content, created_at) VALUES (?, ?, ?)'
-    args_mapping: |
-      root = [
-        this.id,
-        this.content,
-        this.timestamp
-      ]
-    batching:
-      count: 500
-      period: 1s
+  processors:
+    - mapping: |
+        meta id = this.id
+        # Performs a partial update ont he document.
+        root.doc = this
+  elasticsearch_v8:
+    urls: [localhost:9200]
+    index: foo
+    id: ${! @id }
+    action: update
+
+# Scripted update
+output:
+  processors:
+    - mapping: |
+        meta id = this.id
+        # Increments the field "counter" by 1.
+        root.script.source = "ctx._source.counter += 1"
+  elasticsearch_v8:
+    urls: [localhost:9200]
+    index: foo
+    id: ${! @id }
+    action: update
+
+# Upsert
+output:
+  processors:
+    - mapping: |
+        meta id = this.id
+        # If the product with the ID exists, its price will be updated to 100.
+        # If the product does not exist, a new document with ID 1 and a price
+        # of 50 will be inserted.
+        root.doc.product_price = 50
+        root.upsert.product_price = 100
+  elasticsearch_v8:
+    urls: [localhost:9200]
+    index: foo
+    id: ${! @id }
+    action: update
 
 ```
 
 </TabItem>
-<TabItem label="Insert JSON Documents">
-The following example inserts JSON documents into the table `footable` of the keyspace `foospace` using INSERT JSON (https://cassandra.apache.org/doc/latest/cql/json.html#insert-json).
+<TabItem label="Indexing documents from Redpanda">
+Here we read messages from a Redpanda cluster and write them to an Elasticsearch index using a field from the message as the ID for the Elasticsearch document.
+
+```
+yaml
+input:
+  redpanda:
+    seed_brokers: [localhost:19092]
+    topics: ["things"]
+    consumer_group: "rpcn3"
+  processors:
+    - mapping: |
+        meta id = this.id
+        root = this
+output:
+  elasticsearch_v8:
+    urls: ['http://localhost:9200']
+    index: "things"
+    action: "index"
+    id: ${! meta("id") }
+
+```
+
+</TabItem>
+<TabItem label="Indexing documents from S3">
+Here we read messages from a AWS S3 bucket and write them to an Elasticsearch index using the S3 key as the ID for the Elasticsearch document.
+
+```
+yaml
+input:
+  aws_s3:
+    bucket: "my-cool-bucket"
+    prefix: "bug-facts/"
+    scanner:
+      to_the_end: {}
+output:
+  elasticsearch_v8:
+    urls: ['http://localhost:9200']
+    index: "cool-bug-facts"
+    action: "index"
+    id: ${! meta("s3_key") }
+
+```
+
+</TabItem>
+<TabItem label="Create Documents">
+When using the `create` action, a new document will be created if the document ID does not already exist. If the document ID already exists, the operation will fail.
 
 ```
 yaml
 output:
-  cassandra:
-    addresses:
-      - localhost:9042
-    query: 'INSERT INTO foospace.footable JSON ?'
-    args_mapping: 'root = [ this ]'
-    batching:
-      count: 500
-      period: 1s
+  elasticsearch_v8:
+    urls: [localhost:9200]
+    index: foo
+    id: ${! json("id") }
+    action: create
+
+```
+
+</TabItem>
+<TabItem label="Upserting Documents">
+When using the `upsert` action, if the document ID already exists, it will be updated. If the document ID does not exist, a new document will be inserted. The request body should contain the document to be indexed.
+
+```
+yaml
+output:
+  processors:
+    - mapping: |
+        meta id = this.id
+        root = this.doc
+  elasticsearch_v8:
+    urls: [localhost:9200]
+    index: foo
+    id: ${! @id }
+    action: upsert
 
 ```
 
@@ -127,9 +206,9 @@ output:
 
 ## Fields
 
-### `addresses`
+### `urls`
 
-A list of Cassandra nodes to connect to. Multiple comma separated addresses can be specified on a single line.
+A list of URLs to connect to. If an item of the list contains commas it will be expanded into multiple URLs.
 
 
 *Type*: `array`
@@ -138,16 +217,71 @@ A list of Cassandra nodes to connect to. Multiple comma separated addresses can 
 ```yml
 # Examples
 
-addresses:
-  - localhost:9042
-
-addresses:
-  - foo:9042
-  - bar:9042
-
-addresses:
-  - foo:9042,bar:9042
+urls:
+  - http://localhost:9200
 ```
+
+### `index`
+
+The index to place messages.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `action`
+
+The action to take on the document. This field must resolve to one of the following action types: `index`, `update`, `delete`, `create` or `upsert`. See the `Updating Documents` example for more on how the `update` action works and the `Create Documents` and `Upserting Documents` examples for how to use the `create` and `upsert` actions respectively.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `id`
+
+The ID for indexed messages. Interpolation should be used in order to create a unique ID for each message.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+id: ${!counter()}-${!timestamp_unix()}
+```
+
+### `pipeline`
+
+An optional pipeline id to preprocess incoming documents.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `routing`
+
+The routing key to use for the document.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `retry_on_conflict`
+
+Specify how many times should an update operation be retried when a conflict occurs
+
+
+*Type*: `int`
+
+*Default*: `0`
 
 ### `tls`
 
@@ -306,35 +440,44 @@ password: foo
 password: ${KEY_PASSWORD}
 ```
 
-### `password_authenticator`
+### `max_in_flight`
 
-Optional configuration of Cassandra authentication parameters.
+The maximum number of messages to have in flight at a given time. Increase this to improve throughput.
+
+
+*Type*: `int`
+
+*Default*: `64`
+
+### `basic_auth`
+
+Allows you to specify basic authentication.
 
 
 *Type*: `object`
 
 
-### `password_authenticator.enabled`
+### `basic_auth.enabled`
 
-Whether to use password authentication
+Whether to use basic authentication in requests.
 
 
 *Type*: `bool`
 
 *Default*: `false`
 
-### `password_authenticator.username`
+### `basic_auth.username`
 
-The username to authenticate as.
+A username to authenticate as.
 
 
 *Type*: `string`
 
 *Default*: `""`
 
-### `password_authenticator.password`
+### `basic_auth.password`
 
-The password to authenticate with.
+A password to authenticate with.
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -344,139 +487,6 @@ The password to authenticate with.
 *Type*: `string`
 
 *Default*: `""`
-
-### `disable_initial_host_lookup`
-
-If enabled the driver will not attempt to get host info from the system.peers table. This can speed up queries but will mean that data_centre, rack and token information will not be available.
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `max_retries`
-
-The maximum number of retries before giving up on a request.
-
-
-*Type*: `int`
-
-*Default*: `3`
-
-### `backoff`
-
-Control time intervals between retry attempts.
-
-
-*Type*: `object`
-
-
-### `backoff.initial_interval`
-
-The initial period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"1s"`
-
-### `backoff.max_interval`
-
-The maximum period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"5s"`
-
-### `timeout`
-
-The client connection timeout.
-
-
-*Type*: `string`
-
-*Default*: `"600ms"`
-
-### `host_selection_policy`
-
-Optional host selection policy configurations. Highly recommended in deployments with multiple DCs. Host selection is always token aware if the token can be calculated from query. By default the underlying policy is round robin over all nodes. Users can specify a local DC and rack to use for the DC Aware & Rack Aware policies.
-
-
-*Type*: `object`
-
-
-### `host_selection_policy.local_dc`
-
-The local DC to use, enables DC aware policy.
-
-
-*Type*: `string`
-
-
-### `host_selection_policy.local_rack`
-
-The local rack to use, requires local_dc to be set, enables rack aware policy.
-
-
-*Type*: `string`
-
-
-### `query`
-
-A query to execute for each message.
-
-
-*Type*: `string`
-
-
-### `args_mapping`
-
-A Bloblang mapping that can be used to provide arguments to Cassandra queries. The result of the query must be an array containing a matching number of elements to the query arguments.
-
-
-*Type*: `string`
-
-Requires version 3.55.0 or newer
-
-### `consistency`
-
-The consistency level to use.
-
-
-*Type*: `string`
-
-*Default*: `"QUORUM"`
-
-Options:
-`ANY`
-, `ONE`
-, `TWO`
-, `THREE`
-, `QUORUM`
-, `ALL`
-, `LOCAL_QUORUM`
-, `EACH_QUORUM`
-, `LOCAL_ONE`
-.
-
-### `logged_batch`
-
-If enabled the driver will perform a logged batch. Disabling this prompts unlogged batches to be used instead, which are less efficient but necessary for alternative storages that do not support logged batches.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `max_in_flight`
-
-The maximum number of messages to have in flight at a given time. Increase this to improve throughput.
-
-
-*Type*: `int`
-
-*Default*: `64`
 
 ### `batching`
 

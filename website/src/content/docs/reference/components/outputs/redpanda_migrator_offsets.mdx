@@ -1,13 +1,13 @@
 ---
-title: kafka_franz
+title: redpanda_migrator_offsets
 kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Kafka output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+Redpanda Migrator consumer group offsets output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
-Introduced in version 3.61.0.
+Introduced in version 4.37.0.
 
 
 <Tabs>
@@ -16,20 +16,14 @@ Introduced in version 3.61.0.
 # Common config fields, showing default values
 output:
   label: ""
-  kafka_franz:
+  redpanda_migrator_offsets:
     seed_brokers: [] # No default (required)
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
+    offset_topic: ${! @kafka_offset_topic }
+    offset_group: ${! @kafka_offset_group }
+    offset_partition: ${! @kafka_offset_partition }
+    offset_commit_timestamp: ${! @kafka_offset_commit_timestamp }
+    offset_metadata: ${! @kafka_offset_metadata }
+    is_high_watermark: ${! @kafka_is_high_watermark }
 ```
 </TabItem>
 <TabItem label="Advanced">
@@ -37,7 +31,7 @@ output:
 # Advanced config fields, showing default values
 output:
   label: ""
-  kafka_franz:
+  redpanda_migrator_offsets:
     seed_brokers: [] # No default (required)
     client_id: benthos
     tls:
@@ -51,35 +45,26 @@ output:
     metadata_max_age: 5m
     request_timeout_overhead: 10s
     conn_idle_timeout: 20s
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    timestamp_ms: ${! timestamp_unix_milli() } # No default (optional)
-    max_in_flight: 10
-    batching:
-      count: 0
-      byte_size: 0
-      period: ""
-      check: ""
-      processors: [] # No default (optional)
-    partitioner: "" # No default (optional)
-    idempotent_write: true
-    compression: "" # No default (optional)
-    allow_auto_topic_creation: true
+    offset_topic: ${! @kafka_offset_topic }
+    offset_topic_prefix: ""
+    offset_group: ${! @kafka_offset_group }
+    offset_partition: ${! @kafka_offset_partition }
+    offset_commit_timestamp: ${! @kafka_offset_commit_timestamp }
+    offset_metadata: ${! @kafka_offset_metadata }
+    is_high_watermark: ${! @kafka_is_high_watermark }
     timeout: 10s
     max_message_bytes: 1MiB
     broker_write_max_bytes: 100MiB
+    max_retries: 0
+    backoff:
+      initial_interval: 1s
+      max_interval: 5s
+      max_elapsed_time: 30s
 ```
 </TabItem>
 </Tabs>
 
-Writes a batch of messages to Kafka brokers and waits for acknowledgement before propagating it back to the input.
-
-This output often out-performs the traditional `kafka` output as well as providing more useful logs and error messages.
-
+This output should be used in combination with the `redpanda_migrator_offsets` input
 
 ## Fields
 
@@ -466,267 +451,75 @@ The rough amount of time to allow connections to idle before they are closed.
 
 *Default*: `"20s"`
 
-### `topic`
+### `offset_topic`
 
-A topic to write messages to.
+Kafka offset topic.
 This field supports interpolation functions.
 
 
 *Type*: `string`
 
+*Default*: `"${! @kafka_offset_topic }"`
 
-### `key`
+### `offset_topic_prefix`
 
-An optional key to populate for each message.
+Kafka offset topic prefix.
 This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-### `partition`
-
-An optional explicit partition to set for each message. This field is only relevant when the `partitioner` is set to `manual`. The provided interpolation string must be a valid integer.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-partition: ${! meta("partition") }
-```
-
-### `metadata`
-
-Determine which (if any) metadata values should be added to messages as headers.
-
-
-*Type*: `object`
-
-
-### `metadata.include_prefixes`
-
-Provide a list of explicit metadata key prefixes to match against.
-
-
-*Type*: `array`
-
-*Default*: `[]`
-
-```yml
-# Examples
-
-include_prefixes:
-  - foo_
-  - bar_
-
-include_prefixes:
-  - kafka_
-
-include_prefixes:
-  - content-
-```
-
-### `metadata.include_patterns`
-
-Provide a list of explicit metadata key regular expression (re2) patterns to match against.
-
-
-*Type*: `array`
-
-*Default*: `[]`
-
-```yml
-# Examples
-
-include_patterns:
-  - .*
-
-include_patterns:
-  - _timestamp_unix$
-```
-
-### `timestamp_ms`
-
-An optional timestamp to set for each message expressed in milliseconds. When left empty, the current timestamp is used.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-timestamp_ms: ${! timestamp_unix_milli() }
-
-timestamp_ms: ${! metadata("kafka_timestamp_ms") }
-```
-
-### `max_in_flight`
-
-The maximum number of batches to be sending in parallel at any given time.
-
-
-*Type*: `int`
-
-*Default*: `10`
-
-### `batching`
-
-Allows you to configure a batching policy.
-
-
-*Type*: `object`
-
-
-```yml
-# Examples
-
-batching:
-  byte_size: 5000
-  count: 0
-  period: 1s
-
-batching:
-  count: 10
-  period: 1s
-
-batching:
-  check: this.contains("END BATCH")
-  count: 0
-  period: 1m
-```
-
-### `batching.count`
-
-A number of messages at which the batch should be flushed. If `0` disables count based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.byte_size`
-
-An amount of bytes at which the batch should be flushed. If `0` disables size based batching.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `batching.period`
-
-A period in which an incomplete batch should be flushed regardless of its size.
 
 
 *Type*: `string`
 
 *Default*: `""`
 
-```yml
-# Examples
+### `offset_group`
 
-period: 1s
-
-period: 1m
-
-period: 500ms
-```
-
-### `batching.check`
-
-A Bloblang query that should return a boolean value indicating whether a message should end a batch.
+Kafka offset group.
+This field supports interpolation functions.
 
 
 *Type*: `string`
 
-*Default*: `""`
+*Default*: `"${! @kafka_offset_group }"`
 
-```yml
-# Examples
+### `offset_partition`
 
-check: this.type == "end_of_transaction"
-```
-
-### `batching.processors`
-
-A list of processors to apply to a batch as it is flushed. This allows you to aggregate and archive the batch however you see fit. Please note that all resulting messages are flushed as a single batch, therefore splitting the batch into smaller batches using these processors is a no-op.
-
-
-*Type*: `array`
-
-
-```yml
-# Examples
-
-processors:
-  - archive:
-      format: concatenate
-
-processors:
-  - archive:
-      format: lines
-
-processors:
-  - archive:
-      format: json_array
-```
-
-### `partitioner`
-
-Override the default murmur2 hashing partitioner.
+Kafka offset partition.
+This field supports interpolation functions.
 
 
 *Type*: `string`
 
+*Default*: `"${! @kafka_offset_partition }"`
 
+### `offset_commit_timestamp`
 
-| Option | Summary |
-| ------ | ------- |
-| `least_backup` | Chooses the least backed up partition (the partition with the fewest amount of buffered records). Partitions are selected per batch. |
-| `manual` | Manually select a partition for each message, requires the field `partition` to be specified. |
-| `murmur2_hash` | Kafka's default hash algorithm that uses a 32-bit murmur2 hash of the key to compute which partition the record will be on. |
-| `round_robin` | Round-robin's messages through all available partitions. This algorithm has lower throughput and causes higher CPU load on brokers, but can be useful if you want to ensure an even distribution of records to partitions. |
-
-
-### `idempotent_write`
-
-Enable the idempotent write producer option. This requires the `IDEMPOTENT_WRITE` permission on `CLUSTER` and can be disabled if this permission is not available.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `compression`
-
-Optionally set an explicit compression type. The default preference is to use snappy when the broker supports it, and fall back to none if not.
+Kafka offset commit timestamp.
+This field supports interpolation functions.
 
 
 *Type*: `string`
 
+*Default*: `"${! @kafka_offset_commit_timestamp }"`
 
-Options:
-`lz4`
-, `snappy`
-, `gzip`
-, `none`
-, `zstd`
-.
+### `offset_metadata`
 
-### `allow_auto_topic_creation`
-
-Enables topics to be auto created if they do not exist when fetching their metadata.
+Kafka offset metadata value.
+This field supports interpolation functions.
 
 
-*Type*: `bool`
+*Type*: `string`
 
-*Default*: `true`
+*Default*: `"${! @kafka_offset_metadata }"`
+
+### `is_high_watermark`
+
+Indicates if the update represents the high watermark of the Kafka topic partition.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+*Default*: `"${! @kafka_is_high_watermark }"`
 
 ### `timeout`
 
@@ -770,5 +563,49 @@ broker_write_max_bytes: 128MB
 
 broker_write_max_bytes: 50mib
 ```
+
+### `max_retries`
+
+The maximum number of retries before giving up on the request. If set to zero there is no discrete limit.
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `backoff`
+
+Control time intervals between retry attempts.
+
+
+*Type*: `object`
+
+
+### `backoff.initial_interval`
+
+The initial period to wait between retry attempts.
+
+
+*Type*: `string`
+
+*Default*: `"1s"`
+
+### `backoff.max_interval`
+
+The maximum period to wait between retry attempts.
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
+
+### `backoff.max_elapsed_time`
+
+The maximum period to wait before retry attempts are abandoned. If zero then no limit is used.
+
+
+*Type*: `string`
+
+*Default*: `"30s"`
 
 
