@@ -56,22 +56,23 @@ output:
     force_path_style_urls: false
     max_in_flight: 64
     timeout: 5s
+    object_canned_acl: private
     batching:
       count: 0
       byte_size: 0
       period: ""
       check: ""
       processors: [] # No default (optional)
-    region: ""
-    endpoint: ""
+    region: "" # No default (optional)
+    endpoint: "" # No default (optional)
     credentials:
-      profile: ""
-      id: ""
-      secret: ""
-      token: ""
-      from_ec2_role: false
-      role: ""
-      role_external_id: ""
+      profile: "" # No default (optional)
+      id: "" # No default (optional)
+      secret: "" # No default (optional)
+      token: "" # No default (optional)
+      from_ec2_role: false # No default (optional)
+      role: "" # No default (optional)
+      role_external_id: "" # No default (optional)
 ```
 </TabItem>
 </Tabs>
@@ -356,6 +357,25 @@ The maximum period to wait on an upload before abandoning it and reattempting.
 
 *Default*: `"5s"`
 
+### `object_canned_acl`
+
+The object canned ACL value.
+
+
+*Type*: `string`
+
+*Default*: `"private"`
+
+Options:
+`private`
+, `public-read`
+, `public-read-write`
+, `authenticated-read`
+, `aws-exec-read`
+, `bucket-owner-read`
+, `bucket-owner-full-control`
+.
+
 ### `batching`
 
 Allows you to configure a batching policy.
@@ -465,7 +485,6 @@ The AWS region to target.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `endpoint`
 
@@ -474,7 +493,6 @@ Allows you to specify a custom endpoint for the AWS API.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials`
 
@@ -491,7 +509,6 @@ A profile from `~/.aws/credentials` to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.id`
 
@@ -500,7 +517,6 @@ The ID of credentials to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.secret`
 
@@ -513,7 +529,6 @@ The secret for the credentials being used.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.token`
 
@@ -522,7 +537,6 @@ The token for the credentials being used, required when using short term credent
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.from_ec2_role`
 
@@ -531,7 +545,6 @@ Use the credentials of a host EC2 machine configured to assume [an IAM role asso
 
 *Type*: `bool`
 
-*Default*: `false`
 Requires version 4.2.0 or newer
 
 ### `credentials.role`
@@ -541,7 +554,6 @@ A role ARN to assume.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.role_external_id`
 
@@ -550,6 +562,5 @@ An external ID to provide when assuming a role.
 
 *Type*: `string`
 
-*Default*: `""`
 
 

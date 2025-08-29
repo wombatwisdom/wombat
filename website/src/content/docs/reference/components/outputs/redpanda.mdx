@@ -42,6 +42,8 @@ output:
       client_certs: []
     sasl: [] # No default (optional)
     metadata_max_age: 5m
+    request_timeout_overhead: 10s
+    conn_idle_timeout: 20s
     topic: "" # No default (required)
     key: "" # No default (optional)
     partition: ${! meta("partition") } # No default (optional)
@@ -53,9 +55,10 @@ output:
     partitioner: "" # No default (optional)
     idempotent_write: true
     compression: "" # No default (optional)
+    allow_auto_topic_creation: true
     timeout: 10s
-    max_message_bytes: 1MB
-    broker_write_max_bytes: 100MB
+    max_message_bytes: 1MiB
+    broker_write_max_bytes: 100MiB
 ```
 </TabItem>
 </Tabs>
@@ -343,7 +346,6 @@ The AWS region to target.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.endpoint`
 
@@ -352,7 +354,6 @@ Allows you to specify a custom endpoint for the AWS API.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials`
 
@@ -369,7 +370,6 @@ A profile from `~/.aws/credentials` to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials.id`
 
@@ -378,7 +378,6 @@ The ID of credentials to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials.secret`
 
@@ -391,7 +390,6 @@ The secret for the credentials being used.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials.token`
 
@@ -400,7 +398,6 @@ The token for the credentials being used, required when using short term credent
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials.from_ec2_role`
 
@@ -409,7 +406,6 @@ Use the credentials of a host EC2 machine configured to assume [an IAM role asso
 
 *Type*: `bool`
 
-*Default*: `false`
 Requires version 4.2.0 or newer
 
 ### `sasl[].aws.credentials.role`
@@ -419,7 +415,6 @@ A role ARN to assume.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `sasl[].aws.credentials.role_external_id`
 
@@ -428,7 +423,6 @@ An external ID to provide when assuming a role.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `metadata_max_age`
 
@@ -438,6 +432,24 @@ The maximum age of metadata before it is refreshed.
 *Type*: `string`
 
 *Default*: `"5m"`
+
+### `request_timeout_overhead`
+
+The request time overhead. Uses the given time as overhead while deadlining requests. Roughly equivalent to request.timeout.ms, but grants additional time to requests that have timeout fields.
+
+
+*Type*: `string`
+
+*Default*: `"10s"`
+
+### `conn_idle_timeout`
+
+The rough amount of time to allow connections to idle before they are closed.
+
+
+*Type*: `string`
+
+*Default*: `"20s"`
 
 ### `topic`
 
@@ -590,6 +602,15 @@ Options:
 , `zstd`
 .
 
+### `allow_auto_topic_creation`
+
+Enables topics to be auto created if they do not exist when fetching their metadata.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
 ### `timeout`
 
 The maximum period of time to wait for message sends before abandoning the request and retrying
@@ -606,7 +627,7 @@ The maximum space in bytes than an individual message may take, messages larger 
 
 *Type*: `string`
 
-*Default*: `"1MB"`
+*Default*: `"1MiB"`
 
 ```yml
 # Examples
@@ -623,7 +644,7 @@ The upper bound for the number of bytes written to a broker connection in a sing
 
 *Type*: `string`
 
-*Default*: `"100MB"`
+*Default*: `"100MiB"`
 
 ```yml
 # Examples
