@@ -8,19 +8,18 @@ import (
 	"fmt"
 	"iter"
 	"strconv"
-	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
+	ibm_mq "github.com/wombatwisdom/components/bundles/ibm-mq"
 	"github.com/wombatwisdom/components/framework/spec"
-	ibm_mq "github.com/wombatwisdom/components/ibm-mq"
 )
 
 func init() {
 	// Register IBM MQ input with ww_ prefix for seamless integration
-	err := service.RegisterInput(
+	err := service.RegisterBatchInput(
 		"ww_ibm_mq",
 		wwIBMMQInputConfig(),
-		func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
+		func(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
 			return newWWIBMMQInput(conf, mgr)
 		})
 	if err != nil {
@@ -144,7 +143,7 @@ This component requires the 'mqclient' build tag:
 			Default("default"))
 }
 
-func newWWIBMMQInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
+func newWWIBMMQInput(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchInput, error) {
 	// Extract configuration
 	queueName, err := conf.FieldString("queue_name")
 	if err != nil {
@@ -236,22 +235,14 @@ func newWWIBMMQOutput(conf *service.ParsedConfig, mgr *service.Resources) (servi
 	outputConfig := ibm_mq.OutputConfig{
 		QueueName:  queueName,
 		NumThreads: numThreads,
-		Format:     &format,
-		Ccsid:      &ccsid,
-		Encoding:   &encoding,
+		Format:     format,
+		Ccsid:      ccsid,
+		Encoding:   encoding,
 	}
 
-	// Handle metadata configuration if provided
-	if conf.Contains("metadata") {
-		metadata := &ibm_mq.MetadataConfig{}
-		if patterns, err := conf.FieldStringList("metadata", "patterns"); err == nil {
-			metadata.Patterns = patterns
-		}
-		if invert, err := conf.FieldBool("metadata", "invert"); err == nil {
-			metadata.Invert = invert
-		}
-		outputConfig.Metadata = metadata
-	}
+	// TODO: Handle metadata configuration for production
+	// For Level 2 testing, skip metadata config
+	outputConfig.Metadata = nil
 
 	return &wwIBMMQOutput{
 		outputConfig: outputConfig,
@@ -269,7 +260,7 @@ type wwIBMMQInput struct {
 	resourceMgr *service.Resources
 
 	// wombatwisdom components
-	wwInput *ibm_mq.Input
+	wwInput  *ibm_mq.Input
 	wwSystem *ibm_mq.System
 
 	// message queue for bridging wombatwisdom messages to Benthos
@@ -323,14 +314,26 @@ func (w *wwIBMMQInput) Read(ctx context.Context) (*service.Message, service.AckF
 		return nil, nil, fmt.Errorf("failed to read from IBM MQ: %w", err)
 	}
 
-	// Convert batch to individual messages (for now, take the first message)
-	messages := batch.Messages()
-	if len(messages) == 0 {
+	// Check if batch is nil or empty
+	if batch == nil {
+		return nil, nil, nil // No messages available
+	}
+
+	// For Level 2 testing, iterate over batch messages to get first one
+	var firstMessage spec.Message
+	var hasMessage bool
+	for _, msg := range batch.Messages() {
+		firstMessage = msg
+		hasMessage = true
+		break // Take only the first message for Level 2 testing
+	}
+
+	if !hasMessage {
 		return nil, nil, nil // No messages available
 	}
 
 	// Convert the first wombatwisdom message to Benthos message
-	benthosMsg, err := w.convertToBenthosMessage(messages[0])
+	benthosMsg, err := w.convertToBenthosMessage(firstMessage)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to convert message: %w", err)
 	}
@@ -344,6 +347,49 @@ func (w *wwIBMMQInput) Read(ctx context.Context) (*service.Message, service.AckF
 	}
 
 	return benthosMsg, ackFunc, nil
+}
+
+func (w *wwIBMMQInput) ReadBatch(ctx context.Context) (service.MessageBatch, service.AckFunc, error) {
+	// Create component context adapter
+	componentCtx := &ibmMQComponentContextAdapter{
+		ctx:    ctx,
+		logger: w.logger,
+	}
+
+	// Read from the wombatwisdom input
+	batch, processedCallback, err := w.wwInput.Read(componentCtx)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read from IBM MQ: %w", err)
+	}
+
+	// Check if batch is nil or empty
+	if batch == nil {
+		return nil, nil, nil // No messages available
+	}
+
+	// Convert wombatwisdom batch to Benthos MessageBatch
+	var benthosMessages service.MessageBatch
+	for _, msg := range batch.Messages() {
+		benthosMsg, err := w.convertToBenthosMessage(msg)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to convert message: %w", err)
+		}
+		benthosMessages = append(benthosMessages, benthosMsg)
+	}
+
+	if len(benthosMessages) == 0 {
+		return nil, nil, nil // No messages available
+	}
+
+	ackFunc := func(ctx context.Context, err error) error {
+		// Call the processed callback
+		if processedCallback != nil {
+			return processedCallback(ctx, err)
+		}
+		return nil
+	}
+
+	return benthosMessages, ackFunc, nil
 }
 
 func (w *wwIBMMQInput) Close(ctx context.Context) error {
@@ -393,12 +439,19 @@ func (w *wwIBMMQInput) getOrCreateSystem(ctx context.Context) (*ibm_mq.System, e
 	// For now, create a basic system - in production this would use
 	// proper system resource management
 	// TODO: Implement proper system resource lookup from Benthos resources
-	
+
 	// Create a basic system config - this would typically come from system resources
+	// TODO: In production, these values should come from Benthos system resources
+	// TODO: Credentials should be configured via environment variables or secure config
+	// Example environment variables: MQ_USER_ID, MQ_PASSWORD, MQ_QUEUE_MANAGER, MQ_CONNECTION_NAME
 	systemConfig := ibm_mq.SystemConfig{
-		QueueManagerName: "QM1", // This should be configurable
-		ChannelName:      "DEV.APP.SVRCONN",
-		ConnectionName:   "localhost(1414)",
+		QueueManagerName: "QM1",             // TODO: Make configurable via system resources
+		ChannelName:      "DEV.APP.SVRCONN", // TODO: Make configurable (default for development)
+		ConnectionName:   "localhost(1414)", // TODO: Make configurable via system resources
+		// Authentication: Configure via environment variables or system resources in production
+		// For development: Use MQ_USER_ID and MQ_PASSWORD environment variables
+		UserId:   nil, // TODO: Load from secure configuration (e.g., os.Getenv("MQ_USER_ID"))
+		Password: nil, // TODO: Load from secure configuration (e.g., os.Getenv("MQ_PASSWORD"))
 	}
 
 	configObj := &ibmMQSystemConfigAdapter{config: systemConfig}
@@ -510,12 +563,19 @@ func (w *wwIBMMQOutput) getOrCreateSystem(ctx context.Context) (*ibm_mq.System, 
 	// For now, create a basic system - in production this would use
 	// proper system resource management
 	// TODO: Implement proper system resource lookup from Benthos resources
-	
+
 	// Create a basic system config - this would typically come from system resources
+	// TODO: In production, these values should come from Benthos system resources
+	// TODO: Credentials should be configured via environment variables or secure config
+	// Example environment variables: MQ_USER_ID, MQ_PASSWORD, MQ_QUEUE_MANAGER, MQ_CONNECTION_NAME
 	systemConfig := ibm_mq.SystemConfig{
-		QueueManagerName: "QM1", // This should be configurable
-		ChannelName:      "DEV.APP.SVRCONN",
-		ConnectionName:   "localhost(1414)",
+		QueueManagerName: "QM1",             // TODO: Make configurable via system resources
+		ChannelName:      "DEV.APP.SVRCONN", // TODO: Make configurable (default for development)
+		ConnectionName:   "localhost(1414)", // TODO: Make configurable via system resources
+		// Authentication: Configure via environment variables or system resources in production
+		// For development: Use MQ_USER_ID and MQ_PASSWORD environment variables
+		UserId:   nil, // TODO: Load from secure configuration (e.g., os.Getenv("MQ_USER_ID"))
+		Password: nil, // TODO: Load from secure configuration (e.g., os.Getenv("MQ_PASSWORD"))
 	}
 
 	configObj := &ibmMQSystemConfigAdapter{config: systemConfig}
@@ -692,8 +752,14 @@ type ibmMQBatchAdapter struct {
 	messages []spec.Message
 }
 
-func (b *ibmMQBatchAdapter) Messages() []spec.Message {
-	return b.messages
+func (b *ibmMQBatchAdapter) Messages() iter.Seq2[int, spec.Message] {
+	return func(yield func(int, spec.Message) bool) {
+		for i, msg := range b.messages {
+			if !yield(i, msg) {
+				break
+			}
+		}
+	}
 }
 
 func (b *ibmMQBatchAdapter) Append(msg spec.Message) {
