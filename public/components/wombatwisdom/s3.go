@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/redpanda-data/benthos/v4/public/service"
 	s3 "github.com/wombatwisdom/components/bundles/aws-s3"
 	"github.com/wombatwisdom/components/framework/spec"
@@ -158,11 +161,10 @@ func newWWS3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.I
 		maxKeys = 1000
 	}
 
-	// TODO: Add AWS config support when implementing full authentication
-	// _, err = conf.FieldString("region")
-	// if err != nil {
-	//     // Default region handling would go here
-	// }
+	region, err := conf.FieldString("region")
+	if err != nil {
+		region = "us-east-1" // Default region
+	}
 
 	forcePathStyle, err := conf.FieldBool("force_path_style_urls")
 	if err != nil {
@@ -174,8 +176,15 @@ func newWWS3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.I
 		endpointURL = ""
 	}
 
+	// Build AWS configuration
+	awsConfig, err := buildAWSConfig(context.Background(), conf, region, endpointURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build AWS config: %w", err)
+	}
+
 	// Build wombatwisdom S3 config
 	inputConfig := s3.InputConfig{
+		Config:             awsConfig,
 		Bucket:             bucket,
 		Prefix:             prefix,
 		MaxKeys:            int32(maxKeys),
@@ -185,8 +194,6 @@ func newWWS3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.I
 	if endpointURL != "" {
 		inputConfig.EndpointURL = &endpointURL
 	}
-
-	// TODO: Handle AWS config - need to check the actual AWS config structure in s3 package
 
 	return &wwS3Input{
 		inputConfig:  inputConfig,
@@ -261,23 +268,49 @@ type wwS3Input struct {
 }
 
 func (w *wwS3Input) Connect(ctx context.Context) error {
+	w.logger.Info("Starting wombatwisdom S3 input connection...")
+
+	// Create a timeout context for the connection attempt
+	connectTimeout := 30 * time.Second
+	connectCtx, cancel := context.WithTimeout(ctx, connectTimeout)
+	defer cancel()
+
 	// Create environment adapter
 	env := &s3EnvironmentAdapter{
-		ctx:    ctx,
+		ctx:    connectCtx,
 		logger: w.logger,
 	}
+	w.logger.Debugf("Created environment adapter for S3 with %v timeout", connectTimeout)
 
 	// Create wombatwisdom S3 input
+	w.logger.Debugf("Creating wombatwisdom S3 input with config: bucket=%s, endpoint=%v",
+		w.inputConfig.Bucket, w.inputConfig.EndpointURL)
 	wwInput, err := s3.NewInput(env, w.inputConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to create wombatwisdom S3 input: %v", err)
 		return fmt.Errorf("failed to create wombatwisdom S3 input: %w", err)
 	}
 	w.wwInput = wwInput
+	w.logger.Debugf("wombatwisdom S3 input created successfully")
 
-	// Connect the wombatwisdom input
-	err = w.wwInput.Connect(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to connect wombatwisdom S3 input: %w", err)
+	// Connect the wombatwisdom input with timeout
+	w.logger.Debugf("Attempting to connect wombatwisdom S3 input with %v timeout...", connectTimeout)
+
+	// Use a channel to handle the connection result
+	connectResult := make(chan error, 1)
+	go func() {
+		connectResult <- w.wwInput.Connect(connectCtx)
+	}()
+
+	select {
+	case err := <-connectResult:
+		if err != nil {
+			w.logger.Errorf("Failed to connect wombatwisdom S3 input: %v", err)
+			return fmt.Errorf("failed to connect wombatwisdom S3 input: %w", err)
+		}
+	case <-connectCtx.Done():
+		w.logger.Errorf("wombatwisdom S3 input connection timed out after %v", connectTimeout)
+		return fmt.Errorf("wombatwisdom S3 input connection timed out after %v", connectTimeout)
 	}
 
 	// Create a collector that bridges wombatwisdom messages to Benthos
@@ -465,6 +498,32 @@ func (w *wwS3Retrieval) convertToBenthosMessage(wwMsg spec.Message) (*service.Me
 	benthosMsg.MetaSet("ww_source", "wombatwisdom")
 
 	return benthosMsg, nil
+}
+
+// buildAWSConfig creates an AWS configuration from Benthos config
+func buildAWSConfig(ctx context.Context, conf *service.ParsedConfig, region, endpointURL string) (aws.Config, error) {
+	// Start with default config
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(region),
+	)
+	if err != nil {
+		return aws.Config{}, fmt.Errorf("failed to load default AWS config: %w", err)
+	}
+
+	// Check for custom AWS credentials in config
+	if conf.Contains("aws") {
+		awsConf := conf.Namespace("aws")
+
+		accessKey, _ := awsConf.FieldString("access_key_id")
+		secretKey, _ := awsConf.FieldString("secret_access_key")
+		sessionToken, _ := awsConf.FieldString("session_token")
+
+		if accessKey != "" && secretKey != "" {
+			cfg.Credentials = credentials.NewStaticCredentialsProvider(accessKey, secretKey, sessionToken)
+		}
+	}
+
+	return cfg, nil
 }
 
 // S3-specific adapter implementations

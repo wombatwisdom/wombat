@@ -231,55 +231,75 @@ type wwNatsInput struct {
 }
 
 func (w *wwNatsInput) Connect(ctx context.Context) error {
+	w.logger.Info("Starting wombatwisdom NATS input connection...")
+
 	// Create wombatwisdom config objects
+	w.logger.Debugf("Creating NATS system config: url=%s, name=%s", w.systemConfig.Url, w.systemConfig.Name)
 	systemConfigMap := make(map[string]interface{})
 	systemConfigBytes, err := json.Marshal(w.systemConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to marshal system config: %v", err)
 		return fmt.Errorf("failed to marshal system config: %w", err)
 	}
 	if err := json.Unmarshal(systemConfigBytes, &systemConfigMap); err != nil {
+		w.logger.Errorf("Failed to unmarshal system config: %v", err)
 		return fmt.Errorf("failed to unmarshal system config: %w", err)
 	}
 	systemSpecConfig := spec.NewMapConfig(systemConfigMap)
 
+	w.logger.Debugf("Creating NATS input config: subject=%s, batch_count=%d", w.inputConfig.Subject, w.inputConfig.BatchCount)
 	inputConfigMap := make(map[string]interface{})
 	inputConfigBytes, err := json.Marshal(w.inputConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to marshal input config: %v", err)
 		return fmt.Errorf("failed to marshal input config: %w", err)
 	}
 	if err := json.Unmarshal(inputConfigBytes, &inputConfigMap); err != nil {
+		w.logger.Errorf("Failed to unmarshal input config: %v", err)
 		return fmt.Errorf("failed to unmarshal input config: %w", err)
 	}
 	inputSpecConfig := spec.NewMapConfig(inputConfigMap)
 
 	// Create wombatwisdom system
+	w.logger.Debugf("Creating wombatwisdom NATS system...")
 	wwSystem, err := nats.NewSystemFromConfig(systemSpecConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to create wombatwisdom system: %v", err)
 		return fmt.Errorf("failed to create wombatwisdom system: %w", err)
 	}
 	w.wwSystem = wwSystem
+	w.logger.Debugf("wombatwisdom NATS system created successfully")
 
 	// Create wombatwisdom input
+	w.logger.Debugf("Creating wombatwisdom NATS input...")
 	wwInput, err := nats.NewInputFromConfig(wwSystem, inputSpecConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to create wombatwisdom input: %v", err)
 		return fmt.Errorf("failed to create wombatwisdom input: %w", err)
 	}
 	w.wwInput = wwInput
+	w.logger.Debugf("wombatwisdom NATS input created successfully")
 
 	// Connect the system (wombatwisdom systems use Connect, not Init)
+	w.logger.Debugf("Connecting wombatwisdom NATS system...")
 	if err := w.wwSystem.Connect(ctx); err != nil {
+		w.logger.Errorf("Failed to connect wombatwisdom system: %v", err)
 		return fmt.Errorf("failed to connect wombatwisdom system: %w", err)
 	}
+	w.logger.Debugf("wombatwisdom NATS system connected successfully")
 
 	// Initialize the input component with adapter context
+	w.logger.Debugf("Initializing wombatwisdom NATS input...")
 	componentCtx := &benthosTowombatwisdomContextAdapter{
 		ctx:    ctx,
 		logger: w.logger,
 	}
 
 	if err := w.wwInput.Init(componentCtx); err != nil {
+		w.logger.Errorf("Failed to initialize wombatwisdom input: %v", err)
 		return fmt.Errorf("failed to initialize wombatwisdom input: %w", err)
 	}
+	w.logger.Debugf("wombatwisdom NATS input initialized successfully")
 
 	w.logger.Info("wombatwisdom NATS input connected successfully")
 	return nil
@@ -375,55 +395,75 @@ type wwNatsOutput struct {
 }
 
 func (w *wwNatsOutput) Connect(ctx context.Context) error {
+	w.logger.Info("Starting wombatwisdom NATS output connection...")
+
 	// Create wombatwisdom config objects
+	w.logger.Debugf("Creating NATS output system config: url=%s, name=%s", w.systemConfig.Url, w.systemConfig.Name)
 	systemConfigMap := make(map[string]interface{})
 	systemConfigBytes, err := json.Marshal(w.systemConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to marshal system config: %v", err)
 		return fmt.Errorf("failed to marshal system config: %w", err)
 	}
 	if err := json.Unmarshal(systemConfigBytes, &systemConfigMap); err != nil {
+		w.logger.Errorf("Failed to unmarshal system config: %v", err)
 		return fmt.Errorf("failed to unmarshal system config: %w", err)
 	}
 	systemSpecConfig := spec.NewMapConfig(systemConfigMap)
 
+	w.logger.Debugf("Creating NATS output config: subject=%s", w.outputConfig.Subject)
 	outputConfigMap := make(map[string]interface{})
 	outputConfigBytes, err := json.Marshal(w.outputConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to marshal output config: %v", err)
 		return fmt.Errorf("failed to marshal output config: %w", err)
 	}
 	if err := json.Unmarshal(outputConfigBytes, &outputConfigMap); err != nil {
+		w.logger.Errorf("Failed to unmarshal output config: %v", err)
 		return fmt.Errorf("failed to unmarshal output config: %w", err)
 	}
 	outputSpecConfig := spec.NewMapConfig(outputConfigMap)
 
 	// Create wombatwisdom system
+	w.logger.Debugf("Creating wombatwisdom NATS output system...")
 	wwSystem, err := nats.NewSystemFromConfig(systemSpecConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to create wombatwisdom system: %v", err)
 		return fmt.Errorf("failed to create wombatwisdom system: %w", err)
 	}
 	w.wwSystem = wwSystem
+	w.logger.Debugf("wombatwisdom NATS output system created successfully")
 
 	// Create wombatwisdom output
+	w.logger.Debugf("Creating wombatwisdom NATS output...")
 	wwOutput, err := nats.NewOutputFromConfig(wwSystem, outputSpecConfig)
 	if err != nil {
+		w.logger.Errorf("Failed to create wombatwisdom output: %v", err)
 		return fmt.Errorf("failed to create wombatwisdom output: %w", err)
 	}
 	w.wwOutput = wwOutput
+	w.logger.Debugf("wombatwisdom NATS output created successfully")
 
 	// Connect the system (wombatwisdom systems use Connect, not Init)
+	w.logger.Debugf("Connecting wombatwisdom NATS output system...")
 	if err := w.wwSystem.Connect(ctx); err != nil {
+		w.logger.Errorf("Failed to connect wombatwisdom system: %v", err)
 		return fmt.Errorf("failed to connect wombatwisdom system: %w", err)
 	}
+	w.logger.Debugf("wombatwisdom NATS output system connected successfully")
 
 	// Initialize the output component with adapter context
+	w.logger.Debugf("Initializing wombatwisdom NATS output...")
 	componentCtx := &benthosTowombatwisdomContextAdapter{
 		ctx:    ctx,
 		logger: w.logger,
 	}
 
 	if err := w.wwOutput.Init(componentCtx); err != nil {
+		w.logger.Errorf("Failed to initialize wombatwisdom output: %v", err)
 		return fmt.Errorf("failed to initialize wombatwisdom output: %w", err)
 	}
+	w.logger.Debugf("wombatwisdom NATS output initialized successfully")
 
 	w.logger.Info("wombatwisdom NATS output connected successfully")
 	return nil
