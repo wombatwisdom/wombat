@@ -6,6 +6,7 @@ package wombatwisdom_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,6 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/nats-io/nats-server/v2/test"
+	"github.com/nats-io/nats.go"
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/redpanda-data/benthos/v4/public/service/integration"
 	"github.com/stretchr/testify/require"
@@ -23,6 +26,8 @@ import (
 	// Import core Benthos components for testing
 	_ "github.com/redpanda-data/benthos/v4/public/components/io"
 	_ "github.com/redpanda-data/benthos/v4/public/components/pure"
+	// Import Connect components for standard MQTT
+	_ "github.com/redpanda-data/connect/v4/public/components/all"
 )
 
 func TestWombatwWisdomIntegration(t *testing.T) {
@@ -469,4 +474,732 @@ output:
 		integration.StreamTestOptSleepAfterInput(1*time.Second),
 		integration.StreamTestOptSleepAfterOutput(1*time.Second),
 	)
+}
+
+func TestMQTTQoS2NoCrash(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+	// Setup embedded NATS server
+	natsOpts := test.DefaultTestOptions
+	natsOpts.Port = -1
+	natsOpts.StoreDir, _ = os.MkdirTemp("", "nats-test-")
+
+	natsServer := test.RunServer(&natsOpts)
+	t.Cleanup(func() {
+		natsServer.Shutdown()
+		os.RemoveAll(natsOpts.StoreDir)
+	})
+
+	natsURL := natsServer.ClientURL()
+	t.Logf("NATS server: %s", natsURL)
+
+	// Setup NATS client for validation
+	natsConn, err := nats.Connect(natsURL)
+	require.NoError(t, err)
+	defer natsConn.Close()
+
+	sub, err := natsConn.SubscribeSync("processed.sequences")
+	require.NoError(t, err)
+
+	// Setup MQTT broker
+	mqttContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "eclipse-mosquitto:2.0",
+			ExposedPorts: []string{"1883/tcp"},
+			Files: []testcontainers.ContainerFile{
+				{
+					ContainerFilePath: "/mosquitto/config/mosquitto.conf",
+					FileMode:          0644,
+					Reader: strings.NewReader(`
+listener 1883
+allow_anonymous true
+`),
+				},
+			},
+			WaitingFor: wait.ForListeningPort("1883/tcp"),
+		},
+		Started: true,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		mqttContainer.Terminate(cleanupCtx)
+	})
+
+	mqttHost, err := mqttContainer.Host(ctx)
+	require.NoError(t, err)
+	mqttPort, err := mqttContainer.MappedPort(ctx, "1883/tcp")
+	require.NoError(t, err)
+	mqttURL := fmt.Sprintf("tcp://%s:%s", mqttHost, mqttPort.Port())
+
+	t.Logf("MQTT broker: %s", mqttURL)
+
+	// Start Benthos pipeline with standard MQTT component
+	t.Logf("🔗 Starting Benthos pipeline MQTT→NATS...")
+
+	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
+input:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topics: ["test/sequences"]
+    client_id: "benthos-worker"
+    qos: 2
+
+pipeline:
+  processors:
+    - sleep:
+        duration: "10ms"
+    - log:
+        level: INFO
+        message: "📨 MQTT→NATS: ${! content() }"
+
+output:
+  nats:
+    urls: ["$NATS_URL"]
+    subject: "processed.sequences"
+`, "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
+
+	pipelineBuilder := service.NewStreamBuilder()
+	err = pipelineBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	pipelineStream, err := pipelineBuilder.Build()
+	require.NoError(t, err)
+
+	// Start pipeline in background
+	go func() {
+		err := pipelineStream.Run(ctx)
+		if err != nil && ctx.Err() != context.Canceled {
+			t.Logf("Pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for pipeline to be ready
+	time.Sleep(2 * time.Second)
+
+	// Send messages via external producer
+	t.Logf("📤 Sending 100 sequences to MQTT...")
+
+	producerConfig := strings.ReplaceAll(`
+input:
+  generate:
+    interval: "50ms"
+    count: 100
+    mapping: 'root = "sequence-" + counter().string()'
+
+output:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topic: "test/sequences"
+    client_id: "external-producer"
+    qos: 2
+`, "$MQTT_URL", mqttURL)
+
+	producerBuilder := service.NewStreamBuilder()
+	err = producerBuilder.SetYAML(producerConfig)
+	require.NoError(t, err)
+
+	producerStream, err := producerBuilder.Build()
+	require.NoError(t, err)
+
+	// Run producer
+	prodCtx, prodCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer prodCancel()
+
+	err = producerStream.Run(prodCtx)
+	require.NoError(t, err)
+
+	t.Logf("✅ Producer finished - 100 sequences sent to MQTT")
+
+	// Wait for processing
+	time.Sleep(5 * time.Second)
+
+	// Count messages received in NATS
+	t.Logf("📊 Checking NATS for received messages...")
+
+	receivedCount := 0
+	for {
+		msg, err := sub.NextMsg(200 * time.Millisecond)
+		if err != nil {
+			break
+		}
+		receivedCount++
+		t.Logf("✅ NATS received: %s", string(msg.Data))
+	}
+
+	t.Logf("📊 Final Results:")
+	t.Logf("   Sent to MQTT: 100")
+	t.Logf("   Received in NATS: %d", receivedCount)
+
+	require.Equal(t, 100, receivedCount, "All messages must be delivered without crashes")
+}
+
+func TestMQTTQoS2WithCrash(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+	// Setup embedded NATS server
+	natsOpts := test.DefaultTestOptions
+	natsOpts.Port = -1
+	natsOpts.StoreDir, _ = os.MkdirTemp("", "nats-test-")
+
+	natsServer := test.RunServer(&natsOpts)
+	t.Cleanup(func() {
+		natsServer.Shutdown()
+		os.RemoveAll(natsOpts.StoreDir)
+	})
+
+	natsURL := natsServer.ClientURL()
+	t.Logf("NATS server: %s", natsURL)
+
+	// Setup NATS client for validation
+	natsConn, err := nats.Connect(natsURL)
+	require.NoError(t, err)
+	defer natsConn.Close()
+
+	sub, err := natsConn.SubscribeSync("processed.sequences")
+	require.NoError(t, err)
+
+	// Setup MQTT broker
+	mqttContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "eclipse-mosquitto:2.0",
+			ExposedPorts: []string{"1883/tcp"},
+			Files: []testcontainers.ContainerFile{
+				{
+					ContainerFilePath: "/mosquitto/config/mosquitto.conf",
+					FileMode:          0644,
+					Reader: strings.NewReader(`
+listener 1883
+allow_anonymous true
+`),
+				},
+			},
+			WaitingFor: wait.ForListeningPort("1883/tcp"),
+		},
+		Started: true,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		mqttContainer.Terminate(cleanupCtx)
+	})
+
+	mqttHost, err := mqttContainer.Host(ctx)
+	require.NoError(t, err)
+	mqttPort, err := mqttContainer.MappedPort(ctx, "1883/tcp")
+	require.NoError(t, err)
+	mqttURL := fmt.Sprintf("tcp://%s:%s", mqttHost, mqttPort.Port())
+
+	t.Logf("MQTT broker: %s", mqttURL)
+
+	// Start Benthos pipeline with standard MQTT component
+	t.Logf("🔗 Starting Benthos pipeline MQTT→NATS...")
+
+	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
+input:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topics: ["test/sequences"]
+    client_id: "benthos-worker"
+    qos: 2
+
+pipeline:
+  processors:
+    - sleep:
+        duration: "10ms"
+    - log:
+        level: INFO
+        message: "📨 MQTT→NATS: ${! content() }"
+
+output:
+  nats:
+    urls: ["$NATS_URL"]
+    subject: "processed.sequences"
+`, "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
+
+	pipelineBuilder := service.NewStreamBuilder()
+	err = pipelineBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	pipelineStream, err := pipelineBuilder.Build()
+	require.NoError(t, err)
+
+	// Start pipeline in background with cancellable context
+	pipelineCtx, pipelineCancel := context.WithCancel(ctx)
+
+	go func() {
+		err := pipelineStream.Run(pipelineCtx)
+		if err != nil && pipelineCtx.Err() != context.Canceled {
+			t.Logf("Pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for pipeline to be ready
+	time.Sleep(2 * time.Second)
+
+	// Send messages via external producer
+	t.Logf("📤 Sending 2000 sequences to MQTT...")
+
+	producerConfig := strings.ReplaceAll(`
+input:
+  generate:
+    interval: "5ms"
+    count: 2000
+    mapping: 'root = "sequence-" + counter().string()'
+
+output:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topic: "test/sequences"
+    client_id: "external-producer"
+    qos: 2
+`, "$MQTT_URL", mqttURL)
+
+	producerBuilder := service.NewStreamBuilder()
+	err = producerBuilder.SetYAML(producerConfig)
+	require.NoError(t, err)
+
+	producerStream, err := producerBuilder.Build()
+	require.NoError(t, err)
+
+	// Start producer in background
+	go func() {
+		prodCtx, prodCancel := context.WithTimeout(ctx, 15*time.Second)
+		defer prodCancel()
+
+		err := producerStream.Run(prodCtx)
+		if err != nil {
+			t.Logf("Producer error: %v", err)
+		}
+		t.Logf("✅ Producer finished - 2000 sequences sent to MQTT")
+	}()
+
+	// Let producer send ~400 messages (400 * 5ms = 2 seconds)
+	time.Sleep(2 * time.Second)
+
+	// CRASH SIMULATION: Kill Benthos mid-processing
+	t.Logf("💥 SIMULATING CRASH: Stopping Benthos pipeline...")
+	pipelineCancel()
+
+	// Wait for cleanup
+	time.Sleep(1 * time.Second)
+
+	// RESTART with same client_id for message recovery
+	t.Logf("🔄 RESTARTING: Benthos pipeline with same client_id...")
+
+	restartCtx, restartCancel := context.WithTimeout(ctx, 15*time.Second)
+	defer restartCancel()
+
+	// Create new pipeline with same config
+	restartBuilder := service.NewStreamBuilder()
+	err = restartBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	restartStream, err := restartBuilder.Build()
+	require.NoError(t, err)
+
+	go func() {
+		err := restartStream.Run(restartCtx)
+		if err != nil && restartCtx.Err() != context.Canceled {
+			t.Logf("Restart pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for producer to finish and pipeline to process remaining
+	time.Sleep(12 * time.Second)
+
+	// Count messages received in NATS
+	t.Logf("📊 Checking NATS for received messages...")
+
+	receivedCount := 0
+	for {
+		msg, err := sub.NextMsg(200 * time.Millisecond)
+		if err != nil {
+			break
+		}
+		receivedCount++
+		if receivedCount <= 10 || receivedCount%100 == 0 {
+			t.Logf("✅ NATS received: %s", string(msg.Data))
+		}
+	}
+
+	t.Logf("📊 Final Results:")
+	t.Logf("   Sent to MQTT: 2000")
+	t.Logf("   Received in NATS: %d", receivedCount)
+
+	require.Equal(t, 2000, receivedCount, "All messages must be delivered even with crashes - QoS 2 should guarantee delivery")
+}
+
+func TestWWMQTTQoS2NoCrash(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+	// Setup embedded NATS server
+	natsOpts := test.DefaultTestOptions
+	natsOpts.Port = -1
+	natsOpts.StoreDir, _ = os.MkdirTemp("", "nats-test-")
+
+	natsServer := test.RunServer(&natsOpts)
+	t.Cleanup(func() {
+		natsServer.Shutdown()
+		os.RemoveAll(natsOpts.StoreDir)
+	})
+
+	natsURL := natsServer.ClientURL()
+	t.Logf("NATS server: %s", natsURL)
+
+	// Setup NATS client for validation
+	natsConn, err := nats.Connect(natsURL)
+	require.NoError(t, err)
+	defer natsConn.Close()
+
+	sub, err := natsConn.SubscribeSync("processed.sequences")
+	require.NoError(t, err)
+
+	// Setup MQTT broker
+	mqttContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "eclipse-mosquitto:2.0",
+			ExposedPorts: []string{"1883/tcp"},
+			Files: []testcontainers.ContainerFile{
+				{
+					ContainerFilePath: "/mosquitto/config/mosquitto.conf",
+					FileMode:          0644,
+					Reader: strings.NewReader(`
+listener 1883
+allow_anonymous true
+`),
+				},
+			},
+			WaitingFor: wait.ForListeningPort("1883/tcp"),
+		},
+		Started: true,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		mqttContainer.Terminate(cleanupCtx)
+	})
+
+	mqttHost, err := mqttContainer.Host(ctx)
+	require.NoError(t, err)
+	mqttPort, err := mqttContainer.MappedPort(ctx, "1883/tcp")
+	require.NoError(t, err)
+	mqttURL := fmt.Sprintf("tcp://%s:%s", mqttHost, mqttPort.Port())
+
+	t.Logf("MQTT broker: %s", mqttURL)
+
+	// Start Benthos pipeline with WW_MQTT component
+	t.Logf("🔗 Starting Benthos pipeline WW_MQTT→NATS...")
+
+	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
+input:
+  ww_mqtt:
+    urls: ["$MQTT_URL"]
+    client_id: "benthos-worker"
+    filters:
+      "test/sequences": 2
+
+pipeline:
+  processors:
+    - sleep:
+        duration: "10ms"
+    - log:
+        level: INFO
+        message: "📨 WW_MQTT→NATS: ${! content() }"
+
+output:
+  nats:
+    urls: ["$NATS_URL"]
+    subject: "processed.sequences"
+`, "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
+
+	pipelineBuilder := service.NewStreamBuilder()
+	err = pipelineBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	pipelineStream, err := pipelineBuilder.Build()
+	require.NoError(t, err)
+
+	// Start pipeline in background
+	go func() {
+		err := pipelineStream.Run(ctx)
+		if err != nil && ctx.Err() != context.Canceled {
+			t.Logf("Pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for pipeline to be ready
+	time.Sleep(2 * time.Second)
+
+	// Send messages via external producer
+	t.Logf("📤 Sending 100 sequences to MQTT...")
+
+	producerConfig := strings.ReplaceAll(`
+input:
+  generate:
+    interval: "50ms"
+    count: 100
+    mapping: 'root = "sequence-" + counter().string()'
+
+output:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topic: "test/sequences"
+    client_id: "external-producer"
+    qos: 2
+`, "$MQTT_URL", mqttURL)
+
+	producerBuilder := service.NewStreamBuilder()
+	err = producerBuilder.SetYAML(producerConfig)
+	require.NoError(t, err)
+
+	producerStream, err := producerBuilder.Build()
+	require.NoError(t, err)
+
+	// Run producer
+	prodCtx, prodCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer prodCancel()
+
+	err = producerStream.Run(prodCtx)
+	require.NoError(t, err)
+
+	t.Logf("✅ Producer finished - 100 sequences sent to MQTT")
+
+	// Wait for processing
+	time.Sleep(5 * time.Second)
+
+	// Count messages received in NATS
+	t.Logf("📊 Checking NATS for received messages...")
+
+	receivedCount := 0
+	for {
+		msg, err := sub.NextMsg(200 * time.Millisecond)
+		if err != nil {
+			break
+		}
+		receivedCount++
+		t.Logf("✅ NATS received: %s", string(msg.Data))
+	}
+
+	t.Logf("📊 Final Results:")
+	t.Logf("   Sent to MQTT: 100")
+	t.Logf("   Received in NATS: %d", receivedCount)
+
+	require.Equal(t, 100, receivedCount, "All messages must be delivered without crashes")
+}
+
+func TestWWMQTTQoS2WithCrash(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+
+	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
+
+	// Setup embedded NATS server
+	natsOpts := test.DefaultTestOptions
+	natsOpts.Port = -1
+	natsOpts.StoreDir, _ = os.MkdirTemp("", "nats-test-")
+
+	natsServer := test.RunServer(&natsOpts)
+	t.Cleanup(func() {
+		natsServer.Shutdown()
+		os.RemoveAll(natsOpts.StoreDir)
+	})
+
+	natsURL := natsServer.ClientURL()
+	t.Logf("NATS server: %s", natsURL)
+
+	// Setup NATS client for validation
+	natsConn, err := nats.Connect(natsURL)
+	require.NoError(t, err)
+	defer natsConn.Close()
+
+	sub, err := natsConn.SubscribeSync("processed.sequences")
+	require.NoError(t, err)
+
+	// Setup MQTT broker
+	mqttContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+		ContainerRequest: testcontainers.ContainerRequest{
+			Image:        "eclipse-mosquitto:2.0",
+			ExposedPorts: []string{"1883/tcp"},
+			Files: []testcontainers.ContainerFile{
+				{
+					ContainerFilePath: "/mosquitto/config/mosquitto.conf",
+					FileMode:          0644,
+					Reader: strings.NewReader(`
+listener 1883
+allow_anonymous true
+`),
+				},
+			},
+			WaitingFor: wait.ForListeningPort("1883/tcp"),
+		},
+		Started: true,
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cleanupCancel()
+		mqttContainer.Terminate(cleanupCtx)
+	})
+
+	mqttHost, err := mqttContainer.Host(ctx)
+	require.NoError(t, err)
+	mqttPort, err := mqttContainer.MappedPort(ctx, "1883/tcp")
+	require.NoError(t, err)
+	mqttURL := fmt.Sprintf("tcp://%s:%s", mqttHost, mqttPort.Port())
+
+	t.Logf("MQTT broker: %s", mqttURL)
+
+	// Start Benthos pipeline with WW_MQTT component
+	t.Logf("🔗 Starting Benthos pipeline WW_MQTT→NATS...")
+
+	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
+input:
+  ww_mqtt:
+    urls: ["$MQTT_URL"]
+    client_id: "benthos-worker"
+    filters:
+      "test/sequences": 2
+
+pipeline:
+  processors:
+    - sleep:
+        duration: "10ms"
+    - log:
+        level: INFO
+        message: "📨 WW_MQTT→NATS: ${! content() }"
+
+output:
+  nats:
+    urls: ["$NATS_URL"]
+    subject: "processed.sequences"
+`, "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
+
+	pipelineBuilder := service.NewStreamBuilder()
+	err = pipelineBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	pipelineStream, err := pipelineBuilder.Build()
+	require.NoError(t, err)
+
+	// Start pipeline in background with cancellable context
+	pipelineCtx, pipelineCancel := context.WithCancel(ctx)
+
+	go func() {
+		err := pipelineStream.Run(pipelineCtx)
+		if err != nil && pipelineCtx.Err() != context.Canceled {
+			t.Logf("Pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for pipeline to be ready
+	time.Sleep(2 * time.Second)
+
+	// Send messages via external producer
+	t.Logf("📤 Sending 2000 sequences to MQTT...")
+
+	producerConfig := strings.ReplaceAll(`
+input:
+  generate:
+    interval: "5ms"
+    count: 2000
+    mapping: 'root = "sequence-" + counter().string()'
+
+output:
+  mqtt:
+    urls: ["$MQTT_URL"]
+    topic: "test/sequences"
+    client_id: "external-producer"
+    qos: 2
+`, "$MQTT_URL", mqttURL)
+
+	producerBuilder := service.NewStreamBuilder()
+	err = producerBuilder.SetYAML(producerConfig)
+	require.NoError(t, err)
+
+	producerStream, err := producerBuilder.Build()
+	require.NoError(t, err)
+
+	// Start producer in background
+	go func() {
+		prodCtx, prodCancel := context.WithTimeout(ctx, 15*time.Second)
+		defer prodCancel()
+
+		err := producerStream.Run(prodCtx)
+		if err != nil {
+			t.Logf("Producer error: %v", err)
+		}
+		t.Logf("✅ Producer finished - 2000 sequences sent to MQTT")
+	}()
+
+	// Let producer send ~400 messages (400 * 5ms = 2 seconds)
+	time.Sleep(2 * time.Second)
+
+	// CRASH SIMULATION: Kill Benthos mid-processing
+	t.Logf("💥 SIMULATING CRASH: Stopping Benthos pipeline...")
+	pipelineCancel()
+
+	// Wait for cleanup
+	time.Sleep(1 * time.Second)
+
+	// RESTART with same client_id for message recovery
+	t.Logf("🔄 RESTARTING: Benthos pipeline with same client_id...")
+
+	restartCtx, restartCancel := context.WithTimeout(ctx, 15*time.Second)
+	defer restartCancel()
+
+	// Create new pipeline with same config
+	restartBuilder := service.NewStreamBuilder()
+	err = restartBuilder.SetYAML(pipelineConfig)
+	require.NoError(t, err)
+
+	restartStream, err := restartBuilder.Build()
+	require.NoError(t, err)
+
+	go func() {
+		err := restartStream.Run(restartCtx)
+		if err != nil && restartCtx.Err() != context.Canceled {
+			t.Logf("Restart pipeline error: %v", err)
+		}
+	}()
+
+	// Wait for producer to finish and pipeline to process remaining
+	time.Sleep(12 * time.Second)
+
+	// Count messages received in NATS
+	t.Logf("📊 Checking NATS for received messages...")
+
+	receivedCount := 0
+	for {
+		msg, err := sub.NextMsg(200 * time.Millisecond)
+		if err != nil {
+			break
+		}
+		receivedCount++
+		if receivedCount <= 10 || receivedCount%100 == 0 {
+			t.Logf("✅ NATS received: %s", string(msg.Data))
+		}
+	}
+
+	t.Logf("📊 Final Results:")
+	t.Logf("   Sent to MQTT: 2000")
+	t.Logf("   Received in NATS: %d", receivedCount)
+
+	require.Equal(t, 2000, receivedCount, "All messages must be delivered even with crashes - QoS 2 should guarantee delivery")
 }
