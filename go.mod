@@ -16,7 +16,7 @@ require (
 	github.com/nats-io/nats.go v1.43.0
 	github.com/nats-io/nkeys v0.4.11
 	github.com/onsi/ginkgo/v2 v2.23.4
-	github.com/onsi/gomega v1.36.3
+	github.com/onsi/gomega v1.37.0
 	github.com/redpanda-data/benthos/v4 v4.54.0
 	github.com/redpanda-data/connect/v4 v4.61.0
 	github.com/sirupsen/logrus v1.9.3
@@ -32,6 +32,34 @@ require (
 	google.golang.org/api v0.233.0
 	google.golang.org/grpc v1.73.0
 	gopkg.in/yaml.v3 v3.0.1
+)
+
+require (
+	cloud.google.com/go/aiplatform v1.85.0 // indirect
+	cloud.google.com/go/vertexai v0.12.0 // indirect
+	github.com/Masterminds/semver v1.5.0 // indirect
+	github.com/auth0/go-jwt-middleware/v2 v2.3.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.15.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/eventbridge v1.36.7 // indirect
+	github.com/aws/aws-sdk-go-v2/service/pipes v1.19.5 // indirect
+	github.com/cohere-ai/cohere-go/v2 v2.14.1 // indirect
+	github.com/expr-lang/expr v1.17.4 // indirect
+	github.com/go-mysql-org/go-mysql v1.10.0 // indirect
+	github.com/ibm-messaging/mq-golang/v5 v5.6.2 // indirect
+	github.com/jackc/pgx/v5 v5.6.0 // indirect
+	github.com/ollama/ollama v0.9.0 // indirect
+	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
+	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
+	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
+	github.com/pingcap/tidb/pkg/parser v0.0.0-20241118164214-4f047be191be // indirect
+	github.com/sashabaranov/go-openai v1.37.0 // indirect
+	github.com/segmentio/encoding v0.4.0 // indirect
+	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726 // indirect
+	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
+	github.com/slack-go/slack v0.17.1 // indirect
+	github.com/twmb/go-cache v1.2.1 // indirect
+	google.golang.org/genai v1.7.0 // indirect
+	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
 )
 
 require (
@@ -95,36 +123,36 @@ require (
 	github.com/authzed/authzed-go v1.0.0 // indirect
 	github.com/authzed/grpcutil v0.0.0-20240123194739-2ea1e3d2d98b // indirect
 	github.com/aws/aws-lambda-go v1.47.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.36.3 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.29.14 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.67 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.36.5
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.11 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.29.17
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.70
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.14.10 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.32 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.76 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.34 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.36 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.6.36 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.34 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.3.36 // indirect
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.40.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.34.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.22.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/firehose v1.32.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.2 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.12.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.7.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.9.16 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.15 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.15 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.12.17 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.18.17 // indirect
 	github.com/aws/aws-sdk-go-v2/service/kinesis v1.29.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/lambda v1.56.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.81.0
 	github.com/aws/aws-sdk-go-v2/service/sns v1.31.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sqs v1.34.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.25.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
-	github.com/aws/smithy-go v1.22.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sqs v1.38.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.25.5 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.34.0 // indirect
+	github.com/aws/smithy-go v1.22.4 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beanstalkd/go-beanstalk v0.2.0 // indirect
 	github.com/benhoyt/goawk v1.29.1 // indirect
@@ -378,6 +406,7 @@ require (
 	github.com/urfave/cli/v2 v2.27.7 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
+	github.com/wombatwisdom/components v0.1.0-rc6
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
@@ -446,4 +475,12 @@ require (
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
+)
+
+exclude (
+	github.com/wombatwisdom/components/framework v0.1.0-rc1
+	github.com/wombatwisdom/components/framework v0.1.0-rc2
+	github.com/wombatwisdom/components/framework v0.1.0-rc3
+	github.com/wombatwisdom/components/framework v0.1.0-rc4
+	github.com/wombatwisdom/components/framework v0.1.0-rc5
 )
