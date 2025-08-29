@@ -26,7 +26,7 @@ require (
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.37.0
-	github.com/wombatwisdom/components v0.0.0-00010101000000-000000000000
+	github.com/wombatwisdom/components v0.1.0-rc6
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
 	go.mongodb.org/mongo-driver v1.17.2
 	go.opentelemetry.io/otel v1.36.0
@@ -36,8 +36,6 @@ require (
 	google.golang.org/grpc v1.69.4
 	gopkg.in/yaml.v3 v3.0.1
 )
-
-replace github.com/wombatwisdom/components => ../components
 
 require (
 	cel.dev/expr v0.16.2 // indirect
