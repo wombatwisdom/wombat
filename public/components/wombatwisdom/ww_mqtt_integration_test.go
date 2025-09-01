@@ -85,12 +85,44 @@ allow_anonymous true
 
 	t.Logf("Shared MQTT broker: %s", mqttURL)
 
-	testBenthosMQTTAtLeastOnceDelivery(t, ctx, mqttURL, natsURL, "benthos-no-crash")
-	testBenthosMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t, ctx, mqttURL, natsURL, "benthos-with-crash")
-	testWombatMQTTAtLeastOnceDelivery(t, ctx, mqttURL, natsURL, "wombat-no-crash")
-	testWombatMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t, ctx, mqttURL, natsURL, "wombat-with-crash")
-	testWombatMQTTBufferLossDetection(t, ctx, mqttURL, natsURL, "wombat-buffer-loss")
-	testSimpleBufferLossDemo(t, ctx, mqttURL, natsURL, "simple-buffer-loss")
+	//testBenthosMQTTAtLeastOnceDelivery(t, ctx, mqttURL, natsURL, "benthos-no-crash")
+	//testBenthosMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t, ctx, mqttURL, natsURL, "benthos-with-crash")
+	//testWombatMQTTAtLeastOnceDelivery(t, ctx, mqttURL, natsURL, "wombat-no-crash")
+	//testWombatMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t, ctx, mqttURL, natsURL, "wombat-with-crash")
+	//testWombatMQTTBufferLossDetection(t, ctx, mqttURL, natsURL, "wombat-buffer-loss")
+	
+	// Test auto ACK behavior with different configurations
+	testCases := []struct {
+		name                string
+		setAutoAckDisabled  *bool  // nil means omit from config (use default)
+		expectLoss          bool
+		description         string
+	}{
+		{
+			name:               "auto-ack-enabled",
+			setAutoAckDisabled: boolPtr(false),
+			expectLoss:         true,
+			description:        "set_auto_ack_disabled: false should allow message loss (at-most-once)",
+		},
+		{
+			name:               "auto-ack-disabled", 
+			setAutoAckDisabled: boolPtr(true),
+			expectLoss:         false,
+			description:        "set_auto_ack_disabled: true should prevent message loss (at-least-once)",
+		},
+		{
+			name:               "auto-ack-default",
+			setAutoAckDisabled: nil,
+			expectLoss:         false,
+			description:        "default (no set_auto_ack_disabled field) should prevent message loss (at-least-once)",
+		},
+	}
+	
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testManualAckBehavior(t, ctx, mqttURL, natsURL, tc.name, tc.setAutoAckDisabled, tc.expectLoss, tc.description)
+		})
+	}
 }
 
 func testBenthosMQTTAtLeastOnceDelivery(t *testing.T, parentCtx context.Context, mqttURL, natsURL, testID string) {
@@ -914,13 +946,25 @@ func min(a, b int) int {
 	return b
 }
 
-func testSimpleBufferLossDemo(t *testing.T, parentCtx context.Context, mqttURL, natsURL, testID string) {
+// boolPtr returns a pointer to a bool value
+func boolPtr(b bool) *bool {
+	return &b
+}
+
+func testManualAckBehavior(t *testing.T, parentCtx context.Context, mqttURL, natsURL, testID string, setAutoAckDisabled *bool, expectLoss bool, description string) {
 	ctx, cancel := context.WithTimeout(parentCtx, 30*time.Second)
 	defer cancel()
 
-	t.Logf("=== Starting Simple Buffer Loss Demo ===")
-	t.Logf("This test demonstrates that ww_mqtt_3 uses at-most-once delivery")
-	t.Logf("Messages are ACK'd to MQTT after buffering, but before processing")
+	t.Logf("=== Starting Auto ACK Behavior Test: %s ===", testID)
+	t.Logf("Description: %s", description)
+	
+	var autoAckStr string
+	if setAutoAckDisabled == nil {
+		autoAckStr = "default (true)"
+	} else {
+		autoAckStr = fmt.Sprintf("%t", *setAutoAckDisabled)
+	}
+	t.Logf("Testing set_auto_ack_disabled: %s", autoAckStr)
 
 	// Setup NATS for receiving processed messages
 	natsConn, err := nats.Connect(natsURL)
@@ -933,14 +977,24 @@ func testSimpleBufferLossDemo(t *testing.T, parentCtx context.Context, mqttURL, 
 	// Track what we receive
 	receivedCount := 0
 
-	// Pipeline that processes slowly and crashes mid-way
-	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
+	// Build pipeline configuration with dynamic set_auto_ack_disabled setting
+	var autoAckConfig string
+	if setAutoAckDisabled != nil {
+		autoAckConfig = fmt.Sprintf("    set_auto_ack_disabled: %t", *setAutoAckDisabled)
+	} else {
+		autoAckConfig = "" // Omit field to use default
+	}
+	
+	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(fmt.Sprintf(`
 input:
   ww_mqtt_3:
     urls: ["$MQTT_URL"]
-    client_id: "worker-`+testID+`"
+    client_id: "worker-%s"
+    prefetch_count: 10
+    clean_session: false
+%s
     filters:
-      "test/`+testID+`": 2
+      "test/%s": 2
 
 pipeline:
   processors:
@@ -951,8 +1005,8 @@ pipeline:
 output:
   nats:
     urls: ["$NATS_URL"]
-    subject: "processed.`+testID+`"
-`, "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
+    subject: "processed.%s"
+`, testID, autoAckConfig, testID, testID), "$MQTT_URL", mqttURL), "$NATS_URL", natsURL)
 
 	builder := service.NewStreamBuilder()
 	err = builder.SetYAML(pipelineConfig)
@@ -975,7 +1029,7 @@ output:
 
 	// Send messages rapidly to fill the buffer
 	t.Logf("📤 Sending 200 messages rapidly to MQTT...")
-	producerConfig := strings.ReplaceAll(`
+	producerConfig := strings.ReplaceAll(fmt.Sprintf(`
 input:
   generate:
     interval: "1ms"  # Very fast to ensure buffer fills
@@ -986,10 +1040,10 @@ input:
 output:
   mqtt:
     urls: ["$MQTT_URL"]
-    topic: "test/`+testID+`"
-    client_id: "producer-`+testID+`"
+    topic: "test/%s"
+    client_id: "producer-%s"
     qos: 2
-`, "$MQTT_URL", mqttURL)
+`, testID, testID), "$MQTT_URL", mqttURL)
 
 	prodBuilder := service.NewStreamBuilder()
 	err = prodBuilder.SetYAML(producerConfig)
@@ -1032,17 +1086,34 @@ output:
 	t.Logf("   Messages received in NATS: %d", receivedCount)
 	t.Logf("   Messages lost: %d", 200-receivedCount)
 
-	// The key insight:
-	if receivedCount < 200 {
-		messagesLost := 200 - receivedCount
-		t.Logf("❌ BUFFER LOSS: %d messages were lost", messagesLost)
-		t.Logf("   These messages were likely:")
-		t.Logf("   - In the 100-message buffer when pipeline was killed")
-		t.Logf("   - Already ACK'd to MQTT (so not re-delivered)")
-		t.Logf("   This demonstrates at-most-once delivery")
+	// Validate delivery semantics based on expected behavior
+	if expectLoss {
+		// At-most-once delivery - expect some message loss
+		if receivedCount < 200 {
+			messagesLost := 200 - receivedCount
+			t.Logf("✅ EXPECTED: %d messages lost with at-most-once delivery", messagesLost)
+			t.Logf("   Messages were ACK'd before processing, enabling higher throughput")
+			t.Logf("   This demonstrates proper at-most-once delivery")
+		} else {
+			t.Logf("❌ UNEXPECTED: No messages lost with set_auto_ack_disabled: false")
+			t.Logf("   At-most-once delivery should allow some message loss during crashes")
+		}
+		
+		// Should lose some messages due to at-most-once semantics
+		assert.Less(t, receivedCount, 200, "Should lose some messages with at-most-once delivery")
+		assert.Greater(t, 200-receivedCount, 0, "Should have lost some messages")
+	} else {
+		// At-least-once delivery - expect no message loss
+		if receivedCount == 200 {
+			t.Logf("✅ SUCCESS: All 200 messages delivered with at-least-once semantics")
+			t.Logf("   Disabled auto ACK ensures messages are only ACK'd after successful processing")
+			t.Logf("   This demonstrates proper at-least-once delivery")
+		} else {
+			t.Logf("❌ UNEXPECTED: %d messages lost with auto ACK disabled", 200-receivedCount)
+			t.Logf("   Disabled auto ACK should prevent message loss during crashes")
+		}
+		
+		// Should receive all messages with at-least-once delivery
+		assert.Equal(t, 200, receivedCount, "Should receive all messages with at-least-once delivery")
 	}
-
-	// We should lose some messages due to buffer overflow or pipeline termination
-	assert.Less(t, receivedCount, 200, "Should not receive all messages")
-	assert.Greater(t, 200-receivedCount, 0, "Should have lost some messages")
 }

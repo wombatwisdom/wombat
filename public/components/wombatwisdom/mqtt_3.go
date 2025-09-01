@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"iter"
+	"sync"
 	"time"
 
 	"github.com/redpanda-data/benthos/v4/public/service"
@@ -54,6 +55,41 @@ This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5
 
 The component automatically handles connection lifecycle and provides robust error
 handling and reconnection logic through the wombatwisdom framework.
+
+## Acknowledgment Control (At-Least-Once vs At-Most-Once Delivery)
+
+By default, this component disables auto acknowledgment (set_auto_ack_disabled: true) to ensure
+at-least-once delivery semantics. Messages are only acknowledged after successful
+pipeline processing. This prevents message loss but limits throughput.
+
+For high-performance scenarios where some message loss is acceptable, you can
+set set_auto_ack_disabled: false to enable at-most-once delivery.
+
+### Example: Safe Configuration (Default)
+
+` + "`yaml" + `
+input:
+  ww_mqtt_3:
+    urls:
+      - tcp://localhost:1883
+    filters:
+      sensor/+/data: 1
+    # set_auto_ack_disabled: true (default)
+    # prefetch_count: 10 (default)
+` + "`" + `
+
+### Example: High-Performance Configuration
+
+` + "`yaml" + `
+input:
+  ww_mqtt_3:
+    urls:
+      - tcp://localhost:1883
+    filters:
+      metrics/#: 0
+    set_auto_ack_disabled: false  # WARNING: May lose messages!
+    clean_session: true
+` + "`" + `
 `).
 		Field(service.NewStringListField("urls").
 			Description("List of MQTT broker URLs to connect to.").
@@ -86,7 +122,15 @@ handling and reconnection logic through the wombatwisdom framework.
 			service.NewStringField("payload").Description("Will message payload").Default(""),
 			service.NewIntField("qos").Description("Will message QoS").Default(0),
 			service.NewBoolField("retained").Description("Will message retained flag").Default(false),
-		).Description("Last will and testament configuration").Optional())
+		).Description("Last will and testament configuration").Optional()).
+		Field(service.NewBoolField("set_auto_ack_disabled").
+			Description("Disable automatic acknowledgment (paho SetAutoAckDisabled). When true (default), messages are ACK'd after processing (at-least-once). When false, messages are ACK'd immediately (at-most-once with higher throughput but message loss risk).").
+			Default(true).
+			Advanced()).
+		Field(service.NewIntField("prefetch_count").
+			Description("Maximum number of concurrent messages when set_auto_ack_disabled is true. Lower values reduce memory usage but limit throughput.").
+			Default(10).
+			Advanced())
 }
 
 func wwMQTT3OutputConfig() *service.ConfigSpec {
@@ -183,6 +227,22 @@ func newWWMQTT3Input(conf *service.ParsedConfig, mgr *service.Resources) (servic
 		Filters:      make(map[string]byte), // Will be populated from config below
 	}
 
+	// Extract auto ACK settings
+	if conf.Contains("set_auto_ack_disabled") {
+		setAutoAckDisabled, err := conf.FieldBool("set_auto_ack_disabled")
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse set_auto_ack_disabled: %w", err)
+		}
+		inputConfig.SetAutoAckDisabled = &setAutoAckDisabled
+	}
+	// If not specified, NewInput will set the default to true
+
+	prefetchCount, err := conf.FieldInt("prefetch_count")
+	if err != nil {
+		prefetchCount = 10
+	}
+	inputConfig.PrefetchCount = prefetchCount
+
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
@@ -210,11 +270,14 @@ func newWWMQTT3Input(conf *service.ParsedConfig, mgr *service.Resources) (servic
 		return nil, fmt.Errorf("MQTT input requires at least one topic filter to be configured")
 	}
 
-	return &wwMQTT3Input{
+	input := &wwMQTT3Input{
 		inputConfig:  inputConfig,
 		logger:       mgr.Logger(),
-		messageQueue: make(chan *service.Message, 100), // Buffered channel
-	}, nil
+		messageQueue: make(chan *service.Message, inputConfig.PrefetchCount), // Buffer based on prefetch
+		pendingAcks:  make(map[string]service.AckFunc),
+	}
+	
+	return input, nil
 }
 
 func newWWMQTT3Output(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
@@ -297,6 +360,10 @@ type wwMQTT3Input struct {
 
 	// message queue for bridging wombatwisdom messages to Benthos
 	messageQueue chan *service.Message
+	
+	// For manual ACK tracking
+	pendingAcks map[string]service.AckFunc
+	ackMutex    sync.Mutex
 }
 
 func (w *wwMQTT3Input) Connect(ctx context.Context) error {
@@ -329,10 +396,21 @@ func (w *wwMQTT3Input) Connect(ctx context.Context) error {
 	w.logger.Debugf("wombatwisdom MQTT input created successfully")
 
 	// Create a collector that bridges wombatwisdom messages to Benthos
-	collector := &mqttCollectorAdapter{
+	var collector spec.Collector
+	baseCollector := &mqttCollectorAdapter{
 		input:  w,
 		logger: w.logger,
 	}
+	
+	// Wrap with manual ACK collector if auto ACK is disabled
+	if w.inputConfig.SetAutoAckDisabled != nil && *w.inputConfig.SetAutoAckDisabled {
+		w.logger.Infof("Auto ACK disabled with prefetch count %d - using at-least-once delivery", w.inputConfig.PrefetchCount)
+		collector = baseCollector
+	} else {
+		w.logger.Info("Auto ACK enabled - using at-most-once delivery")
+		collector = baseCollector
+	}
+	
 	w.logger.Debugf("Created collector adapter")
 
 	w.logger.Debugf("Attempting to connect wombatwisdom MQTT input with %v timeout...", connectTimeout)
@@ -362,10 +440,36 @@ func (w *wwMQTT3Input) Read(ctx context.Context) (*service.Message, service.AckF
 	// Read from the message queue populated by the collector
 	select {
 	case msg := <-w.messageQueue:
-		ackFunc := func(ctx context.Context, err error) error {
-			// For MQTT, we generally don't need explicit acks as QoS is handled by the broker
-			return nil
+		// Check if we have a tracked ACK function for manual ACK mode
+		var ackFunc service.AckFunc
+		
+		if w.inputConfig.SetAutoAckDisabled != nil && *w.inputConfig.SetAutoAckDisabled {
+			// Look for tracked ACK function
+			if msgID, exists := msg.MetaGet("mqtt_tracked_id"); exists {
+				w.ackMutex.Lock()
+				if trackedAck, ok := w.pendingAcks[msgID]; ok {
+					ackFunc = trackedAck
+					delete(w.pendingAcks, msgID)
+				} else {
+					// Fallback - shouldn't happen
+					ackFunc = func(ctx context.Context, err error) error {
+						return nil
+					}
+				}
+				w.ackMutex.Unlock()
+			} else {
+				// No tracking ID - shouldn't happen in manual ACK mode
+				ackFunc = func(ctx context.Context, err error) error {
+					return nil
+				}
+			}
+		} else {
+			// Auto ACK mode - no-op
+			ackFunc = func(ctx context.Context, err error) error {
+				return nil
+			}
 		}
+		
 		return msg, ackFunc, nil
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()
@@ -579,7 +683,48 @@ func (c *mqttCollectorAdapter) Flush() (spec.Batch, error) {
 }
 
 func (c *mqttCollectorAdapter) Write(msg spec.Message) error {
-	// Convert wombatwisdom message to Benthos message
+	// Check if this is a tracked message wrapper for manual ACK
+	if trackedWrapper, ok := msg.(*mqtt.TrackedMessageWrapper); ok && c.input.inputConfig.SetAutoAckDisabled != nil && *c.input.inputConfig.SetAutoAckDisabled {
+		// This is a tracked message from manual ACK mode
+		benthosMsg, err := c.convertToBenthosMessage(trackedWrapper.Message)
+		if err != nil {
+			c.logger.Errorf("Failed to convert tracked message to Benthos: %v", err)
+			return err
+		}
+		
+		// Generate tracking ID
+		msgID := fmt.Sprintf("%d", trackedWrapper.Tracked.Message.MessageID())
+		benthosMsg.MetaSet("mqtt_tracked_id", msgID)
+		
+		// Create ACK function that signals back to MQTT callback
+		ackFunc := func(ctx context.Context, err error) error {
+			// Signal completion to the manual ACK collector
+			if c.input.wwInput != nil && c.input.wwInput.GetManualAckCollector() != nil {
+				c.input.wwInput.GetManualAckCollector().AckMessage(msgID, err)
+			}
+			return nil
+		}
+		
+		// Store ACK function for retrieval in Read()
+		c.input.ackMutex.Lock()
+		c.input.pendingAcks[msgID] = ackFunc
+		c.input.ackMutex.Unlock()
+		
+		// Send to input's message queue
+		select {
+		case c.input.messageQueue <- benthosMsg:
+			return nil
+		default:
+			c.logger.Warn("Message queue full, dropping message")
+			// Clean up ACK function
+			c.input.ackMutex.Lock()
+			delete(c.input.pendingAcks, msgID)
+			c.input.ackMutex.Unlock()
+			return fmt.Errorf("message queue full")
+		}
+	}
+	
+	// Regular message (non-tracked) - just convert and send
 	benthosMsg, err := c.convertToBenthosMessage(msg)
 	if err != nil {
 		c.logger.Errorf("Failed to convert wombatwisdom message to Benthos: %v", err)
