@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package wombatwisdom_test
+package mqtt3_test
 
 import (
 	"context"
@@ -90,13 +90,13 @@ allow_anonymous true
 	//testWombatMQTTAtLeastOnceDelivery(t, ctx, mqttURL, natsURL, "wombat-no-crash")
 	//testWombatMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t, ctx, mqttURL, natsURL, "wombat-with-crash")
 	//testWombatMQTTBufferLossDetection(t, ctx, mqttURL, natsURL, "wombat-buffer-loss")
-	
+
 	// Test auto ACK behavior with different configurations
 	testCases := []struct {
-		name                string
-		setAutoAckDisabled  *bool  // nil means omit from config (use default)
-		expectLoss          bool
-		description         string
+		name               string
+		setAutoAckDisabled *bool // nil means omit from config (use default)
+		expectLoss         bool
+		description        string
 	}{
 		{
 			name:               "auto-ack-enabled",
@@ -105,7 +105,7 @@ allow_anonymous true
 			description:        "set_auto_ack_disabled: false should allow message loss (at-most-once)",
 		},
 		{
-			name:               "auto-ack-disabled", 
+			name:               "auto-ack-disabled",
 			setAutoAckDisabled: boolPtr(true),
 			expectLoss:         false,
 			description:        "set_auto_ack_disabled: true should prevent message loss (at-least-once)",
@@ -117,7 +117,7 @@ allow_anonymous true
 			description:        "default (no set_auto_ack_disabled field) should prevent message loss (at-least-once)",
 		},
 	}
-	
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			testManualAckBehavior(t, ctx, mqttURL, natsURL, tc.name, tc.setAutoAckDisabled, tc.expectLoss, tc.description)
@@ -957,7 +957,7 @@ func testManualAckBehavior(t *testing.T, parentCtx context.Context, mqttURL, nat
 
 	t.Logf("=== Starting Auto ACK Behavior Test: %s ===", testID)
 	t.Logf("Description: %s", description)
-	
+
 	var autoAckStr string
 	if setAutoAckDisabled == nil {
 		autoAckStr = "default (true)"
@@ -984,7 +984,7 @@ func testManualAckBehavior(t *testing.T, parentCtx context.Context, mqttURL, nat
 	} else {
 		autoAckConfig = "" // Omit field to use default
 	}
-	
+
 	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(fmt.Sprintf(`
 input:
   ww_mqtt_3:
@@ -1098,7 +1098,7 @@ output:
 			t.Logf("❌ UNEXPECTED: No messages lost with set_auto_ack_disabled: false")
 			t.Logf("   At-most-once delivery should allow some message loss during crashes")
 		}
-		
+
 		// Should lose some messages due to at-most-once semantics
 		assert.Less(t, receivedCount, 200, "Should lose some messages with at-most-once delivery")
 		assert.Greater(t, 200-receivedCount, 0, "Should have lost some messages")
@@ -1112,7 +1112,7 @@ output:
 			t.Logf("❌ UNEXPECTED: %d messages lost with auto ACK disabled", 200-receivedCount)
 			t.Logf("   Disabled auto ACK should prevent message loss during crashes")
 		}
-		
+
 		// Should receive all messages with at-least-once delivery
 		assert.Equal(t, 200, receivedCount, "Should receive all messages with at-least-once delivery")
 	}
