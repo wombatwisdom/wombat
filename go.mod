@@ -1,6 +1,6 @@
 module github.com/wombatwisdom/wombat
 
-go 1.24.1
+go 1.24.4
 
 require (
 	cloud.google.com/go/auth v0.16.3
