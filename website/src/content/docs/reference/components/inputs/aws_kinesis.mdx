@@ -24,6 +24,7 @@ input:
     checkpoint_limit: 1024
     auto_replay_nacks: true
     commit_period: 5s
+    steal_grace_period: 2s
     start_from_oldest: true
     batching:
       count: 0
@@ -45,22 +46,33 @@ input:
       billing_mode: PAY_PER_REQUEST
       read_capacity_units: 0
       write_capacity_units: 0
+      region: "" # No default (optional)
+      endpoint: "" # No default (optional)
+      credentials:
+        profile: "" # No default (optional)
+        id: "" # No default (optional)
+        secret: "" # No default (optional)
+        token: "" # No default (optional)
+        from_ec2_role: false # No default (optional)
+        role: "" # No default (optional)
+        role_external_id: "" # No default (optional)
     checkpoint_limit: 1024
     auto_replay_nacks: true
     commit_period: 5s
+    steal_grace_period: 2s
     rebalance_period: 30s
     lease_period: 30s
     start_from_oldest: true
-    region: ""
-    endpoint: ""
+    region: "" # No default (optional)
+    endpoint: "" # No default (optional)
     credentials:
-      profile: ""
-      id: ""
-      secret: ""
-      token: ""
-      from_ec2_role: false
-      role: ""
-      role_external_id: ""
+      profile: "" # No default (optional)
+      id: "" # No default (optional)
+      secret: "" # No default (optional)
+      token: "" # No default (optional)
+      from_ec2_role: false # No default (optional)
+      role: "" # No default (optional)
+      role_external_id: "" # No default (optional)
     batching:
       count: 0
       byte_size: 0
@@ -164,6 +176,91 @@ Set the provisioned write capacity when creating the table with a `billing_mode`
 
 *Default*: `0`
 
+### `dynamodb.region`
+
+The AWS region to target.
+
+
+*Type*: `string`
+
+
+### `dynamodb.endpoint`
+
+Allows you to specify a custom endpoint for the AWS API.
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials`
+
+Optional manual configuration of AWS credentials to use. More information can be found in xref:guides:cloud/aws.adoc[].
+
+
+*Type*: `object`
+
+
+### `dynamodb.credentials.profile`
+
+A profile from `~/.aws/credentials` to use.
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials.id`
+
+The ID of credentials to use.
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials.secret`
+
+The secret for the credentials being used.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials.token`
+
+The token for the credentials being used, required when using short term credentials.
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials.from_ec2_role`
+
+Use the credentials of a host EC2 machine configured to assume [an IAM role associated with the instance](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html).
+
+
+*Type*: `bool`
+
+Requires version 4.2.0 or newer
+
+### `dynamodb.credentials.role`
+
+A role ARN to assume.
+
+
+*Type*: `string`
+
+
+### `dynamodb.credentials.role_external_id`
+
+An external ID to provide when assuming a role.
+
+
+*Type*: `string`
+
+
 ### `checkpoint_limit`
 
 The maximum gap between the in flight sequence versus the latest acknowledged sequence at a given time. Increasing this limit enables parallel processing and batching at the output level to work on individual shards. Any given sequence will not be committed unless all messages under that offset are delivered in order to preserve at least once delivery guarantees.
@@ -190,6 +287,15 @@ The period of time between each update to the checkpoint table.
 *Type*: `string`
 
 *Default*: `"5s"`
+
+### `steal_grace_period`
+
+Determines how long beyond the next commit period a client will wait when stealing a shard for the current owner to store a checkpoint. A longer value increases the time taken to balance shards but reduces the likelihood of processing duplicate messages.
+
+
+*Type*: `string`
+
+*Default*: `"2s"`
 
 ### `rebalance_period`
 
@@ -225,7 +331,6 @@ The AWS region to target.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `endpoint`
 
@@ -234,7 +339,6 @@ Allows you to specify a custom endpoint for the AWS API.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials`
 
@@ -251,7 +355,6 @@ A profile from `~/.aws/credentials` to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.id`
 
@@ -260,7 +363,6 @@ The ID of credentials to use.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.secret`
 
@@ -273,7 +375,6 @@ The secret for the credentials being used.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.token`
 
@@ -282,7 +383,6 @@ The token for the credentials being used, required when using short term credent
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.from_ec2_role`
 
@@ -291,7 +391,6 @@ Use the credentials of a host EC2 machine configured to assume [an IAM role asso
 
 *Type*: `bool`
 
-*Default*: `false`
 Requires version 4.2.0 or newer
 
 ### `credentials.role`
@@ -301,7 +400,6 @@ A role ARN to assume.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `credentials.role_external_id`
 
@@ -310,7 +408,6 @@ An external ID to provide when assuming a role.
 
 *Type*: `string`
 
-*Default*: `""`
 
 ### `batching`
 

@@ -21,7 +21,10 @@ input:
     credentials:
       username: ""
       password: ""
-      private_key_file: ""
+      host_public_key_file: "" # No default (optional)
+      host_public_key: "" # No default (optional)
+      private_key_file: "" # No default (optional)
+      private_key: "" # No default (optional)
       private_key_pass: ""
     paths: [] # No default (required)
     auto_replay_nacks: true
@@ -41,11 +44,16 @@ input:
   label: ""
   sftp:
     address: "" # No default (required)
+    connection_timeout: 30s
     credentials:
       username: ""
       password: ""
-      private_key_file: ""
+      host_public_key_file: "" # No default (optional)
+      host_public_key: "" # No default (optional)
+      private_key_file: "" # No default (optional)
+      private_key: "" # No default (optional)
       private_key_pass: ""
+    max_sftp_sessions: 10
     paths: [] # No default (required)
     auto_replay_nacks: true
     scanner:
@@ -65,6 +73,7 @@ input:
 This input adds the following metadata fields to each message:
 
 - sftp_path
+- sftp_mod_time
 
 You can access these metadata fields using function interpolation.
 
@@ -78,6 +87,15 @@ The address of the server to connect to.
 *Type*: `string`
 
 
+### `connection_timeout`
+
+The connection timeout to use when connecting to the target server.
+
+
+*Type*: `string`
+
+*Default*: `"30s"`
+
 ### `credentials`
 
 The credentials to use to log into the target server.
@@ -88,7 +106,7 @@ The credentials to use to log into the target server.
 
 ### `credentials.username`
 
-The username to connect to the SFTP server.
+The username to authenticate with the SFTP server.
 
 
 *Type*: `string`
@@ -97,7 +115,7 @@ The username to connect to the SFTP server.
 
 ### `credentials.password`
 
-The password for the username to connect to the SFTP server.
+The password for the specified username to connect to the SFTP server.
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -107,19 +125,46 @@ The password for the username to connect to the SFTP server.
 *Type*: `string`
 
 *Default*: `""`
+
+### `credentials.host_public_key_file`
+
+The path to the SFTP server's public key file, used for host key verification.
+
+
+*Type*: `string`
+
+
+### `credentials.host_public_key`
+
+The raw contents of the SFTP server's public key, used for host key verification.
+
+
+*Type*: `string`
+
 
 ### `credentials.private_key_file`
 
-The private key for the username to connect to the SFTP server.
+The path to the private key file, used for authenticating the username.
 
 
 *Type*: `string`
 
-*Default*: `""`
+
+### `credentials.private_key`
+
+The raw contents of the private key, used for authenticating the username.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
 
 ### `credentials.private_key_pass`
 
-Optional passphrase for private key.
+Optional passphrase for decrypting the private key, if it's encrypted.
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -129,6 +174,15 @@ Optional passphrase for private key.
 *Type*: `string`
 
 *Default*: `""`
+
+### `max_sftp_sessions`
+
+The maximum number of SFTP sessions.
+
+
+*Type*: `int`
+
+*Default*: `10`
 
 ### `paths`
 
