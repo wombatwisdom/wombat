@@ -2,6 +2,8 @@ module github.com/wombatwisdom/wombat
 
 go 1.24.1
 
+toolchain go1.24.4
+
 require (
 	cloud.google.com/go/auth v0.16.3
 	cloud.google.com/go/bigtable v1.37.0
@@ -475,12 +477,4 @@ require (
 	modernc.org/strutil v1.2.0 // indirect
 	modernc.org/token v1.1.0 // indirect
 	rsc.io/binaryregexp v0.2.0 // indirect
-)
-
-exclude (
-	github.com/wombatwisdom/components/framework v0.1.0-rc1
-	github.com/wombatwisdom/components/framework v0.1.0-rc2
-	github.com/wombatwisdom/components/framework v0.1.0-rc3
-	github.com/wombatwisdom/components/framework v0.1.0-rc4
-	github.com/wombatwisdom/components/framework v0.1.0-rc5
 )
