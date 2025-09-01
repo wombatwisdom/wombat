@@ -29,7 +29,18 @@ jobs:
       uses: rnorton5432/setup-task@v1
 
     - name: Deps
-      run: task deps && git diff-index --quiet HEAD || { >&2 echo "Stale go.{mod,sum} detected. This can be fixed with 'task deps'."; exit 1; }
+      run: |
+        task deps
+        if ! git diff-index --quiet HEAD; then
+          echo "::error::Stale go.{mod,sum} detected. This can be fixed with 'task deps'."
+          echo "::group::git diff go.mod"
+          git diff go.mod || true
+          echo "::endgroup::"
+          echo "::group::git diff go.sum"
+          git diff go.sum | head -100 || true
+          echo "::endgroup::"
+          exit 1
+        fi
 
     - name: Docs
       run: task docs && git diff-index --quiet HEAD || { >&2 echo "Stale docs detected. This can be fixed with 'task docs'."; exit 1; }
