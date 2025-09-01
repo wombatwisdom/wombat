@@ -9,25 +9,24 @@ import (
 	"time"
 
 	gzmq4 "github.com/go-zeromq/zmq4"
-	"github.com/redpa
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
-	gzmq4 "github.com/go-zeromq/zmq4"
+	"github.com/stretchr/testify/require"
 )
 
 func TestZMQInputNConfig(t *testing.T) {
 	t.Run("returns valid config spec", func(t *testing.T) {
 		spec := zmqInputNConfig()
+		assert.NotNil(t, spec)
 
-		
 		// Verify spec is properly configured
 		// We can't directly check fields, but we can verify the spec is valid
 		assert.NotNil(t, spec)
 	})
 
 	t.Run("config spec has correct defaults", func(t *testing.T) {
+		spec := zmqInputNConfig()
 
-		
 		// Test parsing with minimal config
 		env := service.NewEnvironment()
 		parsedConf, err := spec.ParseYAML(`
@@ -35,17 +34,17 @@ urls:
   - tcp://localhost:5555
 socket_type: PULL
 `, env)
+		require.NoError(t, err)
 
-		
 		// Check defaults
 		bind, err := parsedConf.FieldBool("bind")
 		require.NoError(t, err)
+		assert.False(t, bind)
 
-		
 		hwm, err := parsedConf.FieldInt("high_water_mark")
 		require.NoError(t, err)
+		assert.Equal(t, 0, hwm)
 
-		
 		pollTimeout, err := parsedConf.FieldDuration("poll_timeout")
 		require.NoError(t, err)
 		assert.Equal(t, 5*time.Second, pollTimeout)
@@ -53,12 +52,12 @@ socket_type: PULL
 }
 
 func TestZMQInputNFromConfig(t *testing.T) {
+	tests := []struct {
 		name        string
 		config      string
 		wantErr     bool
-		wantErr   bool
+		errContains string
 		validate    func(t *testing.T, input *zmqInputN)
-		validate  func(t *testing.T, input *zmqInputN)
 	}{
 		{
 			name: "valid PULL configuration",
@@ -205,8 +204,8 @@ sub_filters:
 				assert.Nil(t, input)
 			} else {
 				require.NoError(t, err)
+				require.NotNil(t, input)
 
-				
 				if tt.validate != nil {
 					tt.validate(t, input)
 				}
@@ -216,11 +215,11 @@ sub_filters:
 }
 
 func TestGetZMQInputNType(t *testing.T) {
+	tests := []struct {
 		name        string
 		input       string
 		want        gzmq4.SocketType
 		wantErr     bool
-		wantErr    bool
 		errContains string
 	}{
 		{
@@ -371,8 +370,8 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		batch, ackFunc, err := input.ReadBatch(ctx)
 		require.NoError(t, err)
 		require.NotNil(t, batch)
+		require.NotNil(t, ackFunc)
 
-		
 		require.Equal(t, 1, len(batch))
 		msg := batch[0]
 		content, err := msg.AsBytes()
@@ -472,8 +471,8 @@ func TestZMQInputNReadBatch(t *testing.T) {
 		// Try to read - should timeout
 		start := time.Now()
 		batch, _, err := input.ReadBatch(ctx)
+		elapsed := time.Since(start)
 
-		
 		// Should timeout around pollTimeout
 		assert.NoError(t, err) // Recv with timeout returns empty message, not error
 		assert.NotNil(t, batch)
@@ -606,5 +605,4 @@ func TestZMQInputNIntegrationScenarios(t *testing.T) {
 		}
 		assert.Equal(t, 2, received, "Should receive only topic1 messages")
 	})
-n
 }
