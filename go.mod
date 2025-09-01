@@ -2,8 +2,6 @@ module github.com/wombatwisdom/wombat
 
 go 1.24.1
 
-toolchain go1.24.4
-
 require (
 	cloud.google.com/go/auth v0.16.3
 	cloud.google.com/go/bigtable v1.37.0
