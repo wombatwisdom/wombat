@@ -15,36 +15,40 @@ import (
 func init() {
 	// Register MQTT input with ww_ prefix for seamless integration
 	err := service.RegisterInput(
-		"ww_mqtt",
-		wwMQTTInputConfig(),
+		"ww_mqtt_3",
+		wwMQTT3InputConfig(),
 		func(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
-			return newWWMQTTInput(conf, mgr)
+			return newWWMQTT3Input(conf, mgr)
 		})
 	if err != nil {
-		panic(fmt.Errorf("failed to register ww_mqtt input: %w", err))
+		panic(fmt.Errorf("failed to register ww_mqtt_3 input: %w", err))
 	}
 
 	// Register MQTT output with ww_ prefix for seamless integration
 	err = service.RegisterOutput(
-		"ww_mqtt",
-		wwMQTTOutputConfig(),
-		newWWMQTTOutput)
+		"ww_mqtt_3",
+		wwMQTT3OutputConfig(),
+		newWWMQTT3Output)
 	if err != nil {
-		panic(fmt.Errorf("failed to register ww_mqtt output: %w", err))
+		panic(fmt.Errorf("failed to register ww_mqtt_3 output: %w", err))
 	}
 }
 
-func wwMQTTInputConfig() *service.ConfigSpec {
+func wwMQTT3InputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
 		Categories("Services").
-		Summary("Reads messages from MQTT topics using wombatwisdom components").
+		Summary("Reads messages from MQTT v3.1.1 topics using wombatwisdom components").
 		Description(`
-Seamless integration of wombatwisdom MQTT input component into Wombat.
+Seamless integration of wombatwisdom MQTT v3.1.1 input component into Wombat.
 
-This component uses the wombatwisdom MQTT implementation under the hood while providing
+This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
 a native Benthos interface. All wombatwisdom features are available including advanced
 connection management, authentication, and quality of service settings.
+
+## MQTT Version
+
+This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 
 ## Connection Management
 
@@ -85,17 +89,21 @@ handling and reconnection logic through the wombatwisdom framework.
 		).Description("Last will and testament configuration").Optional())
 }
 
-func wwMQTTOutputConfig() *service.ConfigSpec {
+func wwMQTT3OutputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
 		Categories("Services").
-		Summary("Publishes messages to MQTT topics using wombatwisdom components").
+		Summary("Publishes messages to MQTT v3.1.1 topics using wombatwisdom components").
 		Description(`
-Seamless integration of wombatwisdom MQTT output component into Wombat.
+Seamless integration of wombatwisdom MQTT v3.1.1 output component into Wombat.
 
-This component uses the wombatwisdom MQTT implementation under the hood while providing
+This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
 a native Benthos interface. All wombatwisdom features are available including advanced
 connection management, authentication, and quality of service settings.
+
+## MQTT Version
+
+This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 `).
 		Field(service.NewStringListField("urls").
 			Description("List of MQTT broker URLs to connect to.").
@@ -136,7 +144,7 @@ connection management, authentication, and quality of service settings.
 		).Description("Last will and testament configuration").Optional())
 }
 
-func newWWMQTTInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
+func newWWMQTT3Input(conf *service.ParsedConfig, mgr *service.Resources) (service.Input, error) {
 	// Extract configuration
 	urls, err := conf.FieldStringList("urls")
 	if err != nil {
@@ -202,14 +210,14 @@ func newWWMQTTInput(conf *service.ParsedConfig, mgr *service.Resources) (service
 		return nil, fmt.Errorf("MQTT input requires at least one topic filter to be configured")
 	}
 
-	return &wwMQTTInput{
+	return &wwMQTT3Input{
 		inputConfig:  inputConfig,
 		logger:       mgr.Logger(),
 		messageQueue: make(chan *service.Message, 100), // Buffered channel
 	}, nil
 }
 
-func newWWMQTTOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
+func newWWMQTT3Output(conf *service.ParsedConfig, mgr *service.Resources) (service.Output, int, error) {
 	// Extract configuration
 	urls, err := conf.FieldStringList("urls")
 	if err != nil {
@@ -273,14 +281,14 @@ func newWWMQTTOutput(conf *service.ParsedConfig, mgr *service.Resources) (servic
 		outputConfig.Password = password
 	}
 
-	return &wwMQTTOutput{
+	return &wwMQTT3Output{
 		outputConfig: outputConfig,
 		logger:       mgr.Logger(),
 	}, 1, nil
 }
 
-// wwMQTTInput provides seamless integration between Benthos and wombatwisdom MQTT input
-type wwMQTTInput struct {
+// wwMQTT3Input provides seamless integration between Benthos and wombatwisdom MQTT v3.1.1 input
+type wwMQTT3Input struct {
 	inputConfig mqtt.InputConfig
 	logger      *service.Logger
 
@@ -291,7 +299,7 @@ type wwMQTTInput struct {
 	messageQueue chan *service.Message
 }
 
-func (w *wwMQTTInput) Connect(ctx context.Context) error {
+func (w *wwMQTT3Input) Connect(ctx context.Context) error {
 	w.logger.Info("Starting wombatwisdom MQTT input connection...")
 
 	connectTimeout := 30 * time.Second
@@ -350,7 +358,7 @@ func (w *wwMQTTInput) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (w *wwMQTTInput) Read(ctx context.Context) (*service.Message, service.AckFunc, error) {
+func (w *wwMQTT3Input) Read(ctx context.Context) (*service.Message, service.AckFunc, error) {
 	// Read from the message queue populated by the collector
 	select {
 	case msg := <-w.messageQueue:
@@ -364,7 +372,7 @@ func (w *wwMQTTInput) Read(ctx context.Context) (*service.Message, service.AckFu
 	}
 }
 
-func (w *wwMQTTInput) Close(ctx context.Context) error {
+func (w *wwMQTT3Input) Close(ctx context.Context) error {
 	if w.wwInput != nil {
 		err := w.wwInput.Disconnect(ctx)
 		if err != nil {
@@ -381,8 +389,8 @@ func (w *wwMQTTInput) Close(ctx context.Context) error {
 	return nil
 }
 
-// wwMQTTOutput provides seamless integration between Benthos and wombatwisdom MQTT output
-type wwMQTTOutput struct {
+// wwMQTT3Output provides seamless integration between Benthos and wombatwisdom MQTT v3.1.1 output
+type wwMQTT3Output struct {
 	outputConfig mqtt.OutputConfig
 	logger       *service.Logger
 
@@ -390,7 +398,7 @@ type wwMQTTOutput struct {
 	wwOutput *mqtt.Output
 }
 
-func (w *wwMQTTOutput) Connect(ctx context.Context) error {
+func (w *wwMQTT3Output) Connect(ctx context.Context) error {
 	w.logger.Info("Starting wombatwisdom MQTT output connection...")
 
 	connectTimeout := 30 * time.Second
@@ -442,7 +450,7 @@ func (w *wwMQTTOutput) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (w *wwMQTTOutput) Write(ctx context.Context, msg *service.Message) error {
+func (w *wwMQTT3Output) Write(ctx context.Context, msg *service.Message) error {
 	if w.wwOutput == nil {
 		return fmt.Errorf("MQTT output not connected")
 	}
@@ -471,7 +479,7 @@ func (w *wwMQTTOutput) Write(ctx context.Context, msg *service.Message) error {
 	return nil
 }
 
-func (w *wwMQTTOutput) Close(ctx context.Context) error {
+func (w *wwMQTT3Output) Close(ctx context.Context) error {
 	if w.wwOutput != nil {
 		err := w.wwOutput.Disconnect(ctx)
 		if err != nil {
@@ -556,7 +564,7 @@ func (f *mqttDynamicField) AsBool(msg spec.Message) (bool, error) {
 
 // mqttCollectorAdapter bridges wombatwisdom messages to Benthos message queue
 type mqttCollectorAdapter struct {
-	input  *wwMQTTInput
+	input  *wwMQTT3Input
 	logger *service.Logger
 }
 

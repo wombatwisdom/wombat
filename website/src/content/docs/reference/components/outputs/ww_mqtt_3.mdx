@@ -1,22 +1,24 @@
 ---
-title: ww_mqtt
-kind: input
+title: ww_mqtt_3
+kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Reads messages from MQTT topics using wombatwisdom components
+Publishes messages to MQTT v3.1.1 topics using wombatwisdom components
 
 ```yml
 # Config fields, showing default values
-input:
+output:
   label: ""
-  ww_mqtt:
+  ww_mqtt_3:
     urls:
       - tcp://localhost:1883
     client_id: ""
-    filters: {}
-    clean_session: true
+    topic: "" # No default (required)
+    qos: 0
+    retained: false
+    write_timeout: 5s
     connect_timeout: 30s
     keepalive: 60s
     auth:
@@ -32,16 +34,15 @@ input:
       retained: false
 ```
 
-Seamless integration of wombatwisdom MQTT input component into Wombat.
+Seamless integration of wombatwisdom MQTT v3.1.1 output component into Wombat.
 
-This component uses the wombatwisdom MQTT implementation under the hood while providing
+This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
 a native Benthos interface. All wombatwisdom features are available including advanced
 connection management, authentication, and quality of service settings.
 
-## Connection Management
+## MQTT Version
 
-The component automatically handles connection lifecycle and provides robust error
-handling and reconnection logic through the wombatwisdom framework.
+This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 
 
 ## Fields
@@ -64,23 +65,40 @@ Unique client identifier. If empty, one will be generated.
 
 *Default*: `""`
 
-### `filters`
+### `topic`
 
-Map of topic patterns to QoS levels to subscribe to.
+Topic to publish to. Can contain interpolation functions.
 
 
-*Type*: `object`
+*Type*: `string`
 
-*Default*: `{}`
 
-### `clean_session`
+### `qos`
 
-Start with a clean session
+Quality of Service level (0, 1, or 2)
+
+
+*Type*: `int`
+
+*Default*: `0`
+
+### `retained`
+
+Set the retained flag on published messages
 
 
 *Type*: `bool`
 
-*Default*: `true`
+*Default*: `false`
+
+### `write_timeout`
+
+Timeout for write operations
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
 
 ### `connect_timeout`
 

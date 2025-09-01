@@ -371,12 +371,12 @@ func testWombatMQTTAtLeastOnceDelivery(t *testing.T, parentCtx context.Context, 
 	sub, err := natsConn.SubscribeSync(fmt.Sprintf("processed.sequences.%s", testID))
 	require.NoError(t, err)
 
-	// Start Benthos pipeline with WW_MQTT component
-	t.Logf("🔗 Starting Benthos pipeline WW_MQTT→NATS...")
+	// Start Benthos pipeline with WW_MQTT_3 component
+	t.Logf("🔗 Starting Benthos pipeline WW_MQTT_3→NATS...")
 
 	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
 input:
-  ww_mqtt:
+  ww_mqtt_3:
     urls: ["$MQTT_URL"]
     client_id: "benthos-worker-`+testID+`"
     filters:
@@ -388,7 +388,7 @@ pipeline:
         duration: "10ms"
     - log:
         level: INFO
-        message: "📨 WW_MQTT→NATS: ${! content() }"
+        message: "📨 WW_MQTT_3→NATS: ${! content() }"
 
 output:
   nats:
@@ -482,12 +482,12 @@ func testWombatMQTTAtLeastOnceDeliveryWithRetryAfterCrash(t *testing.T, parentCt
 	sub, err := natsConn.SubscribeSync(fmt.Sprintf("processed.sequences.%s", testID))
 	require.NoError(t, err)
 
-	// Start Benthos pipeline with WW_MQTT component
-	t.Logf("🔗 Starting Benthos pipeline WW_MQTT→NATS...")
+	// Start Benthos pipeline with WW_MQTT_3 component
+	t.Logf("🔗 Starting Benthos pipeline WW_MQTT_3→NATS...")
 
 	pipelineConfig := strings.ReplaceAll(strings.ReplaceAll(`
 input:
-  ww_mqtt:
+  ww_mqtt_3:
     urls: ["$MQTT_URL"]
     client_id: "benthos-worker-`+testID+`"
     filters:
@@ -499,7 +499,7 @@ pipeline:
         duration: "10ms"
     - log:
         level: INFO
-        message: "📨 WW_MQTT→NATS: ${! content() }"
+        message: "📨 WW_MQTT_3→NATS: ${! content() }"
 
 output:
   nats:
