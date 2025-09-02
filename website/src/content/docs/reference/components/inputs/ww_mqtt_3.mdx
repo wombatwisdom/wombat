@@ -7,8 +7,11 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Reads messages from MQTT v3.1.1 topics using wombatwisdom components
 
+
+<Tabs>
+<TabItem label="Common">
 ```yml
-# Config fields, showing default values
+# Common config fields, showing default values
 input:
   label: ""
   ww_mqtt_3:
@@ -31,6 +34,35 @@ input:
       qos: 0
       retained: false
 ```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
+input:
+  label: ""
+  ww_mqtt_3:
+    urls:
+      - tcp://localhost:1883
+    client_id: ""
+    filters: {}
+    clean_session: true
+    connect_timeout: 30s
+    keepalive: 60s
+    auth:
+      username: ""
+      password: ""
+    tls:
+      enabled: false
+      skip_cert_verify: false
+    will:
+      topic: ""
+      payload: ""
+      qos: 0
+      retained: false
+    enable_auto_ack: false
+```
+</TabItem>
+</Tabs>
 
 Seamless integration of wombatwisdom MQTT v3.1.1 input component into Wombat.
 
@@ -46,6 +78,41 @@ This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5
 
 The component automatically handles connection lifecycle and provides robust error
 handling and reconnection logic through the wombatwisdom framework.
+
+## Acknowledgment Control (At-Least-Once vs At-Most-Once Delivery)
+
+By default, this component disables auto acknowledgment (set_auto_ack_disabled: true) to ensure
+at-least-once delivery semantics. Messages are only acknowledged after successful
+pipeline processing. This prevents message loss but limits throughput.
+
+For high-performance scenarios where some message loss is acceptable, you can
+set set_auto_ack_disabled: false to enable at-most-once delivery.
+
+### Example: Safe Configuration (Default)
+
+`yaml
+input:
+  ww_mqtt_3:
+    urls:
+      - tcp://localhost:1883
+    filters:
+      sensor/+/data: 1
+    # set_auto_ack_disabled: true (default)
+    # prefetch_count: 10 (default)
+`
+
+### Example: High-Performance Configuration
+
+`yaml
+input:
+  ww_mqtt_3:
+    urls:
+      - tcp://localhost:1883
+    filters:
+      metrics/#: 0
+    set_auto_ack_disabled: false  # WARNING: May lose messages!
+    clean_session: true
+`
 
 
 ## Fields
@@ -194,6 +261,15 @@ Will message QoS
 ### `will.retained`
 
 Will message retained flag
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `enable_auto_ack`
+
+Enable automatic acknowledgment (paho SetAutoAckDisabled). When false (default), messages are ACK'd after processing (at-least-once). When true, messages are ACK'd immediately (at-most-once with higher throughput but message loss risk).
 
 
 *Type*: `bool`
