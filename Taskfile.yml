@@ -106,6 +106,14 @@ tasks:
       Are you sure you want to continue?
     cmd: go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -run "^Test.*Integration.*$$" -timeout 5m ./...
 
+  test-mqtt-integration:
+    desc: Run MQTT integration tests
+    cmd: go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
+
+  test-benthos-mqtt-integration:
+    desc: Run Benthos MQTT integration tests
+    cmd: go test -tags integration -v -run TestBenthosMQTTIntegration ./public/components/wombatwisdom/mqtt3/
+
   clean:
     cmds:
       - rm -rf {{.TARGET_DIR}}
