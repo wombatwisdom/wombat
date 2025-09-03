@@ -3,11 +3,12 @@ package mqtt3
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/bundles/mqtt"
 	"github.com/wombatwisdom/components/framework/spec"
 	"github.com/wombatwisdom/wombat/public/components/wombatwisdom"
-	"time"
 )
 
 func outputConfig() *service.ConfigSpec {
@@ -67,7 +68,7 @@ This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5
 
 func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchOutput, service.BatchPolicy, int, error) {
 	bp := service.BatchPolicy{Count: 1}
-	
+
 	// Extract configuration
 	urls, err := conf.FieldStringList("urls")
 	if err != nil {
@@ -156,8 +157,7 @@ type output struct {
 
 func (w *output) Connect(ctx context.Context) error {
 	err := w.wwOutput.Init(w.mctx)
-	// TODO: we need to check this error and translate it into the correct Benthos error
-	return err
+	return translateConnectError(err)
 }
 
 func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) error {
@@ -173,7 +173,8 @@ func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) err
 		msgs = append(msgs, msg)
 	}
 
-	return w.wwOutput.Write(w.mctx, w.mctx.NewBatch(msgs...))
+	err := w.wwOutput.Write(w.mctx, w.mctx.NewBatch(msgs...))
+	return translateWriteError(err)
 }
 
 func (w *output) Close(ctx context.Context) error {
@@ -181,7 +182,7 @@ func (w *output) Close(ctx context.Context) error {
 		return nil
 	}
 
-	err := w.wwOutput.Close(w.mctx)
-	// TODO: we need to check this error and translate it into the correct Benthos error
-	return err
+	// Close errors are typically not critical and don't need translation
+	// as the component is shutting down anyway
+	return w.wwOutput.Close(w.mctx)
 }

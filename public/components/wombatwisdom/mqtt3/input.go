@@ -3,10 +3,11 @@ package mqtt3
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/bundles/mqtt"
 	"github.com/wombatwisdom/wombat/public/components/wombatwisdom"
-	"time"
 )
 
 const (
@@ -232,27 +233,23 @@ type input struct {
 
 func (w *input) Connect(ctx context.Context) error {
 	err := w.wwInput.Init(w.mctx)
-
-	// TODO: we need to check this error and translate it into the correct Benthos error
-
-	return err
+	return translateConnectError(err)
 }
 
 func (w *input) ReadBatch(ctx context.Context) (service.MessageBatch, service.AckFunc, error) {
 	batch, cb, err := w.wwInput.Read(w.mctx)
 	if err != nil {
-		// TODO: we need to check this error and translate it into the correct Benthos error
-		return nil, nil, err
+		return nil, nil, translateReadError(err)
 	}
 
 	var result service.MessageBatch
 	for _, msg := range batch.Messages() {
 		bmsg := msg.(*wombatwisdom.BenthosMessage)
-		
+
 		result = append(result, bmsg.Message)
 	}
-	
-	return result, func (ctx context.Context, err error) error {
+
+	return result, func(ctx context.Context, err error) error {
 		return cb(ctx, err)
 	}, nil
 }
@@ -262,9 +259,7 @@ func (w *input) Close(ctx context.Context) error {
 		return nil
 	}
 
-	err := w.wwInput.Close(w.mctx)
-
-	// TODO: we need to check this error and translate it into the correct Benthos error
-
-	return err
+	// Close errors are typically not critical and don't need translation
+	// as the component is shutting down anyway
+	return w.wwInput.Close(w.mctx)
 }
