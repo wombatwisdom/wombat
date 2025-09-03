@@ -7,6 +7,12 @@ import rehypeMermaid from 'rehype-mermaid'
 // https://astro.build/config
 export default defineConfig({
 	site:'https://wombatwisdom.github.io',
+	image: {
+		// Use the passthrough service which doesn't process images
+		service: {
+			entrypoint: 'astro/assets/services/noop',
+		},
+	},
 	markdown: {
 		rehypePlugins: [
 			[rehypeMermaid, { simple: true }],
