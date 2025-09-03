@@ -108,7 +108,7 @@ tasks:
 
   test-mqtt-integration:
     desc: Run MQTT integration tests
-    cmd: go test -tags integration -v -run TestWombatWisdomMQTTIntegration ./public/components/wombatwisdom/mqtt3/
+    cmd: go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
 
   test-benthos-mqtt-integration:
     desc: Run Benthos MQTT integration tests

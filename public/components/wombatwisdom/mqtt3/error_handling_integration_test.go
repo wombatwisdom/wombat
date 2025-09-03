@@ -80,32 +80,53 @@ func TestErrorHandlingIntegration(t *testing.T) {
 	natsURL := fmt.Sprintf("nats://localhost:%s", natsPort.Port())
 
 	t.Run("should_retry_on_connection_failure", func(t *testing.T) {
-		// This test verifies two behaviors:
+		// This test verifies two behaviors for both input and output:
 		// 1. Benthos automatically retries connections on ANY error
 		// 2. When wombatwisdom/components errors are properly translated to Benthos errors, then we should see them in Benthos logging
 
-		// Start TCP listener to count connection retries
-		listener, err := net.Listen("tcp", "127.0.0.1:65500")
+		// Start TCP listener for INPUT to count connection retries
+		inputListener, err := net.Listen("tcp", "127.0.0.1:65500")
 		require.NoError(t, err)
-		defer listener.Close()
+		defer inputListener.Close()
 
-		attemptCount := int32(0)
-		listenerDone := make(chan struct{})
+		inputAttemptCount := int32(0)
+		inputListenerDone := make(chan struct{})
 
 		go func() {
-			defer close(listenerDone)
+			defer close(inputListenerDone)
 			for {
-				conn, err := listener.Accept()
+				conn, err := inputListener.Accept()
 				if err != nil {
 					return // Listener closed
 				}
-				atomic.AddInt32(&attemptCount, 1)
+				atomic.AddInt32(&inputAttemptCount, 1)
+				conn.Close() // Immediately close to simulate connection failure
+			}
+		}()
+
+		// Start TCP listener for OUTPUT to count connection retries
+		outputListener, err := net.Listen("tcp", "127.0.0.1:65501")
+		require.NoError(t, err)
+		defer outputListener.Close()
+
+		outputAttemptCount := int32(0)
+		outputListenerDone := make(chan struct{})
+
+		go func() {
+			defer close(outputListenerDone)
+			for {
+				conn, err := outputListener.Accept()
+				if err != nil {
+					return // Listener closed
+				}
+				atomic.AddInt32(&outputAttemptCount, 1)
 				conn.Close() // Immediately close to simulate connection failure
 			}
 		}()
 
 		logCap := &logCapture{}
 
+		// Pipeline with both failing input and output
 		config := `
 input:
   ww_mqtt_3:
@@ -114,9 +135,14 @@ input:
     filters:
       "test/topic": 1
     clean_session: true
+    client_id: test_input
 
 output:
-  drop: {}  # We don't need output for this test
+  ww_mqtt_3:
+    urls:
+      - tcp://127.0.0.1:65501
+    topic: "output/topic"
+    client_id: test_output
 `
 
 		builder := service.NewStreamBuilder()
@@ -136,12 +162,17 @@ output:
 		// Wait and check for multiple connection attempts
 		time.Sleep(3 * time.Second)
 
-		// Verify automatic retry behavior (Benthos framework feature)
-		attempts := atomic.LoadInt32(&attemptCount)
-		t.Logf("Detected %d connection attempts", attempts)
-		assert.GreaterOrEqual(t, attempts, int32(2), "Should have at least 2 connection attempts - Benthos automatically retries on any connection error")
+		// Verify automatic retry behavior for INPUT (Benthos framework feature)
+		inputAttempts := atomic.LoadInt32(&inputAttemptCount)
+		t.Logf("Detected %d INPUT connection attempts", inputAttempts)
+		assert.GreaterOrEqual(t, inputAttempts, int32(2), "Should have at least 2 INPUT connection attempts - Benthos automatically retries on any connection error")
 
-		// Verify our error translation is working
+		// Verify automatic retry behavior for OUTPUT (Benthos framework feature)
+		outputAttempts := atomic.LoadInt32(&outputAttemptCount)
+		t.Logf("Detected %d OUTPUT connection attempts", outputAttempts)
+		assert.GreaterOrEqual(t, outputAttempts, int32(2), "Should have at least 2 OUTPUT connection attempts - Benthos automatically retries on any connection error")
+
+		// Verify our error translation is working for both input and output
 		messages := logCap.getMessages()
 		t.Logf("Captured %d log messages", len(messages))
 		for i, msg := range messages {
@@ -153,13 +184,18 @@ output:
 
 		for _, msg := range messages {
 			if strings.Contains(msg, "not connected to target source or sink") {
-				foundTranslatedError = true
+				if strings.Contains(msg, "ww_mqtt_3") && strings.Contains(msg, "Failed to connect") {
+					// Could be input or output, check for both
+					foundTranslatedError = true
+				}
 			}
+			// Check for raw network errors that shouldn't appear
 			if strings.Contains(msg, "network Error") && strings.Contains(msg, "connection reset by peer") {
 				foundRawError = true
 			}
 		}
 
+		// Since both input and output use the same error translation, we expect to see the translated error
 		assert.True(t, foundTranslatedError, "Should see translated error message 'not connected to target source or sink' - our error translation is working")
 		assert.False(t, foundRawError, "Should NOT see raw network error 'connection reset by peer' - error should be translated")
 	})
