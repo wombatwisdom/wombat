@@ -211,7 +211,6 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	}
 
 	env := wombatwisdom.NewEnvironment(mgr.Logger())
-	input.mctx = wombatwisdom.NewComponentContext(context.Background(), mgr.Logger())
 
 	input.wwInput, err = mqtt.NewInput(env, inputConfig)
 	if err != nil {
@@ -221,23 +220,24 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	return input, nil
 }
 
-// input provides seamless integration between Benthos and wombatwisdom MQTT v3.1.1 input
+// input integration between Benthos and wombatwisdom MQTT v3.1.1 input
 type input struct {
 	inputConfig mqtt.InputConfig
 	logger      *service.Logger
+	wwInput     *mqtt.Input
+}
 
-	// wombatwisdom components
-	mctx    *wombatwisdom.ComponentContext
-	wwInput *mqtt.Input
+func (w *input) contextAdapter(ctx context.Context) *wombatwisdom.ComponentContext {
+	return wombatwisdom.NewComponentContext(ctx, w.logger)
 }
 
 func (w *input) Connect(ctx context.Context) error {
-	err := w.wwInput.Init(w.mctx)
+	err := w.wwInput.Init(w.contextAdapter(ctx))
 	return translateConnectError(err)
 }
 
 func (w *input) ReadBatch(ctx context.Context) (service.MessageBatch, service.AckFunc, error) {
-	batch, cb, err := w.wwInput.Read(w.mctx)
+	batch, cb, err := w.wwInput.Read(w.contextAdapter(ctx))
 	if err != nil {
 		return nil, nil, translateReadError(err)
 	}
@@ -259,7 +259,5 @@ func (w *input) Close(ctx context.Context) error {
 		return nil
 	}
 
-	// Close errors are typically not critical and don't need translation
-	// as the component is shutting down anyway
-	return w.wwInput.Close(w.mctx)
+	return w.wwInput.Close(w.contextAdapter(ctx))
 }
