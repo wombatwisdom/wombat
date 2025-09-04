@@ -150,13 +150,8 @@ type output struct {
 	wwOutput *mqtt.Output
 }
 
-// contextAdapter converts a standard context.Context to a wombatwisdom ComponentContext
-func (w *output) contextAdapter(ctx context.Context) *wombatwisdom.ComponentContext {
-	return wombatwisdom.NewComponentContext(ctx, w.logger)
-}
-
 func (w *output) Connect(ctx context.Context) error {
-	err := w.wwOutput.Init(w.contextAdapter(ctx))
+	err := w.wwOutput.Init(wombatwisdom.NewComponentContext(ctx, w.logger))
 	return translateConnectError(err)
 }
 
@@ -165,7 +160,7 @@ func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) err
 		return service.ErrNotConnected
 	}
 
-	writeCtx := w.contextAdapter(ctx)
+	writeCtx := wombatwisdom.NewComponentContext(ctx, w.logger)
 	var msgs []spec.Message
 	for _, bmsg := range batch {
 		msg := &wombatwisdom.BenthosMessage{
@@ -182,8 +177,6 @@ func (w *output) Close(ctx context.Context) error {
 	if w.wwOutput == nil {
 		return nil
 	}
-
-	// Close errors are typically not critical and don't need translation
-	// as the component is shutting down anyway
-	return w.wwOutput.Close(w.contextAdapter(ctx))
+	
+	return w.wwOutput.Close(wombatwisdom.NewComponentContext(ctx, w.logger))
 }

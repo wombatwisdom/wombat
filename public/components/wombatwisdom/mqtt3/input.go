@@ -227,17 +227,13 @@ type input struct {
 	wwInput     *mqtt.Input
 }
 
-func (w *input) contextAdapter(ctx context.Context) *wombatwisdom.ComponentContext {
-	return wombatwisdom.NewComponentContext(ctx, w.logger)
-}
-
 func (w *input) Connect(ctx context.Context) error {
-	err := w.wwInput.Init(w.contextAdapter(ctx))
+	err := w.wwInput.Init(wombatwisdom.NewComponentContext(ctx, w.logger))
 	return translateConnectError(err)
 }
 
 func (w *input) ReadBatch(ctx context.Context) (service.MessageBatch, service.AckFunc, error) {
-	batch, cb, err := w.wwInput.Read(w.contextAdapter(ctx))
+	batch, cb, err := w.wwInput.Read(wombatwisdom.NewComponentContext(ctx, w.logger))
 	if err != nil {
 		return nil, nil, translateReadError(err)
 	}
@@ -259,5 +255,5 @@ func (w *input) Close(ctx context.Context) error {
 		return nil
 	}
 
-	return w.wwInput.Close(w.contextAdapter(ctx))
+	return w.wwInput.Close(wombatwisdom.NewComponentContext(ctx, w.logger))
 }
