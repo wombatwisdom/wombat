@@ -61,7 +61,7 @@ set set_auto_ack_disabled: false to enable at-most-once delivery.
 
 ### Example: Safe Configuration (Default)
 
-` + "`yaml" + `
+` + "```yaml" + `
 input:
   ww_mqtt_3:
     urls:
@@ -70,11 +70,11 @@ input:
       sensor/+/data: 1
     # set_auto_ack_disabled: true (default)
     # prefetch_count: 10 (default)
-` + "`" + `
+` + "```" + `
 
 ### Example: High-Performance Configuration
 
-` + "`yaml" + `
+` + "```yaml" + `
 input:
   ww_mqtt_3:
     urls:
@@ -83,7 +83,7 @@ input:
       metrics/#: 0
     set_auto_ack_disabled: false  # WARNING: May lose messages!
     clean_session: true
-` + "`" + `
+` + "```" + `
 `).
 		Field(service.NewStringListField(fldUrls).
 			Description("List of MQTT broker URLs to connect to.").
