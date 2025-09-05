@@ -5,7 +5,7 @@ kind: input
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Reads messages from MQTT v3.1.1 topics using wombatwisdom components
+Subscribe to topics on MQTT brokers.
 
 
 <Tabs>
@@ -25,14 +25,6 @@ input:
     auth:
       username: ""
       password: ""
-    tls:
-      enabled: false
-      skip_cert_verify: false
-    will:
-      topic: ""
-      payload: ""
-      qos: 0
-      retained: false
 ```
 </TabItem>
 <TabItem label="Advanced">
@@ -51,68 +43,49 @@ input:
     auth:
       username: ""
       password: ""
-    tls:
-      enabled: false
-      skip_cert_verify: false
-    will:
-      topic: ""
-      payload: ""
-      qos: 0
-      retained: false
     enable_auto_ack: false
 ```
 </TabItem>
 </Tabs>
 
-Seamless integration of wombatwisdom MQTT v3.1.1 input component into Wombat.
-
-This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
-a native Benthos interface. All wombatwisdom features are available including advanced
-connection management, authentication, and quality of service settings.
+Uses mqtt input component found in [wombatwisdom/components](https://github.com/wombatwisdom/components). It differs from the `mqtt`
+input in that it exposes `enable_auto_ack`, which is set to false by default.
 
 ## MQTT Version
 
 This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 
-## Connection Management
+## Delivery guarantees
 
-The component automatically handles connection lifecycle and provides robust error
-handling and reconnection logic through the wombatwisdom framework.
+By default, this input disables auto acknowledgment to ensure at-least-once delivery semantics.
 
-## Acknowledgment Control (At-Least-Once vs At-Most-Once Delivery)
+If message loss is acceptable, you can set `enable_auto_ack: true` to enable at-most-once delivery.
 
-By default, this component disables auto acknowledgment (set_auto_ack_disabled: true) to ensure
-at-least-once delivery semantics. Messages are only acknowledged after successful
-pipeline processing. This prevents message loss but limits throughput.
+### Example: At least once
 
-For high-performance scenarios where some message loss is acceptable, you can
-set set_auto_ack_disabled: false to enable at-most-once delivery.
-
-### Example: Safe Configuration (Default)
-
-`yaml
+```yaml
 input:
   ww_mqtt_3:
     urls:
       - tcp://localhost:1883
     filters:
       sensor/+/data: 1
-    # set_auto_ack_disabled: true (default)
-    # prefetch_count: 10 (default)
-`
+    clean_session: false
+    enable_auto_ack: false # Ack will happen once output is done processing.
+```
 
-### Example: High-Performance Configuration
+### Example: at most once
 
-`yaml
+```yaml
 input:
   ww_mqtt_3:
     urls:
       - tcp://localhost:1883
     filters:
       metrics/#: 0
-    set_auto_ack_disabled: false  # WARNING: May lose messages!
     clean_session: true
-`
+    enable_auto_ack: true # Ack will happen once input receives message
+```
 
 
 ## Fields
@@ -196,76 +169,6 @@ Password for authentication
 *Type*: `string`
 
 *Default*: `""`
-
-### `tls`
-
-TLS configuration
-
-
-*Type*: `object`
-
-
-### `tls.enabled`
-
-Enable TLS
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `tls.skip_cert_verify`
-
-Skip certificate verification
-
-
-*Type*: `bool`
-
-*Default*: `false`
-
-### `will`
-
-Last will and testament configuration
-
-
-*Type*: `object`
-
-
-### `will.topic`
-
-Will message topic
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `will.payload`
-
-Will message payload
-
-
-*Type*: `string`
-
-*Default*: `""`
-
-### `will.qos`
-
-Will message QoS
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `will.retained`
-
-Will message retained flag
-
-
-*Type*: `bool`
-
-*Default*: `false`
 
 ### `enable_auto_ack`
 
