@@ -132,12 +132,8 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		outputConfig.Password = password
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	output := &output{
-		logger:     mgr.Logger(),
-		compCtx:    wombatwisdom.NewComponentContext(ctx, mgr.Logger()),
-		compCancel: cancel,
+		logger: mgr.Logger(),
 	}
 
 	env := wombatwisdom.NewEnvironment(mgr.Logger())
@@ -159,13 +155,12 @@ type output struct {
 }
 
 func (w *output) Connect(closeAtLeisureCtx context.Context) error {
-	err := w.wwOutput.Init(w.compCtx)
+	ctx, cancel := context.WithCancel(closeAtLeisureCtx)
 
-	// close immediately, do not wait for Acks.
-	go func() {
-		<-closeAtLeisureCtx.Done()
-		_ = w.wwOutput.Close(w.compCtx)
-	}()
+	w.compCtx = wombatwisdom.NewComponentContext(ctx, w.logger)
+	w.compCancel = cancel
+
+	err := w.wwOutput.Init(w.compCtx)
 
 	return translateConnectError(err)
 }

@@ -204,16 +204,9 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		return nil, fmt.Errorf("MQTT input requires at least one topic filter to be configured")
 	}
 
-	// Create a cancellable context for the component. Note: Benthos manages two contexts: closeAtLeisureCtx and closeNowCtx.
-	// ww Components only manage a single context. For now, we perform a hard shutdown in the ww Component when closeAtLeisureCtx
-	// is cancelled. This way, we kill in-flight Acks, but that's fine for now.
-	ctx, cancel := context.WithCancel(context.Background())
-
 	input := &input{
 		inputConfig: inputConfig,
 		logger:      mgr.Logger(),
-		compCtx:     wombatwisdom.NewComponentContext(ctx, mgr.Logger()),
-		compCancel:  cancel,
 	}
 
 	env := wombatwisdom.NewEnvironment(mgr.Logger())
@@ -236,27 +229,16 @@ type input struct {
 }
 
 func (w *input) Connect(closeAtLeisureCtx context.Context) error {
-	err := w.wwInput.Init(w.compCtx)
+	ctx, cancel := context.WithCancel(closeAtLeisureCtx)
+	w.compCtx = wombatwisdom.NewComponentContext(ctx, w.logger)
+	w.compCancel = cancel
 
-	// this will close our MQTT client, even when it's blocked on `Read()`
-	go func() {
-		<-closeAtLeisureCtx.Done()
-		w.logger.Info("Shutting down MQTT input immediately. Unacknowledged messages will be redelivered on restart")
-		_ = w.wwInput.Close(w.compCtx)
-	}()
+	err := w.wwInput.Init(w.compCtx)
 
 	return translateConnectError(err)
 }
 
 func (w *input) ReadBatch(closeAtLeisureCtx context.Context) (service.MessageBatch, service.AckFunc, error) {
-	select {
-	case <-closeAtLeisureCtx.Done():
-		w.compCancel()
-		// Benthos won't wait for ACKs on ErrNotConnected (should be ErrEndOfInput when doing exactly-once)
-		return nil, nil, service.ErrNotConnected
-	default:
-	}
-
 	batch, cb, err := w.wwInput.Read(w.compCtx)
 	if err != nil {
 		return nil, nil, translateReadError(err)
