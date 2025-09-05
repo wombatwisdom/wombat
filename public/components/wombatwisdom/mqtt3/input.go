@@ -33,33 +33,22 @@ func inputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
 		Categories("Services").
-		Summary("Reads messages from MQTT v3.1.1 topics using wombatwisdom components").
+		Summary("Subscribe to topics on MQTT brokers.").
 		Description(`
-Seamless integration of wombatwisdom MQTT v3.1.1 input component into Wombat.
-
-This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
-a native Benthos interface. All wombatwisdom features are available including advanced
-connection management, authentication, and quality of service settings.
+Uses mqtt input component found in [wombatwisdom/components](https://github.com/wombatwisdom/components). It differs from the ` + "`mqtt`" + `
+input in that it exposes ` + "`enable_auto_ack`" + `, which is set to ` + "false" + ` by default.
 
 ## MQTT Version
 
 This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 
-## Connection Management
+## Delivery guarantees
 
-The component automatically handles connection lifecycle and provides robust error
-handling and reconnection logic through the wombatwisdom framework.
+By default, this input disables auto acknowledgment to ensure at-least-once delivery semantics.
 
-## Acknowledgment Control (At-Least-Once vs At-Most-Once Delivery)
+If message loss is acceptable, you can set ` + "`enable_auto_ack: true`" + ` to enable at-most-once delivery.
 
-By default, this component disables auto acknowledgment (set_auto_ack_disabled: true) to ensure
-at-least-once delivery semantics. Messages are only acknowledged after successful
-pipeline processing. This prevents message loss but limits throughput.
-
-For high-performance scenarios where some message loss is acceptable, you can
-set set_auto_ack_disabled: false to enable at-most-once delivery.
-
-### Example: Safe Configuration (Default)
+### Example: At least once
 
 ` + "```yaml" + `
 input:
@@ -68,11 +57,11 @@ input:
       - tcp://localhost:1883
     filters:
       sensor/+/data: 1
-    # set_auto_ack_disabled: true (default)
-    # prefetch_count: 10 (default)
+    clean_session: false
+    enable_auto_ack: false # Ack will happen once output is done processing.
 ` + "```" + `
 
-### Example: High-Performance Configuration
+### Example: at most once
 
 ` + "```yaml" + `
 input:
@@ -81,8 +70,8 @@ input:
       - tcp://localhost:1883
     filters:
       metrics/#: 0
-    set_auto_ack_disabled: false  # WARNING: May lose messages!
     clean_session: true
+    enable_auto_ack: true # Ack will happen once input receives message
 ` + "```" + `
 `).
 		Field(service.NewStringListField(fldUrls).
@@ -107,16 +96,6 @@ input:
 			service.NewStringField(fldUsername).Description("Username for authentication").Default(""),
 			service.NewStringField(fldPassword).Description("Password for authentication").Default(""),
 		).Description("Authentication configuration").Optional()).
-		Field(service.NewObjectField(fldTLS,
-			service.NewBoolField("enabled").Description("Enable TLS").Default(false),
-			service.NewBoolField("skip_cert_verify").Description("Skip certificate verification").Default(false),
-		).Description("TLS configuration").Optional()).
-		Field(service.NewObjectField(fldWill,
-			service.NewStringField(fldTopic).Description("Will message topic").Default(""),
-			service.NewStringField(fldPayload).Description("Will message payload").Default(""),
-			service.NewIntField(fldQOS).Description("Will message QoS").Default(0),
-			service.NewBoolField(fldRetained).Description("Will message retained flag").Default(false),
-		).Description("Last will and testament configuration").Optional()).
 		Field(service.NewBoolField(fldEnableAutoAck).
 			Description("Enable automatic acknowledgment (paho SetAutoAckDisabled). When false (default), messages are ACK'd after processing (at-least-once). When true, messages are ACK'd immediately (at-most-once with higher throughput but message loss risk).").
 			Default(false).

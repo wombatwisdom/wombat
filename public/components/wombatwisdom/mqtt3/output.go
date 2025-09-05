@@ -15,17 +15,10 @@ func outputConfig() *service.ConfigSpec {
 	return service.NewConfigSpec().
 		Stable().
 		Categories("Services").
-		Summary("Publishes messages to MQTT v3.1.1 topics using wombatwisdom components").
+		Summary("Pushes messages to an MQTT broker.").
 		Description(`
-Seamless integration of wombatwisdom MQTT v3.1.1 output component into Wombat.
+Uses mqtt output component found in [wombatwisdom/components](https://github.com/wombatwisdom/components). 
 
-This component uses the wombatwisdom MQTT v3.1.1 implementation under the hood while providing
-a native Benthos interface. All wombatwisdom features are available including advanced
-connection management, authentication, and quality of service settings.
-
-## MQTT Version
-
-This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5 (coming soon).
 `).
 		Field(service.NewStringListField("urls").
 			Description("List of MQTT broker URLs to connect to.").
@@ -53,17 +46,7 @@ This component supports MQTT v3.1.1 protocol. For MQTT v5 support, use ww_mqtt_5
 		Field(service.NewObjectField("auth",
 			service.NewStringField("username").Description("Username for authentication").Default(""),
 			service.NewStringField("password").Description("Password for authentication").Default(""),
-		).Description("Authentication configuration").Optional()).
-		Field(service.NewObjectField("tls",
-			service.NewBoolField("enabled").Description("Enable TLS").Default(false),
-			service.NewBoolField("skip_cert_verify").Description("Skip certificate verification").Default(false),
-		).Description("TLS configuration").Optional()).
-		Field(service.NewObjectField("will",
-			service.NewStringField("topic").Description("Will message topic").Default(""),
-			service.NewStringField("payload").Description("Will message payload").Default(""),
-			service.NewIntField("qos").Description("Will message QoS").Default(0),
-			service.NewBoolField("retained").Description("Will message retained flag").Default(false),
-		).Description("Last will and testament configuration").Optional())
+		).Description("Authentication configuration").Optional())
 }
 
 func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchOutput, service.BatchPolicy, int, error) {
