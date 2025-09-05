@@ -295,4 +295,128 @@ output:
 		default:
 		}
 	})
+
+	t.Run("should_shutdown_cleanly_after_processing_messages", func(t *testing.T) {
+		// MQTT uses a persistent subscription model where Read() blocks indefinitely.
+		// We should handle context cancellation to allow clean pipeline shutdown.
+		mosqReq := testcontainers.ContainerRequest{
+			Image:        "eclipse-mosquitto:2.0",
+			ExposedPorts: []string{"1883/tcp"},
+			Files: []testcontainers.ContainerFile{
+				{
+					ContainerFilePath: "/mosquitto/config/mosquitto.conf",
+					FileMode:          0644,
+					Reader: strings.NewReader(`persistence false
+allow_anonymous true
+listener 1883`),
+				},
+			},
+			WaitingFor: wait.ForListeningPort("1883/tcp"),
+		}
+		mosqContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
+			ContainerRequest: mosqReq,
+			Started:          true,
+		})
+		require.NoError(t, err)
+		defer mosqContainer.Terminate(ctx)
+
+		mosqPort, err := mosqContainer.MappedPort(ctx, "1883")
+		require.NoError(t, err)
+		mqttURL := fmt.Sprintf("tcp://localhost:%s", mosqPort.Port())
+
+		config := fmt.Sprintf(`
+input:
+  ww_mqtt_3:
+    urls: [%s]
+    filters:
+      "test/shutdown": 1
+    client_id: shutdown_test
+    clean_session: false
+
+pipeline:
+  processors:
+    - mapping: |
+        root = this
+        meta processed_at = now()
+
+output:
+  drop: {}
+
+shutdown_timeout: 2s
+`, mqttURL)
+
+		logCap := &logCapture{}
+		builder := service.NewStreamBuilder()
+		builder.SetPrintLogger(logCap)
+		err = builder.SetYAML(config)
+		require.NoError(t, err)
+
+		stream, err := builder.Build()
+		require.NoError(t, err)
+
+		streamCtx, streamCancel := context.WithCancel(ctx)
+
+		// Track when pipeline starts
+		pipelineReady := make(chan struct{})
+		go func() {
+			// Wait for pipeline to be ready
+			for i := 0; i < 20; i++ {
+				messages := logCap.getMessages()
+				for _, msg := range messages {
+					if strings.Contains(msg, "Input type ww_mqtt_3 is now active") {
+						close(pipelineReady)
+						return
+					}
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+		}()
+
+		// Run pipeline
+		go stream.Run(streamCtx)
+
+		// Wait for pipeline to be ready
+		select {
+		case <-pipelineReady:
+			t.Log("Pipeline is ready")
+		case <-time.After(3 * time.Second):
+			t.Fatal("Pipeline failed to start")
+		}
+
+		// Now attempt shutdown
+		t.Log("Initiating shutdown...")
+		streamCancel()
+
+		shutdownStart := time.Now()
+		shutdownDone := make(chan error, 1)
+
+		go func() {
+			shutdownDone <- stream.Stop(context.Background())
+		}()
+
+		// Wait for shutdown with timeout
+		select {
+		case <-shutdownDone:
+			shutdownDuration := time.Since(shutdownStart)
+			t.Logf("Shutdown completed in %v", shutdownDuration)
+
+			// Check for forced termination warning
+			foundWarning := false
+			messages := logCap.getMessages()
+			for _, msg := range messages {
+				if strings.Contains(msg, "prevented forced termination") {
+					foundWarning = true
+					t.Log("Found forced termination warning")
+					break
+				}
+			}
+
+			// After fix: Expect clean shutdown without warnings
+			assert.False(t, foundWarning, "Should not have forced termination warning after fix")
+			assert.Less(t, shutdownDuration.Seconds(), 1.0, "Should shutdown quickly with context cancellation")
+
+		case <-time.After(5 * time.Second):
+			t.Fatal("Shutdown timed out after 5 seconds")
+		}
+	})
 }

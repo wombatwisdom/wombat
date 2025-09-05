@@ -115,35 +115,40 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		outputConfig.Password = password
 	}
 
+	output := &output{
+		logger: mgr.Logger(),
+	}
+
 	env := wombatwisdom.NewEnvironment(mgr.Logger())
-	mctx := wombatwisdom.NewComponentContext(context.Background(), mgr.Logger())
 	wo, err := mqtt.NewOutput(env, outputConfig)
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to create wombatwisdom MQTT output: %w", err)
 	}
 
-	return &output{
-		logger:   mgr.Logger(),
-		mctx:     mctx,
-		wwOutput: wo,
-	}, bp, 1, nil
+	output.wwOutput = wo
+	return output, bp, 1, nil
 }
 
-// wwMQTT3Output provides seamless integration between Benthos and wombatwisdom MQTT v3.1.1 output
+// output integration between Benthos and wombatwisdom MQTT v3.1.1 output
 type output struct {
-	logger *service.Logger
-
-	// wombatwisdom components
-	wwOutput *mqtt.Output
-	mctx     *wombatwisdom.ComponentContext
+	logger     *service.Logger
+	wwOutput   *mqtt.Output
+	compCtx    *wombatwisdom.ComponentContext
+	compCancel context.CancelFunc
 }
 
-func (w *output) Connect(ctx context.Context) error {
-	err := w.wwOutput.Init(w.mctx)
+func (w *output) Connect(closeAtLeisureCtx context.Context) error {
+	ctx, cancel := context.WithCancel(closeAtLeisureCtx)
+
+	w.compCtx = wombatwisdom.NewComponentContext(ctx, w.logger)
+	w.compCancel = cancel
+
+	err := w.wwOutput.Init(w.compCtx)
+
 	return translateConnectError(err)
 }
 
-func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) error {
+func (w *output) WriteBatch(writeRequestCtx context.Context, batch service.MessageBatch) error {
 	if w.wwOutput == nil {
 		return service.ErrNotConnected
 	}
@@ -156,16 +161,18 @@ func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) err
 		msgs = append(msgs, msg)
 	}
 
-	err := w.wwOutput.Write(w.mctx, w.mctx.NewBatch(msgs...))
+	err := w.wwOutput.Write(w.compCtx, w.compCtx.NewBatch(msgs...))
 	return translateWriteError(err)
 }
 
-func (w *output) Close(ctx context.Context) error {
+func (w *output) Close(backgroundCtx context.Context) error {
 	if w.wwOutput == nil {
 		return nil
 	}
 
-	// Close errors are typically not critical and don't need translation
-	// as the component is shutting down anyway
-	return w.wwOutput.Close(w.mctx)
+	// Cancel the component context to signal shutdown
+	w.compCancel()
+
+	// Close with the persistent context
+	return w.wwOutput.Close(w.compCtx)
 }
