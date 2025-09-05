@@ -241,6 +241,7 @@ func (w *input) Connect(closeAtLeisureCtx context.Context) error {
 	// this will close our MQTT client, even when it's blocked on `Read()`
 	go func() {
 		<-closeAtLeisureCtx.Done()
+		w.logger.Info("Shutting down MQTT input immediately. Unacknowledged messages will be redelivered on restart")
 		_ = w.wwInput.Close(w.compCtx)
 	}()
 
