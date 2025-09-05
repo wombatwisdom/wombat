@@ -132,35 +132,49 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		outputConfig.Password = password
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
+	output := &output{
+		logger:     mgr.Logger(),
+		compCtx:    wombatwisdom.NewComponentContext(ctx, mgr.Logger()),
+		compCancel: cancel,
+	}
+
 	env := wombatwisdom.NewEnvironment(mgr.Logger())
 	wo, err := mqtt.NewOutput(env, outputConfig)
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to create wombatwisdom MQTT output: %w", err)
 	}
 
-	return &output{
-		logger:   mgr.Logger(),
-		wwOutput: wo,
-	}, bp, 1, nil
+	output.wwOutput = wo
+	return output, bp, 1, nil
 }
 
-// wwMQTT3Output integration between Benthos and wombatwisdom MQTT v3.1.1 output
+// output integration between Benthos and wombatwisdom MQTT v3.1.1 output
 type output struct {
-	logger   *service.Logger
-	wwOutput *mqtt.Output
+	logger     *service.Logger
+	wwOutput   *mqtt.Output
+	compCtx    *wombatwisdom.ComponentContext
+	compCancel context.CancelFunc
 }
 
-func (w *output) Connect(ctx context.Context) error {
-	err := w.wwOutput.Init(wombatwisdom.NewComponentContext(ctx, w.logger))
+func (w *output) Connect(closeAtLeisureCtx context.Context) error {
+	err := w.wwOutput.Init(w.compCtx)
+
+	// close immediately, do not wait for Acks.
+	go func() {
+		<-closeAtLeisureCtx.Done()
+		_ = w.wwOutput.Close(w.compCtx)
+	}()
+
 	return translateConnectError(err)
 }
 
-func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) error {
+func (w *output) WriteBatch(writeRequestCtx context.Context, batch service.MessageBatch) error {
 	if w.wwOutput == nil {
 		return service.ErrNotConnected
 	}
 
-	writeCtx := wombatwisdom.NewComponentContext(ctx, w.logger)
 	var msgs []spec.Message
 	for _, bmsg := range batch {
 		msg := &wombatwisdom.BenthosMessage{
@@ -169,14 +183,18 @@ func (w *output) WriteBatch(ctx context.Context, batch service.MessageBatch) err
 		msgs = append(msgs, msg)
 	}
 
-	err := w.wwOutput.Write(writeCtx, writeCtx.NewBatch(msgs...))
+	err := w.wwOutput.Write(w.compCtx, w.compCtx.NewBatch(msgs...))
 	return translateWriteError(err)
 }
 
-func (w *output) Close(ctx context.Context) error {
+func (w *output) Close(backgroundCtx context.Context) error {
 	if w.wwOutput == nil {
 		return nil
 	}
-	
-	return w.wwOutput.Close(wombatwisdom.NewComponentContext(ctx, w.logger))
+
+	// Cancel the component context to signal shutdown
+	w.compCancel()
+
+	// Close with the persistent context
+	return w.wwOutput.Close(w.compCtx)
 }
