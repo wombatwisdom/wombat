@@ -94,8 +94,8 @@ ACL migration adheres to the following principles:
 <TabItem label="Transfer data">
 Writes messages to the configured broker and creates topics and topic ACLs if they don't exist. It also ensures that the message order is preserved.
 
-```
-yaml
+```yaml
+
 output:
   redpanda_migrator:
     seed_brokers: [ "127.0.0.1:9093" ]

@@ -123,4 +123,5 @@ tasks:
 #      - build
 #      - tools
     cmds:
+      - rm -rf ./website/src/content/docs/reference/components/*
       - go run ./cmd/docs_gen

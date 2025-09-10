@@ -72,8 +72,8 @@ output:
 
 Here we insert rows into a database by populating the columns id, name and topic with values extracted from messages and metadata:
 
-```
-yaml
+```yaml
+
 output:
   sql_raw:
     driver: mysql
@@ -92,8 +92,8 @@ output:
 <TabItem label="Dynamically Creating Tables (PostgreSQL)">
 Here we dynamically create output tables transactionally with inserting a record into the newly created table.
 
-```
-yaml
+```yaml
+
 output:
   processors:
     - mapping: |

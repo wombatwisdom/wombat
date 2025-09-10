@@ -57,8 +57,8 @@ List of folders that will be used to load modules from if the requested JS modul
 <TabItem label="Simple mutation">
 In this example we define a simple function that performs a basic mutation against messages, treating their contents as raw strings.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - javascript:
@@ -70,8 +70,8 @@ pipeline:
 <TabItem label="Structured mutation">
 In this example we define a function that performs basic mutations against a structured message. Note that we encapsulate the logic within an anonymous function that is called for each invocation, this is required in order to avoid duplicate variable declarations in the global state.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - javascript:

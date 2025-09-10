@@ -45,8 +45,8 @@ This processor will interpolate functions within the `key` and `value` fields in
 
 Deduplication can be done using the add operator with a key extracted from the message payload, since it fails when a key already exists we can remove the duplicates using a `mapping` processor:
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - cache:
@@ -68,8 +68,8 @@ cache_resources:
 
 Sometimes it's necessary to deduplicate a batch of messages (also known as a window) by a single identifying value. This can be done by introducing a `branch` processor, which executes the cache only once on behalf of the batch, in this case with a value make from a field extracted from the first and last messages of the batch:
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     # Try and add one message to a cache that identifies the whole batch
@@ -97,8 +97,8 @@ pipeline:
 
 It's possible to enrich payloads with content previously stored in a cache by using the `branch` processor:
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - branch:

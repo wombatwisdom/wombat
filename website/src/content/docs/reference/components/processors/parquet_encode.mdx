@@ -41,8 +41,8 @@ This processor uses [https://github.com/parquet-go/parquet-go](https://github.co
 <TabItem label="Writing Parquet Files to AWS S3">
 In this example we use the batching mechanism of an `aws_s3` output to collect a batch of messages in memory, which then converts it to a parquet file and uploads it.
 
-```
-yaml
+```yaml
+
 output:
   aws_s3:
     bucket: TODO

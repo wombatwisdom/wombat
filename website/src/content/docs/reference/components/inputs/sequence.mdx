@@ -42,8 +42,8 @@ This input is useful for consuming from inputs that have an explicit end but mus
 <TabItem label="End of Stream Message">
 A common use case for sequence might be to generate a message at the end of our main input. With the following config once the records within `./dataset.csv` are exhausted our final payload `{"status":"finished"}` will be routed through the pipeline.
 
-```
-yaml
+```yaml
+
 input:
   sequence:
     inputs:
@@ -87,8 +87,8 @@ We can parse and join this data into a single dataset:
 
 With the following config:
 
-```
-yaml
+```yaml
+
 input:
   sequence:
     sharded_join:
@@ -135,8 +135,8 @@ And so we will want to map these into a flattened structure before the join, and
 
 With the following config:
 
-```
-yaml
+```yaml
+
 input:
   sequence:
     sharded_join:
