@@ -107,6 +107,49 @@ func getSchema() *service.ConfigSchema {
 	return s
 }
 
+func collectComponentNames(env *service.Environment, walker func(func(string, *service.ConfigView))) []string {
+	names := []string{}
+	walker(func(name string, _ *service.ConfigView) {
+		names = append(names, name)
+	})
+	return names
+}
+
+func cleanOrphanedDocs(docsDir string, validNames []string) error {
+	// Create a set of valid names for quick lookup
+	validSet := make(map[string]bool)
+	for _, name := range validNames {
+		validSet[name] = true
+	}
+
+	// Read directory
+	files, err := os.ReadDir(docsDir)
+	if err != nil {
+		return err
+	}
+
+	// Check each .mdx file
+	for _, file := range files {
+		if file.IsDir() || !strings.HasSuffix(file.Name(), ".mdx") {
+			continue
+		}
+
+		// Get component name from filename (remove .mdx)
+		componentName := strings.TrimSuffix(file.Name(), ".mdx")
+
+		// If not in valid set, it's orphaned
+		if !validSet[componentName] {
+			filePath := filepath.Join(docsDir, file.Name())
+			fmt.Printf("Removing orphaned documentation: %s\n", filePath)
+			if err := os.Remove(filePath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
 func main() {
 	docsDir := "./website/src/content/docs"
 	flag.StringVar(&docsDir, "dir", docsDir, "The directory to write docs to")
@@ -116,6 +159,35 @@ func main() {
 
 	refDir := path.Join(docsDir, "./reference")
 
+	// Clean up orphaned docs before generating new ones
+	inputNames := collectComponentNames(env, env.WalkInputs)
+	cleanOrphanedDocs(path.Join(refDir, "./components/inputs"), inputNames)
+
+	bufferNames := collectComponentNames(env, env.WalkBuffers)
+	cleanOrphanedDocs(path.Join(refDir, "./components/buffers"), bufferNames)
+
+	cacheNames := collectComponentNames(env, env.WalkCaches)
+	cleanOrphanedDocs(path.Join(refDir, "./components/caches"), cacheNames)
+
+	metricNames := collectComponentNames(env, env.WalkMetrics)
+	cleanOrphanedDocs(path.Join(refDir, "./components/metrics"), metricNames)
+
+	outputNames := collectComponentNames(env, env.WalkOutputs)
+	cleanOrphanedDocs(path.Join(refDir, "./components/outputs"), outputNames)
+
+	processorNames := collectComponentNames(env, env.WalkProcessors)
+	cleanOrphanedDocs(path.Join(refDir, "./components/processors"), processorNames)
+
+	rateLimitNames := collectComponentNames(env, env.WalkRateLimits)
+	cleanOrphanedDocs(path.Join(refDir, "./components/rate_limits"), rateLimitNames)
+
+	tracerNames := collectComponentNames(env, env.WalkTracers)
+	cleanOrphanedDocs(path.Join(refDir, "./components/tracers"), tracerNames)
+
+	scannerNames := collectComponentNames(env, env.WalkScanners)
+	cleanOrphanedDocs(path.Join(refDir, "./components/scanners"), scannerNames)
+
+	// Now generate docs as before
 	env.WalkInputs(viewForDir(path.Join(refDir, "./components/inputs")))
 	env.WalkBuffers(viewForDir(path.Join(refDir, "./components/buffers")))
 	env.WalkCaches(viewForDir(path.Join(refDir, "./components/caches")))
