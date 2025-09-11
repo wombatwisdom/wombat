@@ -53,7 +53,7 @@ func TestChangeStreamReaderOptions(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.wantURI, tt.options.Config.Uri)
+			assert.Equal(t, tt.wantURI, tt.options.Uri)
 			assert.Equal(t, tt.wantDB, tt.options.Database)
 			assert.Equal(t, tt.wantColl, tt.options.Collection)
 		})
@@ -128,7 +128,7 @@ func TestChangeStreamReaderOptionsValidation(t *testing.T) {
 			}
 			
 			// Test that empty URI is invalid
-			if tt.options.Config.Uri == "" {
+			if tt.options.Uri == "" {
 				assert.False(t, tt.valid, "Empty URI should be invalid")
 			}
 		})
