@@ -14,11 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mongodb"
-	"github.com/wombatwisdom/wombat/public/components/mongodb/change_stream"
-	mdbconfig "github.com/wombatwisdom/wombat/public/components/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	mdbconfig "github.com/wombatwisdom/wombat/public/components/mongodb"
+	"github.com/wombatwisdom/wombat/public/components/mongodb/change_stream"
 )
 
 type MongoDBContainer struct {
@@ -79,7 +80,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			// Setup
 			database := "test_db"
 			collection := "test_collection"
-			
+
 			opts := change_stream.ChangeStreamReaderOptions{
 				Config: mdbconfig.Config{
 					Uri: mongoContainer.URI,
@@ -89,7 +90,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			}
 
 			reader := change_stream.NewChangeStreamReader(opts)
-			
+
 			// Connect the reader
 			err := reader.Connect(ctx)
 			require.NoError(t, err, "Failed to connect reader")
@@ -106,7 +107,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				defer client.Disconnect(ctx)
 
 				coll := client.Database(database).Collection(collection)
-				
+
 				// Insert documents
 				for i := 0; i < 3; i++ {
 					doc := bson.M{
@@ -156,10 +157,10 @@ func TestChangeStreamIntegration(t *testing.T) {
 
 				// Verify change event structure
 				assert.Equal(t, "insert", changeEvent["operationType"])
-				
+
 				fullDoc, ok := changeEvent["fullDocument"].(map[string]interface{})
 				require.True(t, ok, "fullDocument should be present")
-				
+
 				assert.Equal(t, fmt.Sprintf("test-%d", i), fullDoc["name"])
 				assert.Equal(t, float64(i), fullDoc["value"]) // JSON numbers are float64
 			}
@@ -167,7 +168,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 
 		t.Run("should read from database level", func(t *testing.T) {
 			database := "test_db_level"
-			
+
 			opts := change_stream.ChangeStreamReaderOptions{
 				Config: mdbconfig.Config{
 					Uri: mongoContainer.URI,
@@ -177,7 +178,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			}
 
 			reader := change_stream.NewChangeStreamReader(opts)
-			
+
 			err := reader.Connect(ctx)
 			require.NoError(t, err, "Failed to connect reader")
 			defer reader.Close(ctx)
@@ -191,7 +192,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				defer client.Disconnect(ctx)
 
 				db := client.Database(database)
-				
+
 				// Insert into different collections
 				collections := []string{"coll1", "coll2", "coll3"}
 				for _, collName := range collections {
@@ -232,7 +233,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 
 				ns, ok := changeEvent["ns"].(map[string]interface{})
 				require.True(t, ok)
-				
+
 				collName, ok := ns["coll"].(string)
 				require.True(t, ok)
 				collectionsSeen[collName] = true
@@ -244,7 +245,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 		t.Run("should handle update and delete operations", func(t *testing.T) {
 			database := "test_ops_db"
 			collection := "test_ops_collection"
-			
+
 			opts := change_stream.ChangeStreamReaderOptions{
 				Config: mdbconfig.Config{
 					Uri: mongoContainer.URI,
@@ -254,7 +255,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			}
 
 			reader := change_stream.NewChangeStreamReader(opts)
-			
+
 			err := reader.Connect(ctx)
 			require.NoError(t, err, "Failed to connect reader")
 			defer reader.Close(ctx)
@@ -268,7 +269,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				defer client.Disconnect(ctx)
 
 				coll := client.Database(database).Collection(collection)
-				
+
 				// Insert
 				result, err := coll.InsertOne(ctx, bson.M{"_id": "test-1", "value": "initial"})
 				require.NoError(t, err)
@@ -323,7 +324,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			}
 
 			reader := change_stream.NewChangeStreamReader(opts)
-			
+
 			err := reader.Connect(ctx)
 			assert.Error(t, err)
 			assert.Contains(t, err.Error(), "failed to create change stream")
@@ -339,7 +340,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			}
 
 			reader := change_stream.NewChangeStreamReader(opts)
-			
+
 			// Connect
 			err := reader.Connect(ctx)
 			require.NoError(t, err, "Failed to connect reader")

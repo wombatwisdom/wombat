@@ -2,6 +2,7 @@ package wombatwisdom
 
 import (
 	"fmt"
+
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/wombatwisdom/components/framework/spec"
 )

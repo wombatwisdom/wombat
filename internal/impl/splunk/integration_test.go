@@ -434,7 +434,7 @@ output:
 		// The stream might not return an error immediately due to async processing
 		// but no events should be successfully sent
 		time.Sleep(1 * time.Second)
-		
+
 		events := mockServer.GetEvents()
 		assert.Len(t, events, 0, "No events should be accepted with wrong auth token")
 	})
@@ -473,7 +473,7 @@ output:
 		require.NoError(t, err)
 
 		start := time.Now()
-		
+
 		// Run the stream
 		go func() {
 			time.Sleep(3 * time.Second)
@@ -484,10 +484,10 @@ output:
 		assert.NoError(t, err)
 
 		duration := time.Since(start)
-		
+
 		// With 10 events and rate limit of 2/sec, should take at least 4 seconds
 		assert.GreaterOrEqual(t, duration, 2*time.Second, "Rate limiting should slow down processing")
-		
+
 		events := mockServer.GetEvents()
 		assert.GreaterOrEqual(t, len(events), 4, "Should have processed some events within rate limit")
 	})

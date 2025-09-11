@@ -11,10 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go/modules/mongodb"
-	mdbconfig "github.com/wombatwisdom/wombat/public/components/mongodb"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	mdbconfig "github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 
 func setupMongoDBContainer(t *testing.T, ctx context.Context) string {
@@ -147,10 +148,10 @@ func TestMongoDBConfigIntegration(t *testing.T) {
 
 			client, err := config.NewClient(ctx)
 			require.NoError(t, err, "Failed to create client with auth")
-			
+
 			err = client.Ping(ctx, nil)
 			assert.NoError(t, err, "Failed to ping with auth")
-			
+
 			client.Disconnect(ctx)
 
 			// Test with invalid credentials
@@ -206,7 +207,7 @@ func TestMongoDBConfigIntegration(t *testing.T) {
 
 			// Try to perform an operation with the short timeout context
 			collection := client.Database("test_db").Collection("test_collection")
-			
+
 			// This should timeout
 			_, err = collection.InsertOne(shortCtx, bson.M{"test": "timeout"})
 			assert.Error(t, err, "Expected timeout error")

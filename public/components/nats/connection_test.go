@@ -229,7 +229,7 @@ auth:
 			connDetails.tlsConf = &tls.Config{
 				InsecureSkipVerify: true,
 			}
-			
+
 			// Test that TLS config doesn't cause issues
 			_, err := connDetails.get(context.Background())
 			_ = err // Ignore the specific error
@@ -241,7 +241,7 @@ auth:
 				extraOptApplied = true
 				return nil
 			}
-			
+
 			_, err := connDetails.get(context.Background(), extraOpt)
 			_ = err // Ignore connection error
 			// The important thing is that our option was applied

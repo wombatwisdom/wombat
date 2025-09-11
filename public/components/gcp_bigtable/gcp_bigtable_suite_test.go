@@ -1,13 +1,14 @@
 package gcp_bigtable_test
 
 import (
+	"context"
+	"testing"
+
 	"cloud.google.com/go/bigtable"
 	"cloud.google.com/go/bigtable/bttest"
-	"context"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-	"testing"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

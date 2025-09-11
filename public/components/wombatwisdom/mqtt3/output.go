@@ -8,6 +8,7 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/bundles/mqtt"
 	"github.com/wombatwisdom/components/framework/spec"
+
 	"github.com/wombatwisdom/wombat/public/components/wombatwisdom"
 )
 

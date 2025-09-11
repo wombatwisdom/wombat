@@ -1,8 +1,9 @@
 package wombatwisdom
 
 import (
-	"github.com/wombatwisdom/components/framework/spec"
 	"regexp"
+
+	"github.com/wombatwisdom/components/framework/spec"
 )
 
 type MetadataFilterFactory struct {

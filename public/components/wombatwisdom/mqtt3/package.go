@@ -2,6 +2,7 @@ package mqtt3
 
 import (
 	"fmt"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 )
 

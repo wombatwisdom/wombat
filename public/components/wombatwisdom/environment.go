@@ -1,9 +1,10 @@
 package wombatwisdom
 
 import (
-	"github.com/wombatwisdom/components/framework/spec"
 	"os"
 	"strconv"
+
+	"github.com/wombatwisdom/components/framework/spec"
 )
 
 func NewEnvironment(logger spec.Logger) *Environment {

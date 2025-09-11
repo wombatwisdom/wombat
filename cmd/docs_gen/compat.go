@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/redpanda-data/benthos/v4/public/bloblang"
-	"github.com/redpanda-data/benthos/v4/public/service"
 	"regexp"
 	"strings"
+
+	"github.com/redpanda-data/benthos/v4/public/bloblang"
+	"github.com/redpanda-data/benthos/v4/public/service"
 )
 
 var (

@@ -24,6 +24,7 @@ import (
 
 	_ "github.com/redpanda-data/benthos/v4/public/components/io"
 	_ "github.com/redpanda-data/benthos/v4/public/components/pure"
+
 	_ "github.com/wombatwisdom/wombat/public/components/all"
 )
 

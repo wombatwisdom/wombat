@@ -2,7 +2,9 @@ package change_stream
 
 import (
 	"context"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
+
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 

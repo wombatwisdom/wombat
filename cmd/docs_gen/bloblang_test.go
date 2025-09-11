@@ -28,7 +28,6 @@ import (
 
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
-
 	//_ "github.com/wombatwisdom/wombat/public/components/all"
 )
 

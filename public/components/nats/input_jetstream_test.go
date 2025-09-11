@@ -24,8 +24,8 @@ type mockMsg struct {
 	metadataFunc func() (*jetstream.MsgMetadata, error)
 }
 
-func (m *mockMsg) Data() []byte { return m.data }
-func (m *mockMsg) Subject() string { return m.subject }
+func (m *mockMsg) Data() []byte         { return m.data }
+func (m *mockMsg) Subject() string      { return m.subject }
 func (m *mockMsg) Headers() nats.Header { return m.headers }
 func (m *mockMsg) Ack() error {
 	m.acked = true
@@ -55,13 +55,13 @@ func (m *mockMsg) Metadata() (*jetstream.MsgMetadata, error) {
 		Timestamp:    time.Unix(1234567890, 0),
 	}, nil
 }
-func (m *mockMsg) Term() error { return nil }
-func (m *mockMsg) InProgress() error { return nil }
-func (m *mockMsg) Ack2() jetstream.PubAck { return jetstream.PubAck{} }
-func (m *mockMsg) Reply() string { return "" }
-func (m *mockMsg) Size() int { return len(m.data) }
+func (m *mockMsg) Term() error                         { return nil }
+func (m *mockMsg) InProgress() error                   { return nil }
+func (m *mockMsg) Ack2() jetstream.PubAck              { return jetstream.PubAck{} }
+func (m *mockMsg) Reply() string                       { return "" }
+func (m *mockMsg) Size() int                           { return len(m.data) }
 func (m *mockMsg) DoubleAck(ctx context.Context) error { return nil }
-func (m *mockMsg) TermWithReason(reason string) error { return nil }
+func (m *mockMsg) TermWithReason(reason string) error  { return nil }
 
 type mockMessageResult struct {
 	messages []jetstream.Msg
@@ -146,7 +146,7 @@ func (m *mockJetStream) CreateOrUpdateConsumer(ctx context.Context, stream strin
 
 var _ = Describe("JetStream Input", func() {
 	var (
-		mgr  *service.Resources
+		mgr *service.Resources
 	)
 
 	BeforeEach(func() {
@@ -513,7 +513,7 @@ ack_wait: "invalid-duration"
 
 			msg := convertMessage(mockMsg)
 			Expect(msg).NotTo(BeNil())
-			
+
 			// Check message data
 			msgBytes, _ := msg.AsBytes()
 			Expect(string(msgBytes)).To(Equal("test message"))
@@ -521,29 +521,29 @@ ack_wait: "invalid-duration"
 			// Check metadata
 			subject, _ := msg.MetaGet("nats_subject")
 			Expect(subject).To(Equal("test.subject"))
-			
+
 			seqStream, _ := msg.MetaGet("nats_sequence_stream")
 			Expect(seqStream).To(Equal("123"))
-			
+
 			seqConsumer, _ := msg.MetaGet("nats_sequence_consumer")
 			Expect(seqConsumer).To(Equal("456"))
-			
+
 			numDelivered, _ := msg.MetaGet("nats_num_delivered")
 			Expect(numDelivered).To(Equal("1"))
-			
+
 			numPending, _ := msg.MetaGet("nats_num_pending")
 			Expect(numPending).To(Equal("10"))
-			
+
 			domain, _ := msg.MetaGet("nats_domain")
 			Expect(domain).To(Equal("test-domain"))
-			
+
 			timestamp, _ := msg.MetaGet("nats_timestamp_unix_nano")
 			Expect(timestamp).To(Equal("1234567890000000000"))
 
 			// Check headers
 			customHeader, _ := msg.MetaGet("X-Custom-Header")
 			Expect(customHeader).To(Equal("value1"))
-			
+
 			anotherHeader, _ := msg.MetaGet("X-Another")
 			Expect(anotherHeader).To(Equal("value2"))
 		})
@@ -559,11 +559,11 @@ ack_wait: "invalid-duration"
 
 			msg := convertMessage(mockMsg)
 			Expect(msg).NotTo(BeNil())
-			
+
 			// Subject should still be set
 			subject, _ := msg.MetaGet("nats_subject")
 			Expect(subject).To(Equal("test.subject"))
-			
+
 			// Other metadata should not be set
 			_, exists := msg.MetaGet("nats_sequence_stream")
 			Expect(exists).To(BeFalse())
@@ -580,7 +580,7 @@ ack_wait: "invalid-duration"
 
 			msg := convertMessage(mockMsg)
 			Expect(msg).NotTo(BeNil())
-			
+
 			// Empty header should not be set
 			_, exists := msg.MetaGet("Empty-Header")
 			Expect(exists).To(BeFalse())

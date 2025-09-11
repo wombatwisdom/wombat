@@ -3,11 +3,12 @@ package gcp_bigtable_test
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/google/uuid"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	"strings"
 
 	_ "github.com/wombatwisdom/wombat/public/components/all"
 )

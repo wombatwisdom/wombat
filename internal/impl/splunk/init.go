@@ -2,6 +2,7 @@ package splunk
 
 import (
 	_ "embed"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 )
 

@@ -8,16 +8,17 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	"github.com/wombatwisdom/wombat/public/components/mongodb"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 
 var _ = Describe("Config", func() {
 	var (
-		config  mongodb.Config
-		ctx     context.Context
-		cancel  context.CancelFunc
+		config mongodb.Config
+		ctx    context.Context
+		cancel context.CancelFunc
 	)
 
 	BeforeEach(func() {
@@ -72,10 +73,10 @@ var _ = Describe("Config", func() {
 				client, err := config.NewClient(ctx)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(client).NotTo(BeNil())
-				
+
 				// Verify it's a MongoDB client
 				Expect(client).To(BeAssignableToTypeOf(&mongo.Client{}))
-				
+
 				// Disconnect to clean up
 				if client != nil {
 					_ = client.Disconnect(ctx)
@@ -94,7 +95,7 @@ var _ = Describe("Config", func() {
 				client, err := config.NewClient(ctx)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(client).NotTo(BeNil())
-				
+
 				// Clean up
 				if client != nil {
 					_ = client.Disconnect(ctx)
@@ -113,7 +114,7 @@ var _ = Describe("Config", func() {
 				client, err := config.NewClient(ctx)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(client).NotTo(BeNil())
-				
+
 				// Clean up
 				if client != nil {
 					_ = client.Disconnect(ctx)
@@ -128,12 +129,12 @@ var _ = Describe("Config", func() {
 			config = mongodb.Config{
 				Uri: "mongodb://user:p%40ssw0rd%21@localhost:27017/testdb",
 			}
-			
+
 			// Should create client successfully with properly encoded URI
 			client, err := config.NewClient(ctx)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(client).NotTo(BeNil())
-			
+
 			// Clean up
 			if client != nil {
 				_ = client.Disconnect(ctx)
@@ -145,7 +146,7 @@ var _ = Describe("Config", func() {
 			config = mongodb.Config{
 				Uri: "mongodb://user:p@ssw0rd!@localhost:27017/testdb",
 			}
-			
+
 			// Should fail to create client due to unescaped @ in password
 			client, err := config.NewClient(ctx)
 			Expect(err).To(HaveOccurred())
@@ -161,7 +162,7 @@ var _ = Describe("MongoDB Client Options", func() {
 		// Test that the client options are correctly applied
 		opts := options.Client().ApplyURI("mongodb://localhost:27017")
 		Expect(opts).NotTo(BeNil())
-		
+
 		// In actual implementation, we might want to verify specific options
 		// like timeouts, pool sizes, etc.
 	})
