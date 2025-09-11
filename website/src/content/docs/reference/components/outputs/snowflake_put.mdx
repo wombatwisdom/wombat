@@ -216,8 +216,8 @@ This output benefits from sending messages as a batch for improved performance. 
 <TabItem label="Kafka / realtime brokers">
 Upload message batches from realtime brokers such as Kafka persisting the batch partition and offsets in the stage path and filename similarly to the [Kafka Connector scheme](https://docs.snowflake.com/en/user-guide/kafka-connector-ts.html#step-1-view-the-copy-history-for-the-table) and call Snowpipe to load them into a table. When batching is configured at the input level, it is done per-partition.
 
-```
-yaml
+```yaml
+
 input:
   kafka:
     addresses:
@@ -258,8 +258,8 @@ output:
 <TabItem label="No compression">
 Upload concatenated messages into a `.json` file to a table stage without calling Snowpipe.
 
-```
-yaml
+```yaml
+
 output:
   snowflake_put:
     account: wombat
@@ -286,8 +286,8 @@ output:
 <TabItem label="Parquet format with snappy compression">
 Upload concatenated messages into a `.parquet` file to a table stage without calling Snowpipe.
 
-```
-yaml
+```yaml
+
 output:
   snowflake_put:
     account: wombat
@@ -320,8 +320,8 @@ output:
 <TabItem label="Automatic compression">
 Upload concatenated messages compressed automatically into a `.gz` archive file to a table stage without calling Snowpipe.
 
-```
-yaml
+```yaml
+
 output:
   snowflake_put:
     account: wombat
@@ -348,8 +348,8 @@ output:
 <TabItem label="DEFLATE compression">
 Upload concatenated messages compressed into a `.deflate` archive file to a table stage and call Snowpipe to load them into a table.
 
-```
-yaml
+```yaml
+
 output:
   snowflake_put:
     account: wombat
@@ -379,8 +379,8 @@ output:
 <TabItem label="RAW_DEFLATE compression">
 Upload concatenated messages compressed into a `.raw_deflate` archive file to a table stage and call Snowpipe to load them into a table.
 
-```
-yaml
+```yaml
+
 output:
   snowflake_put:
     account: wombat

@@ -79,8 +79,8 @@ This field supports interpolation functions.
 <TabItem label="Counter">
 In this example we emit a counter metric called `Foos`, which increments for every message processed, and we label the metric with some metadata about where the message came from and a field from the document that states what type it is. We also configure our metrics to emit to CloudWatch, and explicitly only allow our custom metric and some internal Redpanda Connect metrics to emit.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - metric:
@@ -107,8 +107,8 @@ metrics:
 <TabItem label="Gauge">
 In this example we emit a gauge metric called `FooSize`, which is given a value extracted from JSON messages at the path `foo.size`. We then also configure our Prometheus metric exporter to only emit this custom metric and nothing else. We also label the metric with some metadata.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - metric:

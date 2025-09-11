@@ -76,8 +76,8 @@ This output benefits from sending messages as a batch for improved performance. 
 <TabItem label="Updating Documents">
 When updating documents, the request body should contain a combination of a `doc`, `upsert`, and/or `script` fields at the top level, this should be done via mapping processors. `doc` updates using a partial document, `script` performs an update using a scripting language such as the built in Painless language, and `upsert` updates an existing document or inserts a new one if it doesn’t exist. For more information on the structures and behaviors of these fields, please see the [Elasticsearch Update API](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-update.html)
 
-```
-yaml
+```yaml
+
 # Partial document update
 output:
   processors:
@@ -126,8 +126,8 @@ output:
 <TabItem label="Indexing documents from Redpanda">
 Here we read messages from a Redpanda cluster and write them to an Elasticsearch index using a field from the message as the ID for the Elasticsearch document.
 
-```
-yaml
+```yaml
+
 input:
   redpanda:
     seed_brokers: [localhost:19092]
@@ -150,8 +150,8 @@ output:
 <TabItem label="Indexing documents from S3">
 Here we read messages from a AWS S3 bucket and write them to an Elasticsearch index using the S3 key as the ID for the Elasticsearch document.
 
-```
-yaml
+```yaml
+
 input:
   aws_s3:
     bucket: "my-cool-bucket"
@@ -171,8 +171,8 @@ output:
 <TabItem label="Create Documents">
 When using the `create` action, a new document will be created if the document ID does not already exist. If the document ID already exists, the operation will fail.
 
-```
-yaml
+```yaml
+
 output:
   elasticsearch_v8:
     urls: [localhost:9200]
@@ -186,8 +186,8 @@ output:
 <TabItem label="Upserting Documents">
 When using the `upsert` action, if the document ID already exists, it will be updated. If the document ID does not exist, a new document will be inserted. The request body should contain the document to be indexed.
 
-```
-yaml
+```yaml
+
 output:
   processors:
     - mapping: |

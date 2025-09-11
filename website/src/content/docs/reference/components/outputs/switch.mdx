@@ -43,8 +43,8 @@ The most common use for a switch output is to multiplex messages across a range 
 
 Outputs can have their own processors associated with them, and in this example the `redis_streams` output has a processor that enforces the presence of a type field before sending it.
 
-```
-yaml
+```yaml
+
 output:
   switch:
     cases:
@@ -78,8 +78,8 @@ The `continue` field allows messages that have passed a case to be tested agains
 
 In the following example a message that passes both the check of the first case as well as the second will be routed to both.
 
-```
-yaml
+```yaml
+
 output:
   switch:
     cases:

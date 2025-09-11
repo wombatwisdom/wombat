@@ -73,8 +73,8 @@ And imagine doing so knowing that the diagram is subject to change over time. Yi
 
 When the field `order` is omitted a best attempt is made to determine a dependency tree between branches based on their request and result mappings. In the following example the branches foo and bar will be executed first in parallel, and afterwards the branch baz will be executed.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - workflow:
@@ -112,8 +112,8 @@ pipeline:
 
 Branches of a workflow are skipped when the `request_map` assigns `deleted()` to the root. In this example the branch A is executed when the document type is "foo", and branch B otherwise. Branch C is executed afterwards and is skipped unless either A or B successfully provided a result at `tmp.result`.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - workflow:
@@ -155,8 +155,8 @@ pipeline:
 
 The `order` field can be used in order to refer to  branch processor resources, this can sometimes make your pipeline configuration cleaner, as well as allowing you to reuse branch configurations in order places. It's also possible to mix and match branches configured within the workflow and configured as resources.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - workflow:

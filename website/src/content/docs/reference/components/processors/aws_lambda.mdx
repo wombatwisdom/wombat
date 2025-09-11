@@ -89,8 +89,8 @@ By default Redpanda Connect will use a shared credentials file when connecting t
 
 This example uses a `branch` processor to map a new payload for triggering a lambda function with an ID and username from the original message, and the result of the lambda is discarded, meaning the original message is unchanged.
 
-```
-yaml
+```yaml
+
 pipeline:
   processors:
     - branch:
