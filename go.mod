@@ -34,30 +34,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	cloud.google.com/go/aiplatform v1.85.0 // indirect
-	cloud.google.com/go/vertexai v0.12.0 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/auth0/go-jwt-middleware/v2 v2.3.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.15.1 // indirect
-	github.com/cohere-ai/cohere-go/v2 v2.14.1 // indirect
-	github.com/expr-lang/expr v1.17.4 // indirect
-	github.com/go-mysql-org/go-mysql v1.10.0 // indirect
-	github.com/jackc/pgx/v5 v5.6.0 // indirect
-	github.com/ollama/ollama v0.9.0 // indirect
-	github.com/pingcap/errors v0.11.5-0.20240311024730-e056997136bb // indirect
-	github.com/pingcap/failpoint v0.0.0-20240528011301-b51a646c7c86 // indirect
-	github.com/pingcap/log v1.1.1-0.20230317032135-a0d097d16e22 // indirect
-	github.com/pingcap/tidb/pkg/parser v0.0.0-20241118164214-4f047be191be // indirect
-	github.com/sashabaranov/go-openai v1.37.0 // indirect
-	github.com/segmentio/encoding v0.4.0 // indirect
-	github.com/siddontang/go v0.0.0-20180604090527-bdc77568d726 // indirect
-	github.com/siddontang/go-log v0.0.0-20180807004314-8d05993dda07 // indirect
-	github.com/slack-go/slack v0.17.1 // indirect
-	github.com/twmb/go-cache v1.2.1 // indirect
-	google.golang.org/genai v1.7.0 // indirect
-	gopkg.in/go-jose/go-jose.v2 v2.6.3 // indirect
-)
+require github.com/expr-lang/expr v1.17.4 // indirect
 
 require (
 	cel.dev/expr v0.23.1 // indirect

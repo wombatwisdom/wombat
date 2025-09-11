@@ -21,7 +21,7 @@ import (
 
 	_ "github.com/redpanda-data/benthos/v4/public/components/io"
 	_ "github.com/redpanda-data/benthos/v4/public/components/pure"
-	_ "github.com/redpanda-data/connect/v4/public/components/all"
+	_ "github.com/redpanda-data/connect/v4/public/components/community"
 )
 
 // These tests validate the behavior of the standard Benthos MQTT component
