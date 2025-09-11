@@ -1,0 +1,85 @@
+version: 2
+project_name: wombat
+
+env:
+  - GO111MODULE=on
+  - CGO_ENABLED=0
+
+before:
+  hooks:
+    - go mod tidy
+    - task check:license  # Keep the license check
+
+builds:
+  - id: wombat
+    main: ./cmd/wombat
+    binary: wombat
+    ldflags:
+      - -w -s
+      - -X main.Version={{.Version}}
+      - -X main.DateBuilt={{.Date}}
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: wombat
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+
+checksum:
+  name_template: 'checksums.txt'
+
+dockers:
+  - image_templates:
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/wombat:{{ .Tag }}"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/wombat:v{{ .Major }}"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/wombat:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/wombat:latest"
+    dockerfile: Dockerfile
+    use: buildx
+    build_flag_templates:
+      - "--platform=linux/amd64,linux/arm64"
+      - "--push"
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: '✨ Features'
+      regexp: '^feat(\(.+\))?: .+'
+      order: 0
+    - title: '🐛 Bug Fixes'
+      regexp: '^fix(\(.+\))?: .+'
+      order: 1
+    - title: '📚 Documentation'
+      regexp: '^docs?(\(.+\))?: .+'
+      order: 2
+    - title: '🧪 Testing'
+      regexp: '^test(\(.+\))?: .+'
+      order: 3
+    - title: '🔨 Refactoring'
+      regexp: '^refactor(\(.+\))?: .+'
+      order: 4
+    - title: 'Other Changes'
+      order: 999
+  filters:
+    exclude:
+      - '^Merge pull request'
+      - '^Merge branch'

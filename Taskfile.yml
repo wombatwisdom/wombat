@@ -27,6 +27,12 @@ vars:
   VER_FLAGS: '-X main.Version={{.VERSION}} -X main.DateBuilt={{.DATE}}'
 
 tasks:
+  setup:
+    desc: Setup development environment
+    cmds:
+      - go install github.com/goreleaser/goreleaser@latest
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
   godir:
     cmd: which go
 
@@ -69,11 +75,28 @@ tasks:
       - go list -f {{.Dir}} ./... | xargs -I{} goimports -w -local github.com/wombatwisdom/wombat {}
       - go mod tidy
 
+  format:check:
+    desc: Check code formatting
+    cmds:
+      - |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Code is not formatted. Please run 'task fmt'"
+          gofmt -l .
+          exit 1
+        fi
+
   lint:
     desc: Vet and lint the code
     cmds:
       - go vet {{.GO_FLAGS}} ./...
       - golangci-lint run --timeout 1h --verbose cmd/... internal/... public/...
+
+  check:
+    desc: Run all code quality checks
+    cmds:
+      - task: lint
+      - task: format:check
+      - task: check:license
 
   check:license:
     desc: Check for restrictively licensed imports
@@ -128,6 +151,13 @@ tasks:
         fi
 
   test:
+    desc: Run all tests
+    deps:
+      - build
+    cmds:
+      - 'go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...'
+
+  test:unit:
     desc: Run the unit tests
     deps:
       - build
@@ -135,12 +165,13 @@ tasks:
       - 'go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...'
 
 
-  test-race:
+  test:race:
+    desc: Run tests with race detector
     deps:
       - build
     cmd: go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m -race ./...
 
-  test-coverage:
+  test:coverage:
     desc: Run tests with coverage report
     deps:
       - build
@@ -149,22 +180,18 @@ tasks:
       - go tool cover -html=coverage.out -o coverage.html
       - echo "Coverage report generated at coverage.html"
 
-  test-integration:
+  test:integration:
+    desc: Run integration tests
     prompt: |-
       WARNING! Running the integration tests in their entirety consumes a huge amount of computing resources and is 
       likely to time out on most machines. It's recommended that you instead run the integration suite for connectors 
       you are working selectively with `go test -run 'TestIntegration/kafka' ./...` and so on. 
       
       Are you sure you want to continue?
-    cmd: go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -run "^Test.*Integration.*$$" -timeout 5m ./...
-
-  test-mqtt-integration:
-    desc: Run MQTT integration tests
-    cmd: go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
-
-  test-benthos-mqtt-integration:
-    desc: Run Benthos MQTT integration tests
-    cmd: go test -tags integration -v -run TestBenthosMQTTIntegration ./public/components/wombatwisdom/mqtt3/
+    cmds:
+      - go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -run "^Test.*Integration.*$$" -timeout 5m ./...
+      - go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
+      - go test -tags integration -v -run TestBenthosMQTTIntegration ./public/components/wombatwisdom/mqtt3/
 
   clean:
     cmds:
@@ -176,3 +203,55 @@ tasks:
 #      - tools
     cmds:
       - go run ./cmd/docs_gen
+
+  release:snapshot:
+    desc: Create a local snapshot release (no tags)
+    env:
+      GITHUB_REPOSITORY_OWNER: wombatwisdom
+    cmds:
+      - goreleaser release --snapshot --clean --skip=publish,docker
+
+  release:rc:
+    desc: Create a release candidate
+    vars:
+      CURRENT_TAG:
+        sh: git describe --tags --always --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "v0.0.0"
+      NEXT_RC:
+        sh: |
+          if [ -z "{{.VERSION}}" ]; then
+            current_tag=$(git describe --tags --always --abbrev=0 --match='v[0-9]*.[0-9]*.[0-9]*' 2>/dev/null || echo "v0.0.0")
+            if echo "$current_tag" | grep -q "\-rc"; then
+              base=$(echo "$current_tag" | sed 's/-rc.*//')
+              rc_num=$(echo "$current_tag" | sed 's/.*-rc//')
+              next_rc=$((rc_num + 1))
+              echo "${base}-rc${next_rc}" | sed 's/^v//'
+            else
+              echo "${current_tag}-rc1" | sed 's/^v//'
+            fi
+          else
+            echo "{{.VERSION}}"
+          fi
+    cmds:
+      - |
+        if [ -z "{{.VERSION}}" ]; then
+          echo "📦 Creating release candidate v{{.NEXT_RC}}"
+        else
+          echo "📦 Creating release candidate {{.VERSION}}"
+        fi
+      - git tag -a "v{{.NEXT_RC}}" -m "Release candidate v{{.NEXT_RC}}"
+      - git push origin "v{{.NEXT_RC}}"
+      - echo "✅ Created RC release v{{.NEXT_RC}}"
+
+  release:final:
+    desc: Create a final release from the current version
+    vars:
+      VERSION:
+        sh: echo "{{.VERSION}}" | sed 's/-rc.*//'
+    preconditions:
+      - sh: '[ -n "{{.VERSION}}" ]'
+        msg: "VERSION is required (e.g., task release:final VERSION=0.1.0)"
+    cmds:
+      - echo "📦 Creating final release v{{.VERSION}}"
+      - git tag -a "v{{.VERSION}}" -m "Release v{{.VERSION}}"
+      - git push origin "v{{.VERSION}}"
+      - echo "✅ Created final release v{{.VERSION}}"
