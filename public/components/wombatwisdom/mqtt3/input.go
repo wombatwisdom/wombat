@@ -135,7 +135,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 30 * time.Second
 		}
 
-		inputConfig.CommonMQTTConfig.ConnectTimeout = &d
+		inputConfig.ConnectTimeout = &d
 	}
 
 	if conf.Contains(fldKeepalive) {
@@ -144,7 +144,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 60 * time.Second
 		}
 
-		inputConfig.CommonMQTTConfig.KeepAlive = &d
+		inputConfig.KeepAlive = &d
 	}
 
 	// Extract auto ACK settings, if not specified, NewInput will set the default to true

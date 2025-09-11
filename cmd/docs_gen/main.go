@@ -161,31 +161,49 @@ func main() {
 
 	// Clean up orphaned docs before generating new ones
 	inputNames := collectComponentNames(env, env.WalkInputs)
-	cleanOrphanedDocs(path.Join(refDir, "./components/inputs"), inputNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/inputs"), inputNames); err != nil {
+		panic(err)
+	}
 
 	bufferNames := collectComponentNames(env, env.WalkBuffers)
-	cleanOrphanedDocs(path.Join(refDir, "./components/buffers"), bufferNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/buffers"), bufferNames); err != nil {
+		panic(err)
+	}
 
 	cacheNames := collectComponentNames(env, env.WalkCaches)
-	cleanOrphanedDocs(path.Join(refDir, "./components/caches"), cacheNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/caches"), cacheNames); err != nil {
+		panic(err)
+	}
 
 	metricNames := collectComponentNames(env, env.WalkMetrics)
-	cleanOrphanedDocs(path.Join(refDir, "./components/metrics"), metricNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/metrics"), metricNames); err != nil {
+		panic(err)
+	}
 
 	outputNames := collectComponentNames(env, env.WalkOutputs)
-	cleanOrphanedDocs(path.Join(refDir, "./components/outputs"), outputNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/outputs"), outputNames); err != nil {
+		panic(err)
+	}
 
 	processorNames := collectComponentNames(env, env.WalkProcessors)
-	cleanOrphanedDocs(path.Join(refDir, "./components/processors"), processorNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/processors"), processorNames); err != nil {
+		panic(err)
+	}
 
 	rateLimitNames := collectComponentNames(env, env.WalkRateLimits)
-	cleanOrphanedDocs(path.Join(refDir, "./components/rate_limits"), rateLimitNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/rate_limits"), rateLimitNames); err != nil {
+		panic(err)
+	}
 
 	tracerNames := collectComponentNames(env, env.WalkTracers)
-	cleanOrphanedDocs(path.Join(refDir, "./components/tracers"), tracerNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/tracers"), tracerNames); err != nil {
+		panic(err)
+	}
 
 	scannerNames := collectComponentNames(env, env.WalkScanners)
-	cleanOrphanedDocs(path.Join(refDir, "./components/scanners"), scannerNames)
+	if err := cleanOrphanedDocs(path.Join(refDir, "./components/scanners"), scannerNames); err != nil {
+		panic(err)
+	}
 
 	// Now generate docs as before
 	env.WalkInputs(viewForDir(path.Join(refDir, "./components/inputs")))
