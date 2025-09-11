@@ -4,17 +4,18 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 	"github.com/wombatwisdom/wombat/public/components/mongodb/change_stream"
 )
 
 func TestChangeStreamReaderOptions(t *testing.T) {
 	tests := []struct {
-		name       string
-		options    change_stream.ChangeStreamReaderOptions
-		wantURI    string
-		wantDB     string
-		wantColl   string
+		name     string
+		options  change_stream.ChangeStreamReaderOptions
+		wantURI  string
+		wantDB   string
+		wantColl string
 	}{
 		{
 			name: "minimal config",
@@ -126,7 +127,7 @@ func TestChangeStreamReaderOptionsValidation(t *testing.T) {
 			if tt.options.Collection != "" && tt.options.Database == "" {
 				assert.False(t, tt.valid, "Collection without database should be invalid")
 			}
-			
+
 			// Test that empty URI is invalid
 			if tt.options.Uri == "" {
 				assert.False(t, tt.valid, "Empty URI should be invalid")

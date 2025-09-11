@@ -8,6 +8,7 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 
@@ -17,7 +18,7 @@ func TestNewChangeStreamInput(t *testing.T) {
 			Fields(mongodb.Fields...).
 			Field(service.NewStringField("database").Optional().Default("")).
 			Field(service.NewStringField("collection").Optional().Default(""))
-		
+
 		env := service.NewEnvironment()
 		confStr := `
 uri: mongodb://localhost:27017
@@ -38,7 +39,7 @@ collection: test_collection
 			Fields(mongodb.Fields...).
 			Field(service.NewStringField("database").Optional().Default("")).
 			Field(service.NewStringField("collection").Optional().Default(""))
-		
+
 		env := service.NewEnvironment()
 		confStr := `
 uri: mongodb://localhost:27017
@@ -57,7 +58,7 @@ uri: mongodb://localhost:27017
 			Field(service.NewStringField("other_field")).
 			Field(service.NewStringField("database").Optional().Default("")).
 			Field(service.NewStringField("collection").Optional().Default(""))
-		
+
 		env := service.NewEnvironment()
 		confStr := `
 other_field: value
@@ -76,7 +77,7 @@ other_field: value
 		spec := service.NewConfigSpec().
 			Fields(mongodb.Fields...).
 			Field(service.NewIntField("database")) // Wrong type - should be string
-		
+
 		env := service.NewEnvironment()
 		confStr := `
 uri: mongodb://localhost:27017
@@ -96,7 +97,7 @@ database: 123
 			Fields(mongodb.Fields...).
 			Field(service.NewStringField("database").Optional().Default("")).
 			Field(service.NewIntField("collection")) // Wrong type - should be string
-		
+
 		env := service.NewEnvironment()
 		confStr := `
 uri: mongodb://localhost:27017

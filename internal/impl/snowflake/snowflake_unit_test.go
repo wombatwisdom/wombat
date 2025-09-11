@@ -14,7 +14,7 @@ func TestSnowflakePutOutputConfig(t *testing.T) {
 	t.Run("should create a valid configuration spec", func(t *testing.T) {
 		spec := snowflakePutOutputConfig()
 		require.NotNil(t, spec)
-		
+
 		// Test that the spec can parse a minimal valid configuration
 		confStr := `
 account: test_account
@@ -40,7 +40,7 @@ file_extension: "json"
 	t.Run("should require mandatory fields", func(t *testing.T) {
 		spec := snowflakePutOutputConfig()
 		env := service.NewEnvironment()
-		
+
 		// Test with missing account field
 		confStr := `
 region: us-west-2
@@ -112,7 +112,7 @@ snowpipe: '${! meta("pipe_name") }'
 		writer, err := newSnowflakeWriterFromConfig(conf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, writer)
-		
+
 		// Verify interpolated strings were created
 		assert.NotNil(t, writer.path)
 		assert.NotNil(t, writer.stage)
@@ -124,7 +124,7 @@ snowpipe: '${! meta("pipe_name") }'
 
 	t.Run("should handle compression settings", func(t *testing.T) {
 		compressionTypes := []string{"NONE", "AUTO", "GZIP", "DEFLATE", "RAW_DEFLATE", "ZSTD"}
-		
+
 		for _, compression := range compressionTypes {
 			confStr := `
 account: test_account
@@ -159,8 +159,8 @@ compression: ` + compression + `
 func TestSnowflakeJWTCreation(t *testing.T) {
 	t.Run("should fail without a private key", func(t *testing.T) {
 		writer := &snowflakeWriter{
-			account:               "test_account",
-			user:                  "test_user",
+			account:              "test_account",
+			user:                 "test_user",
 			publicKeyFingerprint: "test_fingerprint",
 			nowFn:                func() time.Time { return time.Unix(0, 0) },
 		}

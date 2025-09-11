@@ -11,15 +11,15 @@ import (
 
 // TemplateDefinition represents the structure of a Benthos template
 type TemplateDefinition struct {
-	Name        string                   `yaml:"name"`
-	Type        string                   `yaml:"type"`
-	Status      string                   `yaml:"status"`
-	Categories  []string                 `yaml:"categories"`
-	Summary     string                   `yaml:"summary"`
-	Description string                   `yaml:"description"`
-	Fields      []FieldDefinition        `yaml:"fields"`
-	Mapping     string                   `yaml:"mapping"`
-	Tests       []TemplateTest           `yaml:"tests"`
+	Name        string            `yaml:"name"`
+	Type        string            `yaml:"type"`
+	Status      string            `yaml:"status"`
+	Categories  []string          `yaml:"categories"`
+	Summary     string            `yaml:"summary"`
+	Description string            `yaml:"description"`
+	Fields      []FieldDefinition `yaml:"fields"`
+	Mapping     string            `yaml:"mapping"`
+	Tests       []TemplateTest    `yaml:"tests"`
 }
 
 type FieldDefinition struct {
@@ -60,26 +60,26 @@ func TestTemplateStructure(t *testing.T) {
 			hasDefault   bool
 			defaultValue interface{}
 		}{
-			"url":               {fieldType: "string", hasDefault: false},
-			"token":             {fieldType: "string", hasDefault: false},
-			"gzip":              {fieldType: "bool", hasDefault: true, defaultValue: false},
-			"event_host":        {fieldType: "string", hasDefault: true, defaultValue: ""},
-			"event_source":      {fieldType: "string", hasDefault: true, defaultValue: ""},
-			"event_sourcetype":  {fieldType: "string", hasDefault: true, defaultValue: ""},
-			"event_index":       {fieldType: "string", hasDefault: true, defaultValue: ""},
-			"batching_count":    {fieldType: "int", hasDefault: true, defaultValue: 100},
-			"batching_period":   {fieldType: "string", hasDefault: true, defaultValue: "30s"},
+			"url":                {fieldType: "string", hasDefault: false},
+			"token":              {fieldType: "string", hasDefault: false},
+			"gzip":               {fieldType: "bool", hasDefault: true, defaultValue: false},
+			"event_host":         {fieldType: "string", hasDefault: true, defaultValue: ""},
+			"event_source":       {fieldType: "string", hasDefault: true, defaultValue: ""},
+			"event_sourcetype":   {fieldType: "string", hasDefault: true, defaultValue: ""},
+			"event_index":        {fieldType: "string", hasDefault: true, defaultValue: ""},
+			"batching_count":     {fieldType: "int", hasDefault: true, defaultValue: 100},
+			"batching_period":    {fieldType: "string", hasDefault: true, defaultValue: "30s"},
 			"batching_byte_size": {fieldType: "int", hasDefault: true, defaultValue: 1000000},
-			"rate_limit":        {fieldType: "string", hasDefault: true, defaultValue: ""},
-			"max_in_flight":     {fieldType: "int", hasDefault: true, defaultValue: 64},
-			"skip_cert_verify":  {fieldType: "bool", hasDefault: true, defaultValue: false},
+			"rate_limit":         {fieldType: "string", hasDefault: true, defaultValue: ""},
+			"max_in_flight":      {fieldType: "int", hasDefault: true, defaultValue: 64},
+			"skip_cert_verify":   {fieldType: "bool", hasDefault: true, defaultValue: false},
 		}
 
 		for _, field := range template.Fields {
 			if expected, ok := requiredFields[field.Name]; ok {
 				assert.Equal(t, expected.fieldType, field.Type, "Field %s type mismatch", field.Name)
 				assert.NotEmpty(t, field.Description, "Field %s should have description", field.Name)
-				
+
 				if expected.hasDefault {
 					assert.Equal(t, expected.defaultValue, field.Default, "Field %s default mismatch", field.Name)
 				}
@@ -97,26 +97,26 @@ func TestTemplateStructure(t *testing.T) {
 
 	t.Run("mapping", func(t *testing.T) {
 		assert.NotEmpty(t, template.Mapping)
-		
+
 		// Verify key mappings exist
 		assert.Contains(t, template.Mapping, "root.http_client.url = this.url")
 		assert.Contains(t, template.Mapping, "root.http_client.verb = \"POST\"")
 		assert.Contains(t, template.Mapping, "root.http_client.headers.Authorization = \"Splunk \" + this.token")
 		assert.Contains(t, template.Mapping, "root.http_client.headers.\"Content-Type\" = \"application/json\"")
-		
+
 		// Verify conditional gzip handling
 		assert.Contains(t, template.Mapping, "if this.gzip { \"gzip\"}")
 		assert.Contains(t, template.Mapping, "if this.gzip {{ \"algorithm\": \"gzip\" }}")
-		
+
 		// Verify batching configuration
 		assert.Contains(t, template.Mapping, "root.http_client.batching.count = this.batching_count")
 		assert.Contains(t, template.Mapping, "root.http_client.batching.period = this.batching_period")
 		assert.Contains(t, template.Mapping, "root.http_client.batching.byte_size = this.batching_byte_size")
-		
+
 		// Verify TLS configuration
 		assert.Contains(t, template.Mapping, "root.http_client.tls.enabled = true")
 		assert.Contains(t, template.Mapping, "root.http_client.tls.skip_cert_verify = this.skip_cert_verify")
-		
+
 		// Verify processor configuration
 		assert.Contains(t, template.Mapping, "root.processors")
 		assert.Contains(t, template.Mapping, "bloblang")
@@ -228,7 +228,7 @@ func TestBatchingConfiguration(t *testing.T) {
 	t.Run("batching processors", func(t *testing.T) {
 		// Verify archive processor is always added
 		assert.Contains(t, template.Mapping, `root.http_client.batching.processors."-".archive = { "format": "lines" }`)
-		
+
 		// Verify compress processor is conditional
 		assert.Contains(t, template.Mapping, `root.http_client.batching.processors."-".compress = if this.gzip {{ "algorithm": "gzip" }}`)
 	})

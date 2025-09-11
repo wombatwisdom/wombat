@@ -2,9 +2,10 @@ package wombatwisdom
 
 import (
 	"fmt"
+	"iter"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/framework/spec"
-	"iter"
 )
 
 type MessageFactory struct {

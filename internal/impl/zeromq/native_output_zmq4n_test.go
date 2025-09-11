@@ -10,17 +10,17 @@ import (
 	"testing"
 	"time"
 
+	gzmq4 "github.com/go-zeromq/zmq4"
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	gzmq4 "github.com/go-zeromq/zmq4"
 )
 
 func TestZMQOutputNConfig(t *testing.T) {
 	t.Run("returns valid config spec", func(t *testing.T) {
 		spec := zmqOutputNConfig()
 		assert.NotNil(t, spec)
-		
+
 		// Verify spec is properly configured
 		// We can't directly check fields, but we can verify the spec is valid
 		assert.NotNil(t, spec)
@@ -28,7 +28,7 @@ func TestZMQOutputNConfig(t *testing.T) {
 
 	t.Run("config spec has correct defaults", func(t *testing.T) {
 		spec := zmqOutputNConfig()
-		
+
 		// Test parsing with minimal config
 		env := service.NewEnvironment()
 		parsedConf, err := spec.ParseYAML(`
@@ -37,16 +37,16 @@ urls:
 socket_type: PUSH
 `, env)
 		require.NoError(t, err)
-		
+
 		// Check defaults
 		bind, err := parsedConf.FieldBool("bind")
 		require.NoError(t, err)
 		assert.True(t, bind) // Default is true for output
-		
+
 		hwm, err := parsedConf.FieldInt("high_water_mark")
 		require.NoError(t, err)
 		assert.Equal(t, 0, hwm)
-		
+
 		pollTimeout, err := parsedConf.FieldDuration("poll_timeout")
 		require.NoError(t, err)
 		assert.Equal(t, 5*time.Second, pollTimeout)
@@ -55,11 +55,11 @@ socket_type: PUSH
 
 func TestZMQOutputNFromConfig(t *testing.T) {
 	tests := []struct {
-		name      string
-		config    string
-		wantErr   bool
+		name        string
+		config      string
+		wantErr     bool
 		errContains string
-		validate  func(t *testing.T, output *zmqOutputN)
+		validate    func(t *testing.T, output *zmqOutputN)
 	}{
 		{
 			name: "valid PUSH configuration",
@@ -179,7 +179,7 @@ urls:
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, output)
-				
+
 				if tt.validate != nil {
 					tt.validate(t, output)
 				}
@@ -190,10 +190,10 @@ urls:
 
 func TestGetZMQOutputNType(t *testing.T) {
 	tests := []struct {
-		name       string
-		input      string
-		want       gzmq4.SocketType
-		wantErr    bool
+		name        string
+		input       string
+		want        gzmq4.SocketType
+		wantErr     bool
 		errContains string
 	}{
 		{
@@ -395,10 +395,10 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 			msg, err := receiver.Recv()
 			require.NoError(t, err)
 			require.Equal(t, 1, len(msg.Frames))
-			
+
 			content, _ := expectedMsg.AsBytes()
 			assert.Equal(t, content, msg.Frames[0])
-			
+
 			_ = i // Use index to avoid linter warning
 		}
 	})
@@ -525,7 +525,7 @@ func TestZMQOutputNWriteBatch(t *testing.T) {
 		numWriters := 5
 		messagesPerWriter := 10
 		var wg sync.WaitGroup
-		
+
 		for i := 0; i < numWriters; i++ {
 			wg.Add(1)
 			go func(writerID int) {
@@ -635,7 +635,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 		defer func() { _ = output.Close(ctx) }()
 
 		// Get the bound socket's address
-		socketAddr := output.socket.(interface { Addr() net.Addr }).Addr()
+		socketAddr := output.socket.(interface{ Addr() net.Addr }).Addr()
 		endpoint := fmt.Sprintf("tcp://%s", socketAddr.String())
 
 		// Setup subscriber
@@ -691,7 +691,7 @@ func TestZMQOutputNIntegrationScenarios(t *testing.T) {
 		defer func() { _ = output.Close(ctx) }()
 
 		// Get the bound socket's address
-		socketAddr := output.socket.(interface { Addr() net.Addr }).Addr()
+		socketAddr := output.socket.(interface{ Addr() net.Addr }).Addr()
 		endpoint := fmt.Sprintf("tcp://%s", socketAddr.String())
 
 		// Setup multiple pullers

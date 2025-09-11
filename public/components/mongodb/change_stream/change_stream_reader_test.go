@@ -4,12 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/redpanda-data/benthos/v4/public/service"
+	"go.mongodb.org/mongo-driver/bson"
+
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 	"github.com/wombatwisdom/wombat/public/components/mongodb/change_stream"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func TestChangeStreamReader_Connect(t *testing.T) {
@@ -140,7 +141,7 @@ func TestChangeStreamReaderOptions_ChangeStream(t *testing.T) {
 func TestMessageFormat(t *testing.T) {
 	// This test demonstrates the expected message format
 	// In a real implementation, this would be part of integration tests
-	
+
 	t.Run("message contains change stream ID in metadata", func(t *testing.T) {
 		// Create a sample message as the reader would
 		changeData := bson.M{
@@ -150,19 +151,19 @@ func TestMessageFormat(t *testing.T) {
 				"name": "test",
 			},
 		}
-		
+
 		b, err := bson.MarshalExtJSON(changeData, false, false)
 		require.NoError(t, err)
-		
+
 		msg := service.NewMessage(b)
 		msg.MetaSet(change_stream.IdHeader, "12345")
-		
+
 		// Verify message content
 		msgBytes, err := msg.AsBytes()
 		require.NoError(t, err)
 		assert.Contains(t, string(msgBytes), "insert")
 		assert.Contains(t, string(msgBytes), "test")
-		
+
 		// Verify metadata
 		id, exists := msg.MetaGet(change_stream.IdHeader)
 		assert.True(t, exists)
@@ -211,7 +212,7 @@ func TestErrorHandling(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup()
 			}
-			
+
 			reader := change_stream.NewChangeStreamReader(tt.options)
 			tt.check(t, reader)
 		})
@@ -231,7 +232,7 @@ func TestConcurrency(t *testing.T) {
 		// Multiple close calls should not panic
 		err1 := reader.Close(context.Background())
 		err2 := reader.Close(context.Background())
-		
+
 		assert.NoError(t, err1)
 		assert.NoError(t, err2)
 	})
@@ -254,32 +255,32 @@ func TestNewChangeStreamReader(t *testing.T) {
 
 func TestChangeStreamReaderOptions_DatabaseAndCollection(t *testing.T) {
 	tests := []struct {
-		name          string
-		database      string
-		collection    string
-		expectDB      bool
-		expectColl    bool
+		name       string
+		database   string
+		collection string
+		expectDB   bool
+		expectColl bool
 	}{
 		{
-			name:          "no database or collection",
-			database:      "",
-			collection:    "",
-			expectDB:      false,
-			expectColl:    false,
+			name:       "no database or collection",
+			database:   "",
+			collection: "",
+			expectDB:   false,
+			expectColl: false,
 		},
 		{
-			name:          "database only",
-			database:      "testdb",
-			collection:    "",
-			expectDB:      true,
-			expectColl:    false,
+			name:       "database only",
+			database:   "testdb",
+			collection: "",
+			expectDB:   true,
+			expectColl: false,
 		},
 		{
-			name:          "both database and collection",
-			database:      "testdb",
-			collection:    "testcoll",
-			expectDB:      true,
-			expectColl:    true,
+			name:       "both database and collection",
+			database:   "testdb",
+			collection: "testcoll",
+			expectDB:   true,
+			expectColl: true,
 		},
 	}
 
@@ -394,9 +395,9 @@ func TestMessageProcessing(t *testing.T) {
 				data: bson.M{
 					"operationType": "insert",
 					"fullDocument": bson.M{
-						"_id":   "507f1f77bcf86cd799439011",
-						"name":  "test document",
-						"count": 42,
+						"_id":    "507f1f77bcf86cd799439011",
+						"name":   "test document",
+						"count":  42,
 						"active": true,
 					},
 					"ns": bson.M{

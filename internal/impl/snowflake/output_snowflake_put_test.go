@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
-	"github.com/redpanda-data/benthos/v4/public/service"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/redpanda-data/benthos/v4/public/service"
 
 	"github.com/gofrs/uuid"
 	"github.com/stretchr/testify/assert"

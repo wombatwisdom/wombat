@@ -3,11 +3,12 @@ package nats
 import (
 	"context"
 	"fmt"
-	"github.com/nats-io/nats.go/jetstream"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/nats-io/nats.go/jetstream"
 
 	"github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/assert"

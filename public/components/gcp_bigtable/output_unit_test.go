@@ -68,7 +68,7 @@ data: "invalid bloblang !!!"
 			spec := GCPBigTableConfig
 			env := service.NewEnvironment()
 			parsedConf, err := spec.ParseYAML(tt.config, env)
-			
+
 			// Check if parsing failed (for missing required fields)
 			if err != nil {
 				if tt.errContains != "" {
@@ -219,9 +219,9 @@ func TestAsRowKeys(t *testing.T) {
 			messages: []map[string]interface{}{
 				{"key": "value"},
 			},
-			expression:  "this.key",
-			wantErr:     false,
-			expected:    []string{"value"},
+			expression: "this.key",
+			wantErr:    false,
+			expected:   []string{"value"},
 		},
 		{
 			name: "invalid message structure",

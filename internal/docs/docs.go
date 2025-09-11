@@ -1,9 +1,10 @@
 package docs
 
 import (
+	"strings"
+
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/redpanda-data/benthos/v4/public/service"
-	"strings"
 )
 
 type PluginDocView struct {

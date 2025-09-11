@@ -71,8 +71,8 @@ tasks:
 
   fmt:
     cmds:
-      - go list -f {{.Dir}} ./... | xargs -I{} gofmt -w -s {}
-      - go list -f {{.Dir}} ./... | xargs -I{} goimports -w -local github.com/wombatwisdom/wombat {}
+      - gofmt -w -s .
+      - goimports -w -local github.com/wombatwisdom/wombat .
       - go mod tidy
 
   format:check:

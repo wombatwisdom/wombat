@@ -12,7 +12,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/redpanda-data/benthos/v4/public/service"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -20,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/redpanda-data/benthos/v4/public/service"
 
 	"github.com/gofrs/uuid"
 	"github.com/golang-jwt/jwt/v5"

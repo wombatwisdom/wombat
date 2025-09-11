@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"github.com/wombatwisdom/wombat/public/components/mongodb"
 	mdb "go.mongodb.org/mongo-driver/mongo"
+
+	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
 
 const (

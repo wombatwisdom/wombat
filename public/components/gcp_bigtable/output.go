@@ -1,11 +1,12 @@
 package gcp_bigtable
 
 import (
-	"cloud.google.com/go/auth/credentials"
-	"cloud.google.com/go/bigtable"
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"cloud.google.com/go/auth/credentials"
+	"cloud.google.com/go/bigtable"
 	"github.com/google/martian/v3/log"
 	"github.com/hashicorp/go-multierror"
 	"github.com/redpanda-data/benthos/v4/public/bloblang"
