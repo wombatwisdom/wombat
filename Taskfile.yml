@@ -75,6 +75,58 @@ tasks:
       - go vet {{.GO_FLAGS}} ./...
       - golangci-lint run --timeout 1h --verbose cmd/... internal/... public/...
 
+  check:license:
+    desc: Check for restrictively licensed imports
+    cmds:
+      - |
+        echo "🔍 Checking for restrictive imports..."
+        
+        # Check Go files for problematic imports
+        FOUND_ISSUES=0
+        
+        # Check for /enterprise/ in import paths
+        if grep -r --include="*.go" -E 'import.*"/enterprise/"' . 2>/dev/null; then
+          echo "❌ ERROR: Found restrictive imports!"
+          FOUND_ISSUES=1
+        fi
+        
+        # Check for /public/components/all
+        if grep -r --include="*.go" -E 'github\.com/redpanda-data/connect/v4/public/components/all' . 2>/dev/null; then
+          echo "❌ ERROR: Found imports of /public/components/all (contains RCL-licensed enterprise components)"
+          echo "   Replace with: github.com/redpanda-data/connect/v4/public/components/community"
+          FOUND_ISSUES=1
+        fi
+        
+        # Check for /public/schema
+        if grep -r --include="*.go" -E 'github\.com/redpanda-data/connect/v4/public/schema' . 2>/dev/null; then
+          echo "❌ ERROR: Found imports of /public/schema (may contain enterprise dependencies)"
+          echo "   Replace with: use service.GlobalEnvironment() from benthos directly"
+          FOUND_ISSUES=1
+        fi
+        
+        # Check go.mod for non-community RedPanda Connect packages (excluding base module)
+        if grep -E 'github\.com/redpanda-data/connect/v4/' go.mod | grep -v '/public/components/community' | grep -v '// indirect'; then
+          echo "❌ ERROR: Found non-community RedPanda Connect imports in go.mod"
+          echo "   Only use: github.com/redpanda-data/connect/v4/public/components/community"
+          FOUND_ISSUES=1
+        fi
+        
+        # Check for any enterprise-specific keywords
+        if grep -r --include="*.go" -E 'connect-enterprise|redpanda-enterprise|"rcl"|"RCL"' . 2>/dev/null | grep -v "check:license"; then
+          echo "❌ ERROR: Found potential enterprise package references"
+          FOUND_ISSUES=1
+        fi
+        
+        if [ $FOUND_ISSUES -eq 0 ]; then
+          echo "✅ No restrictive imports found - safe to proceed!"
+        else
+          echo ""
+          echo "📝 Safe imports to use:"
+          echo "   - github.com/redpanda-data/benthos/v4/* (MIT licensed)"
+          echo "   - github.com/redpanda-data/connect/v4/public/components/community (Apache 2.0)"
+          exit 1
+        fi
+
   test:
     desc: Run the unit tests
     deps:

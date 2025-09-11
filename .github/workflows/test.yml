@@ -34,6 +34,9 @@ jobs:
     - name: Docs
       run: task docs && git diff-index --quiet HEAD || { >&2 echo "Stale docs detected. This can be fixed with 'task docs'."; exit 1; }
 
+    - name: License Check
+      run: task check:license
+
     - name: Test
       run: task test
 
