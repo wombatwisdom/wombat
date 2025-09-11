@@ -1894,8 +1894,8 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/wI2L/jsondiff v0.4.0 h1:iP56F9tK83eiLttg3YdmEENtZnwlYd3ezEpNNnfZVyM=
 github.com/wI2L/jsondiff v0.4.0/go.mod h1:nR/vyy1efuDeAtMwc3AF6nZf/2LD1ID8GTyyJ+K8YB0=
-github.com/wombatwisdom/components v0.1.0-rc7 h1:6rddYjJph52ucCyihzLqCM3RwwFuzUp6LFt1YKAtIzw=
-github.com/wombatwisdom/components v0.1.0-rc7/go.mod h1:O5pw32X8S1iKJSqMgGkW+PiGZP71+2a+amtvS7WVYWU=
+github.com/wombatwisdom/components v0.1.0 h1:jqXrQNEpUflIpXVuzGBQOYEzmb9nvTLJSQjdHFyQ+1M=
+github.com/wombatwisdom/components v0.1.0/go.mod h1:O5pw32X8S1iKJSqMgGkW+PiGZP71+2a+amtvS7WVYWU=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
 github.com/xanzy/ssh-agent v0.3.3/go.mod h1:6dzNDKs0J9rVPHPhaGCukekBHKqfl+L3KghI1Bc68Uw=
 github.com/xdg-go/pbkdf2 v1.0.0 h1:Su7DPu48wXMwC3bs7MCNG+z4FhcyEuz5dlvchbq0B0c=
