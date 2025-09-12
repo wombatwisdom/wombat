@@ -16,6 +16,22 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    - name: Debug disk space and Go temps
+      run: |
+        echo "=== Disk Usage ==="
+        df -h
+        echo
+        echo "=== Go Environment ==="
+        go env GOTMPDIR
+        go env GOCACHE
+        echo
+        echo "=== Temp Directories ==="
+        echo "TMPDIR: $TMPDIR"
+        echo "/tmp space:"
+        df -h /tmp
+        echo
+        echo "=== Available Space by Mount ==="
+        df -h | grep -E "(Filesystem|/dev/)"
     - name: Checkout code
       uses: actions/checkout@v5
       with:
@@ -71,3 +87,4 @@ jobs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GOTMPDIR: /tmp
