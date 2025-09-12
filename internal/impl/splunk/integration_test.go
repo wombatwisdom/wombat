@@ -17,6 +17,10 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	// Import Benthos standard components for testing
+	_ "github.com/redpanda-data/benthos/v4/public/components/io"         // for generate input
+	_ "github.com/redpanda-data/benthos/v4/public/components/pure"       // for processors like label
 )
 
 // MockSplunkServer simulates a Splunk HEC endpoint
@@ -101,6 +105,13 @@ func NewMockSplunkServer(authToken string) *MockSplunkServer {
 					"code": 6,
 				})
 				return
+			}
+			// If Event is a string, try to parse it as JSON
+			if eventStr, ok := event.Event.(string); ok {
+				var eventMap map[string]interface{}
+				if err := json.Unmarshal([]byte(eventStr), &eventMap); err == nil {
+					event.Event = eventMap
+				}
 			}
 			m.receivedEvents = append(m.receivedEvents, event)
 		}
@@ -237,8 +248,9 @@ output:
 		require.Len(t, events, 1)
 
 		event := events[0]
+		t.Logf("Received event: %+v", event)
 		eventMap, ok := event.Event.(map[string]interface{})
-		require.True(t, ok)
+		require.True(t, ok, "Event should be a map, got %T: %+v", event.Event, event.Event)
 		assert.Equal(t, "test event", eventMap["message"])
 		assert.Equal(t, "info", eventMap["level"])
 	})
@@ -256,8 +268,8 @@ input:
     interval: "100ms"
     mapping: |
       root = {
-        "message": "batch event " + this.count().string(),
-        "index": this.count()
+        "message": "batch event " + counter().string(),
+        "index": counter()
       }
 
 output:
@@ -450,7 +462,7 @@ input:
   generate:
     count: 10
     interval: "10ms"
-    mapping: 'root = {"event": "rate limit test " + this.count().string()}'
+    mapping: 'root = {"event": "rate limit test " + counter().string()}'
 
 rate_limit_resources:
   - label: splunk_limiter
