@@ -97,6 +97,15 @@ input:
 			service.NewStringField(fldUsername).Description("Username for authentication").Default(""),
 			service.NewStringField(fldPassword).Description("Password for authentication").Default(""),
 		).Description("Authentication configuration").Optional()).
+		Field(service.NewTLSToggledField(fldTLS).
+			Description("TLS configuration for secure connections").
+			Optional()).
+		Field(service.NewObjectField(fldWill,
+			service.NewStringField(fldTopic).Description("Topic for will message"),
+			service.NewStringField(fldPayload).Description("Payload for will message").Default(""),
+			service.NewIntField(fldQOS).Description("QoS level for will message (0, 1, or 2)").Default(0),
+			service.NewBoolField(fldRetained).Description("Retained flag for will message").Default(false),
+		).Description("Last Will and Testament configuration").Optional()).
 		Field(service.NewBoolField(fldEnableAutoAck).
 			Description("Enable automatic acknowledgment (paho SetAutoAckDisabled). When false (default), messages are ACK'd after processing (at-least-once). When true, messages are ACK'd immediately (at-most-once with higher throughput but message loss risk).").
 			Default(false).
@@ -112,6 +121,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 
 	clientID, err := conf.FieldString(fldClientID)
 	if err != nil {
+		// If not specified, use default empty string
 		clientID = ""
 	}
 
@@ -163,6 +173,30 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		password, _ := conf.FieldString(fldAuth, fldPassword)
 		inputConfig.Username = username
 		inputConfig.Password = password
+	}
+
+	// Handle TLS if provided
+	tlsConf, tlsEnabled, err := conf.FieldTLSToggled(fldTLS)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse TLS config: %w", err)
+	}
+	if tlsEnabled {
+		inputConfig.TLS = tlsConf
+	}
+
+	// Handle Will if provided
+	if conf.Contains(fldWill) {
+		willTopic, _ := conf.FieldString(fldWill, fldTopic)
+		willPayload, _ := conf.FieldString(fldWill, fldPayload)
+		willQos, _ := conf.FieldInt(fldWill, fldQOS)
+		willRetained, _ := conf.FieldBool(fldWill, fldRetained)
+		
+		inputConfig.Will = &mqtt.WillConfig{
+			Topic:    willTopic,
+			Payload:  willPayload,
+			QoS:      uint8(willQos),
+			Retained: willRetained,
+		}
 	}
 
 	// Handle filters
