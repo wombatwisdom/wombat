@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Debug disk space and Go temps
+    - name: Show disk space and Go temps
       run: |
         echo "=== Disk Usage ==="
         df -h
@@ -80,6 +80,16 @@ jobs:
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Free up disk space and setup temp dirs
+      run: |
+        # Cleanup
+        sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo docker system prune -af
+        # Create temp dir on larger filesystem
+        sudo mkdir -p /mnt/tmp /mnt/gocache
+        sudo chown $USER:$USER /mnt/tmp /mnt/gocache
+        df -h
+
     - name: Run GoReleaser
       uses: goreleaser/goreleaser-action@v6
       with:
@@ -87,4 +97,5 @@ jobs:
         args: release --clean
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GOTMPDIR: /tmp
+        GOTMPDIR: /mnt/tmp
+        GOCACHE: /mnt/gocache
