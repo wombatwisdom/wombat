@@ -47,7 +47,16 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 		Field(service.NewObjectField("auth",
 			service.NewStringField("username").Description("Username for authentication").Default(""),
 			service.NewStringField("password").Description("Password for authentication").Default(""),
-		).Description("Authentication configuration").Optional())
+		).Description("Authentication configuration").Optional()).
+		Field(service.NewTLSToggledField("tls").
+			Description("TLS configuration for secure connections").
+			Optional()).
+		Field(service.NewObjectField("will",
+			service.NewStringField("topic").Description("Topic for will message"),
+			service.NewStringField("payload").Description("Payload for will message").Default(""),
+			service.NewIntField("qos").Description("QoS level for will message (0, 1, or 2)").Default(0),
+			service.NewBoolField("retained").Description("Retained flag for will message").Default(false),
+		).Description("Last Will and Testament configuration").Optional())
 }
 
 func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.BatchOutput, service.BatchPolicy, int, error) {
@@ -114,6 +123,30 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		password, _ := conf.FieldString("auth", "password")
 		outputConfig.Username = username
 		outputConfig.Password = password
+	}
+
+	// Handle TLS if provided
+	tlsConf, tlsEnabled, err := conf.FieldTLSToggled("tls")
+	if err != nil {
+		return nil, bp, 0, fmt.Errorf("failed to parse TLS config: %w", err)
+	}
+	if tlsEnabled {
+		outputConfig.TLS = tlsConf
+	}
+
+	// Handle Will if provided
+	if conf.Contains("will") {
+		willTopic, _ := conf.FieldString("will", "topic")
+		willPayload, _ := conf.FieldString("will", "payload")
+		willQos, _ := conf.FieldInt("will", "qos")
+		willRetained, _ := conf.FieldBool("will", "retained")
+		
+		outputConfig.Will = &mqtt.WillConfig{
+			Topic:    willTopic,
+			Payload:  willPayload,
+			QoS:      uint8(willQos),
+			Retained: willRetained,
+		}
 	}
 
 	output := &output{
