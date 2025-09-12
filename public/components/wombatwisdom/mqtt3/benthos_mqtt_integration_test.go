@@ -305,8 +305,6 @@ func TestBenthosMQTTIntegration(t *testing.T) {
 		t.Skip("Skipping integration tests in short mode")
 	}
 
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 

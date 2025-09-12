@@ -59,8 +59,6 @@ func TestErrorHandlingIntegration(t *testing.T) {
 		t.Skip("Skipping integration tests in short mode")
 	}
 
-	t.Setenv("TESTCONTAINERS_RYUK_DISABLED", "true")
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 

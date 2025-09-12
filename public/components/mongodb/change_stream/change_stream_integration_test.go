@@ -6,6 +6,8 @@ package change_stream_test
 import (
 	"context"
 	"fmt"
+	"net/url"
+	"os"
 	"testing"
 	"time"
 
@@ -48,6 +50,30 @@ func setupMongoDBContainer(t *testing.T, ctx context.Context) *MongoDBContainer 
 	// Get the connection string
 	connectionString, err := mongodbContainer.ConnectionString(ctx)
 	require.NoError(t, err, "Failed to get connection string")
+
+	// For Podman compatibility: Replace internal IP with localhost
+	// when TESTCONTAINERS_HOST_OVERRIDE is set
+	if hostOverride := os.Getenv("TESTCONTAINERS_HOST_OVERRIDE"); hostOverride != "" {
+		// Parse the URL to replace the host
+		u, err := url.Parse(connectionString)
+		require.NoError(t, err, "Failed to parse connection string")
+		
+		// Get the mapped port
+		mappedPort, err := mongodbContainer.MappedPort(ctx, "27017/tcp")
+		require.NoError(t, err, "Failed to get mapped port")
+		
+		// Replace host with localhost and mapped port
+		u.Host = fmt.Sprintf("%s:%s", hostOverride, mappedPort.Port())
+		
+		// Add directConnection to bypass replica set discovery
+		q := u.Query()
+		q.Set("directConnection", "true")
+		u.RawQuery = q.Encode()
+		
+		connectionString = u.String()
+		
+		t.Logf("Modified connection string for Podman: %s", connectionString)
+	}
 
 	// Wait for MongoDB to be ready
 	opts := options.Client().ApplyURI(connectionString)
@@ -155,14 +181,21 @@ func TestChangeStreamIntegration(t *testing.T) {
 				err = bson.UnmarshalExtJSON(msgBytes, false, &changeEvent)
 				require.NoError(t, err)
 
+				// Debug: Log the entire change event
+				t.Logf("Change event %d: %+v", i, changeEvent)
+
 				// Verify change event structure
 				assert.Equal(t, "insert", changeEvent["operationType"])
 
-				fullDoc, ok := changeEvent["fullDocument"].(map[string]interface{})
+				fullDoc, ok := changeEvent["fullDocument"].(bson.M)
+				if !ok {
+					// Try to see what type it actually is
+					t.Logf("fullDocument type: %T, value: %+v", changeEvent["fullDocument"], changeEvent["fullDocument"])
+				}
 				require.True(t, ok, "fullDocument should be present")
 
 				assert.Equal(t, fmt.Sprintf("test-%d", i), fullDoc["name"])
-				assert.Equal(t, float64(i), fullDoc["value"]) // JSON numbers are float64
+				assert.Equal(t, int32(i), fullDoc["value"]) // BSON numbers are int32 by default
 			}
 		})
 
@@ -231,7 +264,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				err = bson.UnmarshalExtJSON(msgBytes, false, &changeEvent)
 				require.NoError(t, err)
 
-				ns, ok := changeEvent["ns"].(map[string]interface{})
+				ns, ok := changeEvent["ns"].(bson.M)
 				require.True(t, ok)
 
 				collName, ok := ns["coll"].(string)

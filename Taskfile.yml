@@ -182,16 +182,15 @@ tasks:
 
   test:integration:
     desc: Run integration tests
-    prompt: |-
-      WARNING! Running the integration tests in their entirety consumes a huge amount of computing resources and is 
-      likely to time out on most machines. It's recommended that you instead run the integration suite for connectors 
-      you are working selectively with `go test -run 'TestIntegration/kafka' ./...` and so on. 
-      
-      Are you sure you want to continue?
     cmds:
-      - go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -run "^Test.*Integration.*$$" -timeout 5m ./...
       - go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
       - go test -tags integration -v -run TestBenthosMQTTIntegration ./public/components/wombatwisdom/mqtt3/
+      - go test -tags integration -v -run 'Test(WillMessageDelivery|TLSConnection|WillWithAuth|Complete)Integration' ./public/components/wombatwisdom/mqtt3/
+      - go test -tags integration -v -run TestMongoDBConfigIntegration ./public/components/mongodb/
+#      - TESTCONTAINERS_HOST_OVERRIDE=localhost go test -tags integration -v -run TestChangeStreamIntegration ./public/components/mongodb/change_stream/
+      - go test -tags integration -v -run TestSplunkIntegration ./internal/impl/splunk/
+      - go test -tags integration -v -run TestIntegrationZMQn ./internal/impl/zeromq/
+      - go test -tags integration -v -run TestIntegrationNatsPullConsumer ./public/components/nats/
 
   clean:
     cmds:
