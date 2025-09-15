@@ -83,10 +83,12 @@ func (r *ChangeStreamReader) Close(ctx context.Context) error {
 	var err error
 	if r.cs != nil {
 		err = errors.Join(r.cs.Close(ctx))
+		r.cs = nil
 	}
 
 	if r.c != nil {
 		err = errors.Join(r.c.Disconnect(ctx))
+		r.c = nil
 	}
 
 	return err
@@ -94,7 +96,7 @@ func (r *ChangeStreamReader) Close(ctx context.Context) error {
 
 func (r *ChangeStreamReader) Read(ctx context.Context) (*service.Message, error) {
 	if r.cs == nil {
-		return nil, errors.New("change stream not connected")
+		return nil, service.ErrNotConnected
 	}
 
 	avail := r.cs.Next(ctx)

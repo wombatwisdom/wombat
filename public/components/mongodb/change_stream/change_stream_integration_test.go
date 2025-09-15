@@ -385,7 +385,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			// Attempting to read after close should fail
 			_, err = reader.Read(ctx)
 			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "change stream not connected")
+			assert.Contains(t, err.Error(), "not connected")
 		})
 	})
 
