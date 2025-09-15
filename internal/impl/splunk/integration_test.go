@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	// Import Benthos standard components for testing
-	_ "github.com/redpanda-data/benthos/v4/public/components/io"         // for generate input
-	_ "github.com/redpanda-data/benthos/v4/public/components/pure"       // for processors like label
+	_ "github.com/redpanda-data/benthos/v4/public/components/io"   // for generate input
+	_ "github.com/redpanda-data/benthos/v4/public/components/pure" // for processors like label
 )
 
 // MockSplunkServer simulates a Splunk HEC endpoint
@@ -248,7 +248,6 @@ output:
 		require.Len(t, events, 1)
 
 		event := events[0]
-		t.Logf("Received event: %+v", event)
 		eventMap, ok := event.Event.(map[string]interface{})
 		require.True(t, ok, "Event should be a map, got %T: %+v", event.Event, event.Event)
 		assert.Equal(t, "test event", eventMap["message"])
