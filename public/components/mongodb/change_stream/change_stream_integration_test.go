@@ -176,7 +176,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				assert.Equal(t, "insert", changeEvent["operationType"])
 
 				fullDoc, ok := changeEvent["fullDocument"].(bson.M)
-				
+
 				require.True(t, ok, "fullDocument should be present")
 
 				assert.Equal(t, fmt.Sprintf("test-%d", i), fullDoc["name"])

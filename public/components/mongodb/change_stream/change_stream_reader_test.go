@@ -73,7 +73,7 @@ func TestChangeStreamReader_ReadErrors(t *testing.T) {
 		// Try to read without connecting
 		msg, err := reader.Read(context.Background())
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "change stream not connected")
+		assert.Contains(t, err.Error(), "not connected")
 		assert.Nil(t, msg)
 	})
 }
