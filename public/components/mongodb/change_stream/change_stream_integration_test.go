@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"testing"
 	"time"
 
@@ -51,29 +50,21 @@ func setupMongoDBContainer(t *testing.T, ctx context.Context) *MongoDBContainer 
 	connectionString, err := mongodbContainer.ConnectionString(ctx)
 	require.NoError(t, err, "Failed to get connection string")
 
-	// For Podman compatibility: Replace internal IP with localhost
-	// when TESTCONTAINERS_HOST_OVERRIDE is set
-	if hostOverride := os.Getenv("TESTCONTAINERS_HOST_OVERRIDE"); hostOverride != "" {
-		// Parse the URL to replace the host
-		u, err := url.Parse(connectionString)
-		require.NoError(t, err, "Failed to parse connection string")
-		
-		// Get the mapped port
-		mappedPort, err := mongodbContainer.MappedPort(ctx, "27017/tcp")
-		require.NoError(t, err, "Failed to get mapped port")
-		
-		// Replace host with localhost and mapped port
-		u.Host = fmt.Sprintf("%s:%s", hostOverride, mappedPort.Port())
-		
-		// Add directConnection to bypass replica set discovery
-		q := u.Query()
-		q.Set("directConnection", "true")
-		u.RawQuery = q.Encode()
-		
-		connectionString = u.String()
-		
-		t.Logf("Modified connection string for Podman: %s", connectionString)
-	}
+	// Always use localhost with mapped port and directConnection. This works under different container runtimes
+	// and we're currently not relying on discovery functionality.
+	mappedPort, err := mongodbContainer.MappedPort(ctx, "27017/tcp")
+	require.NoError(t, err, "Failed to get mapped port")
+
+	u, err := url.Parse(connectionString)
+	require.NoError(t, err, "Failed to parse connection string")
+
+	u.Host = fmt.Sprintf("localhost:%s", mappedPort.Port())
+
+	q := u.Query()
+	q.Set("directConnection", "true")
+	u.RawQuery = q.Encode()
+
+	connectionString = u.String()
 
 	// Wait for MongoDB to be ready
 	opts := options.Client().ApplyURI(connectionString)
