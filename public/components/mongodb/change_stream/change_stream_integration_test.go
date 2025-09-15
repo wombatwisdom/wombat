@@ -172,17 +172,11 @@ func TestChangeStreamIntegration(t *testing.T) {
 				err = bson.UnmarshalExtJSON(msgBytes, false, &changeEvent)
 				require.NoError(t, err)
 
-				// Debug: Log the entire change event
-				t.Logf("Change event %d: %+v", i, changeEvent)
-
 				// Verify change event structure
 				assert.Equal(t, "insert", changeEvent["operationType"])
 
 				fullDoc, ok := changeEvent["fullDocument"].(bson.M)
-				if !ok {
-					// Try to see what type it actually is
-					t.Logf("fullDocument type: %T, value: %+v", changeEvent["fullDocument"], changeEvent["fullDocument"])
-				}
+				
 				require.True(t, ok, "fullDocument should be present")
 
 				assert.Equal(t, fmt.Sprintf("test-%d", i), fullDoc["name"])
