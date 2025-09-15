@@ -5,6 +5,10 @@ env:
   - GO111MODULE=on
   - CGO_ENABLED=0
 
+git:
+  tag_sort: -version:creatordate
+  prerelease_suffix: "-"
+
 before:
   hooks:
     - go mod tidy
