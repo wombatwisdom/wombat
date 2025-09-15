@@ -7,6 +7,7 @@ import (
 
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	mdb "go.mongodb.org/mongo-driver/mongo"
@@ -38,14 +39,14 @@ func (o ChangeStreamReaderOptions) ChangeStream(ctx context.Context, c *mdb.Clie
 			if col == nil {
 				return nil, fmt.Errorf("collection not found: %s", o.Collection)
 			}
-			return col.Watch(ctx, []options.ChangeStreamOptions{})
+			return col.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 		} else {
 			// -- watch database
-			return db.Watch(ctx, []options.ChangeStreamOptions{})
+			return db.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 		}
 	} else {
 		// -- watch client
-		return c.Watch(ctx, []options.ChangeStreamOptions{})
+		return c.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 	}
 }
 
@@ -82,10 +83,12 @@ func (r *ChangeStreamReader) Close(ctx context.Context) error {
 	var err error
 	if r.cs != nil {
 		err = errors.Join(r.cs.Close(ctx))
+		r.cs = nil
 	}
 
 	if r.c != nil {
 		err = errors.Join(r.c.Disconnect(ctx))
+		r.c = nil
 	}
 
 	return err
@@ -93,7 +96,7 @@ func (r *ChangeStreamReader) Close(ctx context.Context) error {
 
 func (r *ChangeStreamReader) Read(ctx context.Context) (*service.Message, error) {
 	if r.cs == nil {
-		return nil, errors.New("change stream not connected")
+		return nil, service.ErrNotConnected
 	}
 
 	avail := r.cs.Next(ctx)

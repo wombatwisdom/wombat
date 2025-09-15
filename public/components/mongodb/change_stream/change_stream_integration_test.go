@@ -6,6 +6,7 @@ package change_stream_test
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"testing"
 	"time"
 
@@ -48,6 +49,22 @@ func setupMongoDBContainer(t *testing.T, ctx context.Context) *MongoDBContainer 
 	// Get the connection string
 	connectionString, err := mongodbContainer.ConnectionString(ctx)
 	require.NoError(t, err, "Failed to get connection string")
+
+	// Always use localhost with mapped port and directConnection. This works under different container runtimes
+	// and we're currently not relying on discovery functionality.
+	mappedPort, err := mongodbContainer.MappedPort(ctx, "27017/tcp")
+	require.NoError(t, err, "Failed to get mapped port")
+
+	u, err := url.Parse(connectionString)
+	require.NoError(t, err, "Failed to parse connection string")
+
+	u.Host = fmt.Sprintf("localhost:%s", mappedPort.Port())
+
+	q := u.Query()
+	q.Set("directConnection", "true")
+	u.RawQuery = q.Encode()
+
+	connectionString = u.String()
 
 	// Wait for MongoDB to be ready
 	opts := options.Client().ApplyURI(connectionString)
@@ -158,11 +175,12 @@ func TestChangeStreamIntegration(t *testing.T) {
 				// Verify change event structure
 				assert.Equal(t, "insert", changeEvent["operationType"])
 
-				fullDoc, ok := changeEvent["fullDocument"].(map[string]interface{})
+				fullDoc, ok := changeEvent["fullDocument"].(bson.M)
+
 				require.True(t, ok, "fullDocument should be present")
 
 				assert.Equal(t, fmt.Sprintf("test-%d", i), fullDoc["name"])
-				assert.Equal(t, float64(i), fullDoc["value"]) // JSON numbers are float64
+				assert.Equal(t, int32(i), fullDoc["value"]) // BSON numbers are int32 by default
 			}
 		})
 
@@ -231,7 +249,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 				err = bson.UnmarshalExtJSON(msgBytes, false, &changeEvent)
 				require.NoError(t, err)
 
-				ns, ok := changeEvent["ns"].(map[string]interface{})
+				ns, ok := changeEvent["ns"].(bson.M)
 				require.True(t, ok)
 
 				collName, ok := ns["coll"].(string)
@@ -352,7 +370,7 @@ func TestChangeStreamIntegration(t *testing.T) {
 			// Attempting to read after close should fail
 			_, err = reader.Read(ctx)
 			assert.Error(t, err)
-			assert.Contains(t, err.Error(), "change stream not connected")
+			assert.Contains(t, err.Error(), "not connected")
 		})
 	})
 
