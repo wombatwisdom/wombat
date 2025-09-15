@@ -140,7 +140,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		willPayload, _ := conf.FieldString("will", "payload")
 		willQos, _ := conf.FieldInt("will", "qos")
 		willRetained, _ := conf.FieldBool("will", "retained")
-		
+
 		outputConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,

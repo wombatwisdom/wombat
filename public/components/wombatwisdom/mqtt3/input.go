@@ -190,7 +190,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		willPayload, _ := conf.FieldString(fldWill, fldPayload)
 		willQos, _ := conf.FieldInt(fldWill, fldQOS)
 		willRetained, _ := conf.FieldBool(fldWill, fldRetained)
-		
+
 		inputConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,

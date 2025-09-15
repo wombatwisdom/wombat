@@ -11,7 +11,7 @@ import (
 
 func TestOutputConfigParsing(t *testing.T) {
 	spec := outputConfig()
-	
+
 	t.Run("basic config", func(t *testing.T) {
 		conf := `
 urls:
@@ -23,18 +23,18 @@ retained: true
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		// Create mock resources
 		mgr := service.MockResources()
-		
+
 		output, _, _, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
-		
+
 		// Can't easily access internal config without exposing it
 		// But we verified no error occurred
 	})
-	
+
 	t.Run("with TLS config", func(t *testing.T) {
 		conf := `
 urls:
@@ -46,14 +46,14 @@ tls:
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		mgr := service.MockResources()
-		
+
 		output, _, _, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
 	})
-	
+
 	t.Run("with Will config", func(t *testing.T) {
 		conf := `
 urls:
@@ -67,14 +67,14 @@ will:
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		mgr := service.MockResources()
-		
+
 		output, _, _, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
 	})
-	
+
 	t.Run("with auth, TLS and Will", func(t *testing.T) {
 		conf := `
 urls:
@@ -96,18 +96,18 @@ keepalive: 30s
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		mgr := service.MockResources()
-		
+
 		output, bp, maxInFlight, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
-		
+
 		// Verify batch policy
 		assert.Equal(t, 1, bp.Count)
 		assert.Equal(t, 1, maxInFlight)
 	})
-	
+
 	t.Run("missing required topic", func(t *testing.T) {
 		conf := `
 urls:
@@ -118,7 +118,7 @@ urls:
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "topic")
 	})
-	
+
 	t.Run("invalid QoS value", func(t *testing.T) {
 		conf := `
 urls:
@@ -130,9 +130,9 @@ qos: 3
 		// The parsing should succeed but the MQTT library should reject it later
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		mgr := service.MockResources()
-		
+
 		output, _, _, err := newOutput(parsedConf, mgr)
 		// This may or may not error depending on when validation happens
 		// If it doesn't error here, it would error when connecting
@@ -147,7 +147,7 @@ qos: 3
 func TestOutputTLSAndWillPassthrough(t *testing.T) {
 	// This test verifies the structure is correct
 	// Actual verification would require mocking mqtt.NewOutput
-	
+
 	t.Run("verify config structure", func(t *testing.T) {
 		// Test that we can create a complex config without errors
 		conf := `
@@ -172,15 +172,15 @@ will:
 `
 		parsedConf, err := outputConfig().ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		mgr := service.MockResources()
-		
+
 		// Should parse without errors even with interpolations
 		output, _, _, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
 	})
-	
+
 	t.Run("verify TLS type", func(t *testing.T) {
 		// Test that TLS config is properly typed
 		conf := `
@@ -192,7 +192,7 @@ tls:
 `
 		parsedConf, err := outputConfig().ParseYAML(conf, nil)
 		require.NoError(t, err)
-		
+
 		// Get the TLS config to verify it's the right type
 		tlsConf, tlsEnabled, err := parsedConf.FieldTLSToggled("tls")
 		require.NoError(t, err)
