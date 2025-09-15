@@ -7,10 +7,8 @@ import (
 
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	mdb "go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/wombatwisdom/wombat/public/components/mongodb"
 )
@@ -39,14 +37,14 @@ func (o ChangeStreamReaderOptions) ChangeStream(ctx context.Context, c *mdb.Clie
 			if col == nil {
 				return nil, fmt.Errorf("collection not found: %s", o.Collection)
 			}
-			return col.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+			return col.Watch(ctx, mdb.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 		} else {
 			// -- watch database
-			return db.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+			return db.Watch(ctx, mdb.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 		}
 	} else {
 		// -- watch client
-		return c.Watch(ctx, mongo.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
+		return c.Watch(ctx, mdb.Pipeline{}, options.ChangeStream().SetFullDocument(options.UpdateLookup))
 	}
 }
 
