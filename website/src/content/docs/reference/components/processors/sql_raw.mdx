@@ -152,35 +152,9 @@ A Data Source Name to identify the target database.
 #### Drivers
 
 
-| Driver | Support Level |
-|--------|---------------|
-| `mysql` | Certified |
-| `postgres` | Certified |
-| `clickhouse` | Community |
-| `mssql` | Community |
-| `sqlite` | Certified |
-| `oracle` | Certified |
-| `snowflake` | Community |
-| `trino` | Community |
-| `gocosmos` | Community |
-| `spanner` | Community |
-
 
 The following is a list of supported drivers, their placeholder style, and their respective DSN formats:
 
-
-| Driver | Data Source Name Format |
-|---|---|
-| `clickhouse` | [`clickhouse://[username[:password]@][netloc][:port]/dbname[?param1=value1&...&paramN=valueN]`](https://github.com/ClickHouse/clickhouse-go#dsn) |
-| `mysql` | `[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]` |
-| `postgres` | `postgres://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]` |
-| `mssql` | `sqlserver://[user[:password]@][netloc][:port][?database=dbname&param1=value1&...]` |
-| `sqlite` | `file:/path/to/filename.db[?param&=value1&...]` |
-| `oracle` | `oracle://[username[:password]@][netloc][:port]/service_name?server=server2&server=server3` |
-| `snowflake` | `username[:password]@account_identifier/dbname/schemaname[?param1=value&...&paramN=valueN]` |
-| `trino` | [`http[s]://user[:pass]@host[:port][?parameters]`](https://github.com/trinodb/trino-go-client#dsn-data-source-name) |
-| `gocosmos` | [`AccountEndpoint=<cosmosdb-endpoint>;AccountKey=<cosmosdb-account-key>[;TimeoutMs=<timeout-in-ms>][;Version=<cosmosdb-api-version>][;DefaultDb/Db=<db-name>][;AutoId=<true/false>][;InsecureSkipVerify=<true/false>]`](https://pkg.go.dev/github.com/microsoft/gocosmos#readme-example-usage) |
-| `spanner` | `projects/[PROJECT]/instances/[INSTANCE]/databases/[DATABASE]` |
 
 
 Please note that the `postgres` driver enforces SSL by default, you can override this with the parameter `sslmode=disable` if required.
