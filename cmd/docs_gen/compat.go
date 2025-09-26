@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
@@ -105,10 +104,8 @@ func parseTemplateParamData(data bloblang.TemplateParamData) bloblang.TemplatePa
 func correctString(inp string) string {
 	res := correctHeaders(inp)
 	res = replaceAsciidocLinksWithMarkdown(res)
-	// Convert AsciiDoc attributes before tables to avoid conflicts
-	res = convertAsciidocAttributes(res)
-	// Convert AsciiDoc tables AFTER processing links, but handle links specially in tables
-	res = convertAsciidocTableToMarkdown(res)
+	res = redactAsciidocAttributes(res)
+	res = redactAsciidocTable(res)
 	return res
 }
 
@@ -170,110 +167,22 @@ func replaceAsciidocLinksWithMarkdown(input string) string {
 	return input
 }
 
-func convertAsciidocAttributes(input string) string {
-	// Look for AsciiDoc attributes like :driver-support: value
-	attrRegex := regexp.MustCompile(`(?m)^:driver-support:\s*(.+)$`)
-	
+func redactAsciidocAttributes(input string) string {
+	// Match any attribute pattern :attribute-name: value
+	attrRegex := regexp.MustCompile(`(?m)^:([^:]+):\s*(.+)$`)
+
 	return attrRegex.ReplaceAllStringFunc(input, func(match string) string {
-		// Extract the attribute value
-		parts := attrRegex.FindStringSubmatch(match)
-		if len(parts) != 2 {
-			return match
-		}
-		
-		value := strings.TrimSpace(parts[1])
-		
-		// Parse the driver support levels
-		drivers := strings.Split(value, ", ")
-		
-		// Build a support level table
-		var result strings.Builder
-		result.WriteString("\n")
-		result.WriteString("| Driver | Support Level |\n")
-		result.WriteString("|--------|---------------|\n")
-		
-		for _, driver := range drivers {
-			parts := strings.Split(driver, "=")
-			if len(parts) == 2 {
-				driverName := strings.TrimSpace(parts[0])
-				supportLevel := strings.TrimSpace(parts[1])
-				
-				// Capitalize support level
-				supportLevel = strings.Title(supportLevel)
-				
-				result.WriteString(fmt.Sprintf("| `%s` | %s |\n", driverName, supportLevel))
-			}
-		}
-		
-		return result.String()
+		// remove AsciiDoc attributes
+		return ""
 	})
 }
 
-func convertAsciidocTableToMarkdown(input string) string {
+func redactAsciidocTable(input string) string {
 	// Look for AsciiDoc table blocks delimited by |===
 	tableRegex := regexp.MustCompile(`(?s)\|===\s*\n(.*?)\n\|===`)
-	
+
 	return tableRegex.ReplaceAllStringFunc(input, func(match string) string {
-		// Extract table content between |=== markers
-		content := tableRegex.FindStringSubmatch(match)[1]
-		lines := strings.Split(strings.TrimSpace(content), "\n")
-		
-		if len(lines) == 0 {
-			return match
-		}
-		
-		// Check if this is the SQL DSN table specifically
-		if !strings.Contains(lines[0], "Driver | Data Source Name Format") {
-			return match // Not the table we're looking for
-		}
-		
-		// Build Markdown table
-		var result strings.Builder
-		result.WriteString("\n")
-		
-		// Header row
-		result.WriteString("| Driver | Data Source Name Format |\n")
-		result.WriteString("|---|---|\n")
-		
-		// Known drivers and their DSN formats from the source
-		drivers := []struct {
-			name string
-			dsn  string
-			link string
-		}{
-			{"clickhouse", `clickhouse://[username[:password]@][netloc][:port]/dbname[?param1=value1&...&paramN=valueN]`, "https://github.com/ClickHouse/clickhouse-go#dsn"},
-			{"mysql", `[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...&paramN=valueN]`, ""},
-			{"postgres", `postgres://[user[:password]@][netloc][:port][/dbname][?param1=value1&...]`, ""},
-			{"mssql", `sqlserver://[user[:password]@][netloc][:port][?database=dbname&param1=value1&...]`, ""},
-			{"sqlite", `file:/path/to/filename.db[?param&=value1&...]`, ""},
-			{"oracle", `oracle://[username[:password]@][netloc][:port]/service_name?server=server2&server=server3`, ""},
-			{"snowflake", `username[:password]@account_identifier/dbname/schemaname[?param1=value&...&paramN=valueN]`, ""},
-			{"trino", `http[s]://user[:pass]@host[:port][?parameters]`, "https://github.com/trinodb/trino-go-client#dsn-data-source-name"},
-			{"gocosmos", `AccountEndpoint=<cosmosdb-endpoint>;AccountKey=<cosmosdb-account-key>[;TimeoutMs=<timeout-in-ms>][;Version=<cosmosdb-api-version>][;DefaultDb/Db=<db-name>][;AutoId=<true/false>][;InsecureSkipVerify=<true/false>]`, "https://pkg.go.dev/github.com/microsoft/gocosmos#readme-example-usage"},
-			{"spanner", `projects/[PROJECT]/instances/[INSTANCE]/databases/[DATABASE]`, ""},
-		}
-		
-		// Write each driver row
-		for _, driver := range drivers {
-			result.WriteString("| `")
-			result.WriteString(driver.name)
-			result.WriteString("` | ")
-			
-			if driver.link != "" {
-				result.WriteString("[`")
-				result.WriteString(driver.dsn)
-				result.WriteString("`](")
-				result.WriteString(driver.link)
-				result.WriteString(")")
-			} else {
-				result.WriteString("`")
-				result.WriteString(driver.dsn)
-				result.WriteString("`")
-			}
-			
-			result.WriteString(" |\n")
-		}
-		
-		return result.String()
+		// remove AsciiDoc tables
+		return ""
 	})
 }
