@@ -104,6 +104,8 @@ func parseTemplateParamData(data bloblang.TemplateParamData) bloblang.TemplatePa
 func correctString(inp string) string {
 	res := correctHeaders(inp)
 	res = replaceAsciidocLinksWithMarkdown(res)
+	res = redactAsciidocAttributes(res)
+	res = redactAsciidocTable(res)
 	return res
 }
 
@@ -163,4 +165,24 @@ func replaceAsciidocLinksWithMarkdown(input string) string {
 	})
 
 	return input
+}
+
+func redactAsciidocAttributes(input string) string {
+	// Match any attribute pattern :attribute-name: value
+	attrRegex := regexp.MustCompile(`(?m)^:([^:]+):\s*(.+)$`)
+
+	return attrRegex.ReplaceAllStringFunc(input, func(match string) string {
+		// remove AsciiDoc attributes
+		return ""
+	})
+}
+
+func redactAsciidocTable(input string) string {
+	// Look for AsciiDoc table blocks delimited by |===
+	tableRegex := regexp.MustCompile(`(?s)\|===\s*\n(.*?)\n\|===`)
+
+	return tableRegex.ReplaceAllStringFunc(input, func(match string) string {
+		// remove AsciiDoc tables
+		return ""
+	})
 }
