@@ -75,7 +75,6 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
 	}
 
-	// Prepare the topic expression for expr-lang
 	topic = wombatwisdom.PrepareExprLangExpression(topic)
 
 	clientID, err := conf.FieldString("client_id")
