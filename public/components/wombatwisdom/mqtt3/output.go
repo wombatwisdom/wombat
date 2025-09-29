@@ -28,7 +28,7 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 			Description("Unique client identifier. If empty, one will be generated.").
 			Default("")).
 		Field(service.NewStringField("topic").
-			Description("Topic to publish to. Can contain interpolation functions.")).
+			Description("Topic to publish to. Supports expr-lang expressions for dynamic topic routing.").Example("test/mqtt/output").Example(`"devices/" + json.device_id + "/data"`)).
 		Field(service.NewIntField("qos").
 			Description("Quality of Service level (0, 1, or 2)").
 			Default(0)).

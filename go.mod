@@ -34,7 +34,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/expr-lang/expr v1.17.4 // indirect
+require github.com/expr-lang/expr v1.17.4
 
 require (
 	cel.dev/expr v0.23.1 // indirect
