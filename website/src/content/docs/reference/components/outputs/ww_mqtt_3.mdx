@@ -18,7 +18,7 @@ output:
     urls:
       - tcp://localhost:1883
     client_id: ""
-    topic: "" # No default (required)
+    topic: test/mqtt/output # No default (required)
     qos: 0
     retained: false
     write_timeout: 5s
@@ -43,7 +43,7 @@ output:
     urls:
       - tcp://localhost:1883
     client_id: ""
-    topic: "" # No default (required)
+    topic: test/mqtt/output # No default (required)
     qos: 0
     retained: false
     write_timeout: 5s
@@ -94,11 +94,19 @@ Unique client identifier. If empty, one will be generated.
 
 ### `topic`
 
-Topic to publish to. Can contain interpolation functions.
+Topic to publish to. Supports expr-lang expressions for dynamic topic routing.
 
 
 *Type*: `string`
 
+
+```yml
+# Examples
+
+topic: test/mqtt/output
+
+topic: '"devices/" + json.device_id + "/data"'
+```
 
 ### `qos`
 
