@@ -8,13 +8,6 @@ import (
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
-// ExpressionParser uses expr-lang to parse and evaluate expressions.
-// This matches the expression language used internally by wombatwisdom components,
-// ensuring consistent syntax for users. For example:
-// - Access JSON fields: json.device_id
-// - Access metadata: metadata.topic_prefix
-// - String concatenation: "prefix/" + json.field + "/suffix"
-
 func NewExpressionParser() *ExpressionParser {
 	return &ExpressionParser{}
 }
