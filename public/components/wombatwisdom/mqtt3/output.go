@@ -27,8 +27,10 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 		Field(service.NewStringField("client_id").
 			Description("Unique client identifier. If empty, one will be generated.").
 			Default("")).
-		Field(service.NewStringField("topic").
-			Description("Topic to publish to. Supports expr-lang expressions for dynamic topic routing.").Example("test/mqtt/output").Example(`"devices/" + json.device_id + "/data"`)).
+		Field(wombatwisdom.NewExprLangField("topic").
+			Description("Topic to publish to. Supports expr-lang expressions for dynamic topic routing.").
+			Example("test/mqtt/output").
+			Example(`"devices/" + json.device_id + "/data"`)).
 		Field(service.NewIntField("qos").
 			Description("Quality of Service level (0, 1, or 2)").
 			Default(0)).
@@ -72,6 +74,9 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
 	}
+
+	// Prepare the topic expression for expr-lang
+	topic = wombatwisdom.PrepareExprLangExpression(topic)
 
 	clientID, err := conf.FieldString("client_id")
 	if err != nil {
