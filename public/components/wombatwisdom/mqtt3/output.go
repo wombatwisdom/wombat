@@ -68,24 +68,10 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to get urls: %w", err)
 	}
 
-	// Get the raw string value
-	topicRaw, err := conf.FieldString("topic")
+	// Get the topic string (may contain interpolations)
+	topic, err := conf.FieldString("topic")
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
-	}
-
-	// Also get the interpolated string to check if it's static
-	topicInterp, err := conf.FieldInterpolatedString("topic")
-	if err != nil {
-		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
-	}
-
-	var topic string
-	staticTopic, isStatic := topicInterp.Static()
-	if isStatic {
-		topic = staticTopic
-	} else {
-		topic = topicRaw
 	}
 
 	clientID, err := conf.FieldString("client_id")
