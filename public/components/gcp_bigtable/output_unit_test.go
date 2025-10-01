@@ -366,7 +366,7 @@ func TestAsMutation(t *testing.T) {
 				} else {
 					assert.NotNil(t, mut)
 					// Note: We can't easily validate the mutation content
-					// as bigtable.Mutation doesn't expose its internal state
+					// as bigtable.Mutation doesn't expose its public state
 				}
 			}
 		})

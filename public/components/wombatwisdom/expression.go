@@ -1,80 +1,90 @@
 package wombatwisdom
 
 import (
-	"fmt"
+	"encoding/json"
+	"github.com/wombatwisdom/wombat/internal/benthos/public/bloblang/field"
+	"github.com/wombatwisdom/wombat/internal/benthos/public/bloblang/parser"
+	"github.com/wombatwisdom/wombat/internal/benthos/public/message"
 
-	"github.com/redpanda-data/benthos/v4/public/bloblang"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
-func NewExpressionParser() *ExpressionParser {
+func NewBenthosInterpolationExpressionParser() *ExpressionParser {
 	return &ExpressionParser{
-		blob: bloblang.GlobalEnvironment(),
+		ctx: parser.GlobalContext(),
 	}
 }
 
 type ExpressionParser struct {
-	blob *bloblang.Environment
+	ctx parser.Context
 }
 
 func (e *ExpressionParser) ParseExpression(expr string) (spec.Expression, error) {
-	be, err := e.blob.Parse(expr)
+	fieldExpression, err := parser.ParseField(e.ctx, expr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &BloblangExpression{
-		expr: be,
+	return &FieldExpression{
+		expr: fieldExpression,
 	}, nil
 }
 
-type BloblangExpression struct {
-	expr *bloblang.Executor
+// FieldExpression wraps a benthos field.Expression to implement spec.Expression
+type FieldExpression struct {
+	expr *field.Expression
 }
 
-func (b *BloblangExpression) EvalString(ctx spec.ExpressionContext) (string, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	respStr, ok := resp.(string)
-	if !ok {
-		return "", fmt.Errorf("expected 'string' response, got %T", resp)
-	}
-	return respStr, nil
+// simpleMessage implements field.Message (benthos)
+type simpleMessage struct {
+	ctx spec.ExpressionContext
 }
 
-func (b *BloblangExpression) EvalInt(ctx spec.ExpressionContext) (int, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return 0, err
+func (s *simpleMessage) Get(p int) *message.Part {
+	if jsonData, ok := s.ctx["json"].(map[string]interface{}); ok {
+		jsonBytes, err := json.Marshal(jsonData)
+		if err == nil {
+			part := message.NewPart(jsonBytes)
+			// Add metadata if available
+			if meta, ok := s.ctx["metadata"].(map[string]interface{}); ok {
+				for k, v := range meta {
+					if str, ok := v.(string); ok {
+						part.MetaSetMut(k, str)
+					}
+				}
+			}
+
+			return part
+		}
 	}
-	switch v := resp.(type) {
-	case int:
-		return v, nil
-	case int8:
-		return int(v), nil
-	case int16:
-		return int(v), nil
-	case int32:
-		return int(v), nil
-	case int64:
-		return int(v), nil
-	default:
-		return 0, fmt.Errorf("expected 'int' response, got %T", resp)
+
+	// Fallback: create empty message part
+	part := message.NewPart([]byte("{}"))
+
+	// Add metadata if available
+	if meta, ok := s.ctx["metadata"].(map[string]interface{}); ok {
+		for k, v := range meta {
+			if str, ok := v.(string); ok {
+				part.MetaSetMut(k, str)
+			}
+		}
 	}
+
+	return part
 }
 
-func (b *BloblangExpression) EvalBool(ctx spec.ExpressionContext) (bool, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return false, err
-	}
+func (s *simpleMessage) Len() int {
+	return 1
+}
 
-	respBool, ok := resp.(bool)
-	if !ok {
-		return false, fmt.Errorf("expected 'string' response, got %T", resp)
-	}
-	return respBool, nil
+func (f *FieldExpression) EvalString(ctx spec.ExpressionContext) (string, error) {
+	return f.expr.String(0, &simpleMessage{ctx: ctx})
+}
+
+func (f *FieldExpression) EvalInt(ctx spec.ExpressionContext) (int, error) {
+	panic("EvalInt not implemented")
+}
+
+func (f *FieldExpression) EvalBool(ctx spec.ExpressionContext) (bool, error) {
+	panic("EvalBool not implemented")
 }

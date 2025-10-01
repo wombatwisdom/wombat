@@ -10,7 +10,7 @@ func NewComponentContext(ctx context.Context, logger spec.Logger) *ComponentCont
 	return &ComponentContext{
 		ctx:                   ctx,
 		Logger:                logger,
-		ExpressionParser:      NewExpressionParser(),
+		ExpressionParser:      NewBenthosInterpolationExpressionParser(),
 		MessageFactory:        &MessageFactory{},
 		MetadataFilterFactory: &MetadataFilterFactory{},
 	}

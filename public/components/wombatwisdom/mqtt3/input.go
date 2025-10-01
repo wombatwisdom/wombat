@@ -130,14 +130,13 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		cleanSession = true
 	}
 
-	// Build wombatwisdom input config
 	inputConfig := mqtt.InputConfig{
-		CommonMQTTConfig: mqtt.CommonMQTTConfig{
+		MqttConfig: mqtt.MqttConfig{
 			ClientId: clientID,
 			Urls:     urls,
 		},
 		CleanSession: cleanSession,
-		Filters:      make(map[string]byte), // Will be populated from config below
+		Filters:      make(map[string]byte),
 	}
 
 	if conf.Contains(fldConnectTimeout) {
@@ -146,7 +145,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 30 * time.Second
 		}
 
-		inputConfig.ConnectTimeout = &d
+		inputConfig.MqttConfig.ConnectTimeout = &d
 	}
 
 	if conf.Contains(fldKeepalive) {
@@ -155,7 +154,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 60 * time.Second
 		}
 
-		inputConfig.KeepAlive = &d
+		inputConfig.MqttConfig.KeepAlive = &d
 	}
 
 	// Extract auto ACK settings, if not specified, NewInput will set the default to true
@@ -171,8 +170,8 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString(fldAuth, fldUsername)
 		password, _ := conf.FieldString(fldAuth, fldPassword)
-		inputConfig.Username = username
-		inputConfig.Password = password
+		inputConfig.MqttConfig.Username = username
+		inputConfig.MqttConfig.Password = password
 	}
 
 	// Handle TLS if provided
@@ -181,7 +180,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		return nil, fmt.Errorf("failed to parse TLS config: %w", err)
 	}
 	if tlsEnabled {
-		inputConfig.TLS = tlsConf
+		inputConfig.MqttConfig.TLS = tlsConf
 	}
 
 	// Handle Will if provided
@@ -191,7 +190,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		willQos, _ := conf.FieldInt(fldWill, fldQOS)
 		willRetained, _ := conf.FieldBool(fldWill, fldRetained)
 
-		inputConfig.Will = &mqtt.WillConfig{
+		inputConfig.MqttConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,
 			QoS:      uint8(willQos),

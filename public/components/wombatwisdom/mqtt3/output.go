@@ -27,7 +27,7 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 		Field(service.NewStringField("client_id").
 			Description("Unique client identifier. If empty, one will be generated.").
 			Default("")).
-		Field(service.NewStringField("topic").
+		Field(service.NewInterpolatedStringField("topic").
 			Description("Topic to publish to. Can contain interpolation functions.")).
 		Field(service.NewIntField("qos").
 			Description("Quality of Service level (0, 1, or 2)").
@@ -68,9 +68,24 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to get urls: %w", err)
 	}
 
-	topic, err := conf.FieldString("topic")
+	// Get the raw string value
+	topicRaw, err := conf.FieldString("topic")
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
+	}
+
+	// Also get the interpolated string to check if it's static
+	topicInterp, err := conf.FieldInterpolatedString("topic")
+	if err != nil {
+		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
+	}
+
+	var topic string
+	staticTopic, isStatic := topicInterp.Static()
+	if isStatic {
+		topic = staticTopic
+	} else {
+		topic = topicRaw
 	}
 
 	clientID, err := conf.FieldString("client_id")
@@ -104,25 +119,25 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	}
 
 	// Build wombatwisdom output config
-	outputConfig := mqtt.OutputConfig{
-		CommonMQTTConfig: mqtt.CommonMQTTConfig{
+	outputConfig := mqtt.Config{
+		Mqtt: mqtt.MqttConfig{
 			ClientId:       clientID,
 			Urls:           urls,
 			ConnectTimeout: &connectTimeout,
 			KeepAlive:      &keepalive,
+			Topic:          topic,
+			WriteTimeout:   writeTimeout,
+			QOS:            byte(qos),
+			Retained:       retained,
 		},
-		TopicExpr:    topic,
-		WriteTimeout: writeTimeout,
-		QOS:          byte(qos),
-		RetainedExpr: fmt.Sprintf("%t", retained), // Convert bool to expression
 	}
 
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
 		password, _ := conf.FieldString("auth", "password")
-		outputConfig.Username = username
-		outputConfig.Password = password
+		outputConfig.Mqtt.Username = username
+		outputConfig.Mqtt.Password = password
 	}
 
 	// Handle TLS if provided
@@ -131,7 +146,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to parse TLS config: %w", err)
 	}
 	if tlsEnabled {
-		outputConfig.TLS = tlsConf
+		outputConfig.Mqtt.TLS = tlsConf
 	}
 
 	// Handle Will if provided
@@ -141,7 +156,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		willQos, _ := conf.FieldInt("will", "qos")
 		willRetained, _ := conf.FieldBool("will", "retained")
 
-		outputConfig.Will = &mqtt.WillConfig{
+		outputConfig.Mqtt.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,
 			QoS:      uint8(willQos),
@@ -178,7 +193,9 @@ func (w *output) Connect(closeAtLeisureCtx context.Context) error {
 	w.compCancel = cancel
 
 	err := w.wwOutput.Init(w.compCtx)
-
+	if err != nil {
+		w.logger.Error("Failed to connect to output")
+	}
 	return translateConnectError(err)
 }
 

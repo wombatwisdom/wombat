@@ -7,7 +7,6 @@ import (
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wombatwisdom/components/bundles/mqtt"
 )
 
 func TestInputConfigParsing(t *testing.T) {
@@ -33,7 +32,7 @@ client_id: test-client
 
 		// Verify the config was parsed correctly
 		i := inputObj.(*input)
-		assert.Equal(t, "test-client", i.inputConfig.CommonMQTTConfig.ClientId)
+		assert.Equal(t, "test-client", i.inputConfig.MqttConfig.ClientId)
 		assert.Equal(t, []string{"tcp://localhost:1883"}, i.inputConfig.Urls)
 		assert.Equal(t, byte(1), i.inputConfig.Filters["test/topic"])
 	})
@@ -166,13 +165,6 @@ tls:
 		// Creation should succeed - connection will fail later
 		assert.NoError(t, err)
 	})
-}
-
-// MockInput is used for testing that config is properly passed
-type MockInputConfig struct {
-	mqtt.InputConfig
-	TLSConfigured  bool
-	WillConfigured bool
 }
 
 func TestInputConfigPassthrough(t *testing.T) {

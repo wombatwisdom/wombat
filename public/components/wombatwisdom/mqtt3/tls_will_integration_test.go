@@ -253,7 +253,7 @@ output:
     urls:
       - %s
     client_id: output-with-will
-    topic: '"data/flow"'
+    topic: data/flow
     will:
       topic: status/output/offline
       payload: "output disconnected"
