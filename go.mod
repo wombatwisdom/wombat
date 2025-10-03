@@ -1,6 +1,6 @@
 module github.com/wombatwisdom/wombat
 
-go 1.25.1
+go 1.24.1
 
 require (
 	cloud.google.com/go/auth v0.16.3
@@ -18,7 +18,7 @@ require (
 	github.com/nats-io/nkeys v0.4.11
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.37.0
-	github.com/redpanda-data/benthos/v4 v4.57.1
+	github.com/redpanda-data/benthos/v4 v4.54.0
 	github.com/redpanda-data/connect/v4 v4.61.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/snowflakedb/gosnowflake v1.15.0
