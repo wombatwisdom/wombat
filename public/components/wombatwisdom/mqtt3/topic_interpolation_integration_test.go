@@ -65,7 +65,7 @@ type receivedMessage struct {
 
 func createSubscriber(t *testing.T, mqttURL string, topics []string) (chan receivedMessage, mqtt.Client) {
 	received := make(chan receivedMessage, 10)
-	
+
 	opts := mqtt.NewClientOptions().
 		AddBroker(mqttURL).
 		SetClientID("test-subscriber").
@@ -142,7 +142,7 @@ output:
 		select {
 		case msg := <-received:
 			assert.Equal(t, "test/static", msg.Topic)
-			
+
 			var payload map[string]interface{}
 			err := json.Unmarshal(msg.Payload, &payload)
 			require.NoError(t, err)
@@ -197,7 +197,7 @@ output:
 		// Collect messages
 		messages := make(map[string]int)
 		mu := sync.Mutex{}
-		
+
 		timeout := time.After(10 * time.Second)
 		for i := 0; i < 3; i++ {
 			select {
@@ -205,15 +205,15 @@ output:
 				mu.Lock()
 				messages[msg.Topic]++
 				mu.Unlock()
-				
+
 				var payload map[string]interface{}
 				err := json.Unmarshal(msg.Payload, &payload)
 				require.NoError(t, err)
-				
+
 				// Verify the sensor_type matches the topic
 				expectedTopic := fmt.Sprintf("test/output/%s", payload["sensor_type"])
 				assert.Equal(t, expectedTopic, msg.Topic)
-				
+
 				t.Logf("Received message on topic %s with sensor_type %s", msg.Topic, payload["sensor_type"])
 			case <-timeout:
 				t.Fatalf("Did not receive all messages within timeout. Got %d messages", i)
@@ -325,9 +325,9 @@ output:
 				var payload map[string]interface{}
 				err := json.Unmarshal(msg.Payload, &payload)
 				require.NoError(t, err)
-				
+
 				receivedMessages[msg.Topic] = payload
-				t.Logf("Received on %s: location=%s, sensor_type=%s", 
+				t.Logf("Received on %s: location=%s, sensor_type=%s",
 					msg.Topic, payload["location"], payload["sensor_type"])
 			case <-time.After(5 * time.Second):
 				t.Fatalf("Did not receive all messages within timeout. Got %d messages", i)

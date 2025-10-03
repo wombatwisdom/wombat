@@ -2,10 +2,11 @@ package mqtt3
 
 import (
 	"crypto/tls"
+	"testing"
+
 	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestOutputConfigParsing(t *testing.T) {

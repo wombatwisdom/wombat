@@ -118,15 +118,15 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		TopicExpr:    wombatwisdom.NewInterpolatedExpression(topic),
 		WriteTimeout: writeTimeout,
 		Retained:     retained,
-		QOS: byte(qos),
+		QOS:          byte(qos),
 	}
 
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
 		password, _ := conf.FieldString("auth", "password")
-		outputConfig.CommonMQTTConfig.Username = username
-		outputConfig.CommonMQTTConfig.Password = password
+		outputConfig.Username = username
+		outputConfig.Password = password
 	}
 
 	// Handle TLS if provided
@@ -135,7 +135,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to parse TLS config: %w", err)
 	}
 	if tlsEnabled {
-		outputConfig.CommonMQTTConfig.TLS = tlsConf
+		outputConfig.TLS = tlsConf
 	}
 
 	// Handle Will if provided
@@ -145,7 +145,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		willQos, _ := conf.FieldInt("will", "qos")
 		willRetained, _ := conf.FieldBool("will", "retained")
 
-		outputConfig.CommonMQTTConfig.Will = &mqtt.WillConfig{
+		outputConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,
 			QoS:      uint8(willQos),
