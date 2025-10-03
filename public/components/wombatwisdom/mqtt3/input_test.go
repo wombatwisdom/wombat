@@ -32,7 +32,7 @@ client_id: test-client
 
 		// Verify the config was parsed correctly
 		i := inputObj.(*input)
-		assert.Equal(t, "test-client", i.inputConfig.MqttConfig.ClientId)
+		assert.Equal(t, "test-client", i.inputConfig.CommonMQTTConfig.ClientId)
 		assert.Equal(t, []string{"tcp://localhost:1883"}, i.inputConfig.Urls)
 		assert.Equal(t, byte(1), i.inputConfig.Filters["test/topic"])
 	})

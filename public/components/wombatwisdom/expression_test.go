@@ -3,47 +3,41 @@ package wombatwisdom
 import (
 	"testing"
 
+	"github.com/redpanda-data/benthos/v4/public/service"
+	"github.com/stretchr/testify/assert"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
+func expression(t *testing.T, s string) spec.Expression {
+	is, err := service.NewInterpolatedString(s)
+	assert.NoError(t, err)
+
+	return NewInterpolatedExpression(is)
+}
+
+func msgCtx(data string, headers map[string]any) spec.ExpressionContext {
+	m := service.NewMessage([]byte(data))
+	for k, v := range headers {
+		m.MetaSetMut(k, v)
+	}
+
+	return BlobExpressionContext(&BenthosMessage{Message: m})
+}
+
 func TestBenthosExpression(t *testing.T) {
-	factory := &BloblangExpressionFactory{}
-	
+	ctx := msgCtx(`{"sensor_type": "temperature", "value": 23.5}`, map[string]any{
+		"device_id": "device-001",
+	})
+
 	// Test json() function
-	expr, err := factory.ParseExpression(`json("sensor_type")`)
-	if err != nil {
-		t.Fatalf("Failed to parse json() expression: %v", err)
-	}
-
-	ctx := spec.ExpressionContext{
-		"json": map[string]interface{}{
-			"sensor_type": "temperature",
-		},
-	}
-
-	result, err := expr.EvalString(ctx)
-	if err != nil {
-		t.Errorf("Failed to evaluate json() expression: %v", err)
-	} else if result != "temperature" {
-		t.Errorf("Expected 'temperature', got '%s'", result)
-	}
+	ex1 := expression(t, `${! json("sensor_type") }`)
+	result, err := ex1.Eval(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "temperature", result)
 
 	// Test meta() function
-	expr2, err := factory.ParseExpression(`meta("device_id")`)
-	if err != nil {
-		t.Fatalf("Failed to parse meta() expression: %v", err)
-	}
-
-	ctx2 := spec.ExpressionContext{
-		"metadata": map[string]interface{}{
-			"device_id": "device-001",
-		},
-	}
-
-	result2, err := expr2.EvalString(ctx2)
-	if err != nil {
-		t.Errorf("Failed to evaluate meta() expression: %v", err)
-	} else if result2 != "device-001" {
-		t.Errorf("Expected 'device-001', got '%s'", result2)
-	}
+	ex2 := expression(t, `${! meta("device_id") }`)
+	result, err = ex2.Eval(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "device-001", result)
 }

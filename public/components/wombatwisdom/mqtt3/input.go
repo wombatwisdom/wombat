@@ -131,7 +131,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	}
 
 	inputConfig := mqtt.InputConfig{
-		MqttConfig: mqtt.MqttConfig{
+		CommonMQTTConfig: mqtt.CommonMQTTConfig{
 			ClientId: clientID,
 			Urls:     urls,
 		},
@@ -145,7 +145,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 30 * time.Second
 		}
 
-		inputConfig.MqttConfig.ConnectTimeout = &d
+		inputConfig.CommonMQTTConfig.ConnectTimeout = &d
 	}
 
 	if conf.Contains(fldKeepalive) {
@@ -154,7 +154,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			d = 60 * time.Second
 		}
 
-		inputConfig.MqttConfig.KeepAlive = &d
+		inputConfig.CommonMQTTConfig.KeepAlive = &d
 	}
 
 	// Extract auto ACK settings, if not specified, NewInput will set the default to true
@@ -170,8 +170,8 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString(fldAuth, fldUsername)
 		password, _ := conf.FieldString(fldAuth, fldPassword)
-		inputConfig.MqttConfig.Username = username
-		inputConfig.MqttConfig.Password = password
+		inputConfig.CommonMQTTConfig.Username = username
+		inputConfig.CommonMQTTConfig.Password = password
 	}
 
 	// Handle TLS if provided
@@ -180,7 +180,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		return nil, fmt.Errorf("failed to parse TLS config: %w", err)
 	}
 	if tlsEnabled {
-		inputConfig.MqttConfig.TLS = tlsConf
+		inputConfig.CommonMQTTConfig.TLS = tlsConf
 	}
 
 	// Handle Will if provided
@@ -190,7 +190,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		willQos, _ := conf.FieldInt(fldWill, fldQOS)
 		willRetained, _ := conf.FieldBool(fldWill, fldRetained)
 
-		inputConfig.MqttConfig.Will = &mqtt.WillConfig{
+		inputConfig.CommonMQTTConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,
 			QoS:      uint8(willQos),

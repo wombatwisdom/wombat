@@ -69,7 +69,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	}
 
 	// Get the topic string (may contain interpolations)
-	topic, err := conf.FieldString("topic")
+	topic, err := conf.FieldInterpolatedString("topic")
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
 	}
@@ -105,25 +105,28 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	}
 
 	// Build wombatwisdom output config
-	outputConfig := mqtt.Config{
-		Mqtt: mqtt.MqttConfig{
+	outputConfig := mqtt.OutputConfig{
+		CommonMQTTConfig: mqtt.CommonMQTTConfig{
 			ClientId:       clientID,
 			Urls:           urls,
 			ConnectTimeout: &connectTimeout,
 			KeepAlive:      &keepalive,
-			Topic:          topic,
-			WriteTimeout:   writeTimeout,
-			QOS:            byte(qos),
-			Retained:       retained,
+			Password:       "",
+			TLS:            nil,
+			Will:           nil,
 		},
+		TopicExpr:    wombatwisdom.NewInterpolatedExpression(topic),
+		WriteTimeout: writeTimeout,
+		Retained:     retained,
+		QOS: byte(qos),
 	}
 
 	// Handle auth if provided
 	if conf.Contains("auth") {
 		username, _ := conf.FieldString("auth", "username")
 		password, _ := conf.FieldString("auth", "password")
-		outputConfig.Mqtt.Username = username
-		outputConfig.Mqtt.Password = password
+		outputConfig.CommonMQTTConfig.Username = username
+		outputConfig.CommonMQTTConfig.Password = password
 	}
 
 	// Handle TLS if provided
@@ -132,7 +135,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to parse TLS config: %w", err)
 	}
 	if tlsEnabled {
-		outputConfig.Mqtt.TLS = tlsConf
+		outputConfig.CommonMQTTConfig.TLS = tlsConf
 	}
 
 	// Handle Will if provided
@@ -142,7 +145,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		willQos, _ := conf.FieldInt("will", "qos")
 		willRetained, _ := conf.FieldBool("will", "retained")
 
-		outputConfig.Mqtt.Will = &mqtt.WillConfig{
+		outputConfig.CommonMQTTConfig.Will = &mqtt.WillConfig{
 			Topic:    willTopic,
 			Payload:  willPayload,
 			QoS:      uint8(willQos),
