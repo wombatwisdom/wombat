@@ -183,9 +183,7 @@ tasks:
   test:integration:
     desc: Run integration tests
     cmds:
-      - go test -tags integration -v -run 'Test(WombatWisdomMQTT|ErrorHandling)Integration' ./public/components/wombatwisdom/mqtt3/
-      - go test -tags integration -v -run TestBenthosMQTTIntegration ./public/components/wombatwisdom/mqtt3/
-      - go test -tags integration -v -run 'Test(WillMessageDelivery|TLSConnection|WillWithAuth|Complete)Integration' ./public/components/wombatwisdom/mqtt3/
+      - go test -tags integration -v -run '.*Integration$' ./public/components/wombatwisdom/mqtt3/
       - go test -tags integration -v -run TestMongoDBConfigIntegration ./public/components/mongodb/
       - go test -tags integration -v -run TestChangeStreamIntegration ./public/components/mongodb/change_stream/
       - go test -tags integration -v -run TestSplunkIntegration ./internal/impl/splunk/

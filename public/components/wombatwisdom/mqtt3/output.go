@@ -27,7 +27,7 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 		Field(service.NewStringField("client_id").
 			Description("Unique client identifier. If empty, one will be generated.").
 			Default("")).
-		Field(service.NewStringField("topic").
+		Field(service.NewInterpolatedStringField("topic").
 			Description("Topic to publish to. Can contain interpolation functions.")).
 		Field(service.NewIntField("qos").
 			Description("Quality of Service level (0, 1, or 2)").
@@ -68,7 +68,8 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to get urls: %w", err)
 	}
 
-	topic, err := conf.FieldString("topic")
+	// Get the topic string (may contain interpolations)
+	topic, err := conf.FieldInterpolatedString("topic")
 	if err != nil {
 		return nil, bp, 0, fmt.Errorf("failed to get topic: %w", err)
 	}
@@ -110,11 +111,14 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 			Urls:           urls,
 			ConnectTimeout: &connectTimeout,
 			KeepAlive:      &keepalive,
+			Password:       "",
+			TLS:            nil,
+			Will:           nil,
 		},
-		TopicExpr:    topic,
+		TopicExpr:    wombatwisdom.NewInterpolatedExpression(topic),
 		WriteTimeout: writeTimeout,
+		Retained:     retained,
 		QOS:          byte(qos),
-		RetainedExpr: fmt.Sprintf("%t", retained), // Convert bool to expression
 	}
 
 	// Handle auth if provided
@@ -178,7 +182,9 @@ func (w *output) Connect(closeAtLeisureCtx context.Context) error {
 	w.compCancel = cancel
 
 	err := w.wwOutput.Init(w.compCtx)
-
+	if err != nil {
+		w.logger.Error("Failed to connect to output")
+	}
 	return translateConnectError(err)
 }
 

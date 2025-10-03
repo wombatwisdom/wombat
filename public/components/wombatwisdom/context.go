@@ -10,7 +10,6 @@ func NewComponentContext(ctx context.Context, logger spec.Logger) *ComponentCont
 	return &ComponentContext{
 		ctx:                   ctx,
 		Logger:                logger,
-		ExpressionParser:      NewExpressionParser(),
 		MessageFactory:        &MessageFactory{},
 		MetadataFilterFactory: &MetadataFilterFactory{},
 	}
@@ -19,7 +18,6 @@ func NewComponentContext(ctx context.Context, logger spec.Logger) *ComponentCont
 type ComponentContext struct {
 	ctx context.Context
 	spec.Logger
-	*ExpressionParser
 	*MessageFactory
 	*MetadataFilterFactory
 }

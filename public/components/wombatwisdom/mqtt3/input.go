@@ -130,14 +130,13 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		cleanSession = true
 	}
 
-	// Build wombatwisdom input config
 	inputConfig := mqtt.InputConfig{
 		CommonMQTTConfig: mqtt.CommonMQTTConfig{
 			ClientId: clientID,
 			Urls:     urls,
 		},
 		CleanSession: cleanSession,
-		Filters:      make(map[string]byte), // Will be populated from config below
+		Filters:      make(map[string]byte),
 	}
 
 	if conf.Contains(fldConnectTimeout) {

@@ -30,9 +30,40 @@ retained: true
 		output, _, _, err := newOutput(parsedConf, mgr)
 		require.NoError(t, err)
 		require.NotNil(t, output)
+	})
 
-		// Can't easily access internal config without exposing it
-		// But we verified no error occurred
+	t.Run("quoted string literal", func(t *testing.T) {
+		conf := `
+urls:
+  - tcp://localhost:1883
+topic: "test/output"
+client_id: test-output-client
+`
+		parsedConf, err := spec.ParseYAML(conf, nil)
+		require.NoError(t, err)
+
+		mgr := service.MockResources()
+
+		output, _, _, err := newOutput(parsedConf, mgr)
+		require.NoError(t, err)
+		require.NotNil(t, output)
+	})
+
+	t.Run("interpolated topic", func(t *testing.T) {
+		conf := `
+urls:
+  - tcp://localhost:1883
+topic: 'test/output/${! json("topic") }'
+client_id: test-output-client
+`
+		parsedConf, err := spec.ParseYAML(conf, nil)
+		require.NoError(t, err)
+
+		mgr := service.MockResources()
+
+		output, _, _, err := newOutput(parsedConf, mgr)
+		require.NoError(t, err)
+		require.NotNil(t, output)
 	})
 
 	t.Run("with TLS config", func(t *testing.T) {

@@ -1,80 +1,63 @@
 package wombatwisdom
 
 import (
+	"encoding/json"
 	"fmt"
 
-	"github.com/redpanda-data/benthos/v4/public/bloblang"
+	"github.com/redpanda-data/benthos/v4/public/service"
 	"github.com/wombatwisdom/components/framework/spec"
 )
 
-func NewExpressionParser() *ExpressionParser {
-	return &ExpressionParser{
-		blob: bloblang.GlobalEnvironment(),
+func BlobExpressionContext(msg spec.Message) spec.ExpressionContext {
+	ctx := make(spec.ExpressionContext)
+	ctx["message"] = msg
+
+	// add json fields to root
+	rawData, err := msg.Raw()
+	if err == nil && len(rawData) > 0 {
+		var jsonData interface{}
+		if err := json.Unmarshal(rawData, &jsonData); err == nil {
+			// Add parsed JSON fields at root for field access
+			if m, ok := jsonData.(map[string]interface{}); ok {
+				for k, v := range m {
+					ctx[k] = v
+				}
+			}
+			// Also store complete JSON under "json" key for json() function
+			ctx["json"] = jsonData
+		}
+	}
+
+	// handle metadata
+	metadata := make(map[string]interface{})
+	for k, v := range msg.Metadata() {
+		metadata[k] = v
+	}
+	ctx["metadata"] = metadata
+
+	return ctx
+}
+
+func NewInterpolatedExpression(is *service.InterpolatedString) spec.Expression {
+	return &interpolatedExpression{
+		ble: is,
 	}
 }
 
-type ExpressionParser struct {
-	blob *bloblang.Environment
+type interpolatedExpression struct {
+	ble *service.InterpolatedString
 }
 
-func (e *ExpressionParser) ParseExpression(expr string) (spec.Expression, error) {
-	be, err := e.blob.Parse(expr)
-	if err != nil {
-		return nil, err
+func (b *interpolatedExpression) Eval(ctx spec.ExpressionContext) (string, error) {
+	msg, fnd := ctx["message"]
+	if !fnd {
+		return "", fmt.Errorf("expression context missing 'message' key")
 	}
 
-	return &BloblangExpression{
-		expr: be,
-	}, nil
-}
-
-type BloblangExpression struct {
-	expr *bloblang.Executor
-}
-
-func (b *BloblangExpression) EvalString(ctx spec.ExpressionContext) (string, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	respStr, ok := resp.(string)
+	bmsg, ok := msg.(*BenthosMessage)
 	if !ok {
-		return "", fmt.Errorf("expected 'string' response, got %T", resp)
-	}
-	return respStr, nil
-}
-
-func (b *BloblangExpression) EvalInt(ctx spec.ExpressionContext) (int, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return 0, err
-	}
-	switch v := resp.(type) {
-	case int:
-		return v, nil
-	case int8:
-		return int(v), nil
-	case int16:
-		return int(v), nil
-	case int32:
-		return int(v), nil
-	case int64:
-		return int(v), nil
-	default:
-		return 0, fmt.Errorf("expected 'int' response, got %T", resp)
-	}
-}
-
-func (b *BloblangExpression) EvalBool(ctx spec.ExpressionContext) (bool, error) {
-	resp, err := b.expr.Query(ctx)
-	if err != nil {
-		return false, err
+		return "", fmt.Errorf("message is not a benthos message")
 	}
 
-	respBool, ok := resp.(bool)
-	if !ok {
-		return false, fmt.Errorf("expected 'string' response, got %T", resp)
-	}
-	return respBool, nil
+	return b.ble.TryString(bmsg.Message)
 }
