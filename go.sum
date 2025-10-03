@@ -1896,7 +1896,6 @@ github.com/vmihailenco/tagparser/v2 v2.0.0 h1:y09buUbR+b5aycVFQs/g70pqKVZNBmxwAh
 github.com/vmihailenco/tagparser/v2 v2.0.0/go.mod h1:Wri+At7QHww0WTrCBeu4J6bNtoV6mEfg5OIWRZA9qds=
 github.com/wI2L/jsondiff v0.4.0 h1:iP56F9tK83eiLttg3YdmEENtZnwlYd3ezEpNNnfZVyM=
 github.com/wI2L/jsondiff v0.4.0/go.mod h1:nR/vyy1efuDeAtMwc3AF6nZf/2LD1ID8GTyyJ+K8YB0=
-github.com/wombatwisdom/components v0.1.1-0.20251001180844-669c249d3fe7/go.mod h1:4OHmC1u+1yDtIdPcBxbmvRLw6Abc/HsdfqvpUVJRxfg=
 github.com/wombatwisdom/components v0.1.1-0.20251003182319-8b0069c1fe39 h1:sVIeBFCk98ya1MZimmOLvrtHyApxVg2w2iHy0OXG98c=
 github.com/wombatwisdom/components v0.1.1-0.20251003182319-8b0069c1fe39/go.mod h1:1rBn0mUBybWUKo9JV2Dlq/tVlPC9qlceCe4BgnqvmqQ=
 github.com/xanzy/ssh-agent v0.3.3 h1:+/15pJfg/RsTxqYcX6fHqOXZwwMP+2VyYWJeWM2qQFM=
