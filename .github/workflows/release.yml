@@ -92,6 +92,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GOTMPDIR: /mnt/tmp
         GOCACHE: /mnt/gocache
+        GORELEASER_CURRENT_TAG: ${{ steps.release_info.outputs.tag }} # override tag b/c git does not offer a tag sort to make "v1.0.6" come out on top when "v1.0.6-rc1" is present on the same commit. Goreleaser fixes this, but only in paid version
   docker:
     name: Build the wombat image
     runs-on: ubuntu-latest
