@@ -1,36 +1,37 @@
 ---
-title: redpanda
-kind: output
+title: legacy_redpanda_migrator_offsets
+kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-A Kafka output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+<Aside type="caution" title="Deprecated">
+	This component is deprecated and will be removed in the next major version release. Please consider moving onto alternative components.
+</Aside>
+Redpanda Migrator consumer group offsets input using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+
+Introduced in version 4.45.0.
 
 
 <Tabs>
 <TabItem label="Common">
 ```yml
 # Common config fields, showing default values
-output:
+input:
   label: ""
-  redpanda:
+  legacy_redpanda_migrator_offsets:
     seed_brokers: [] # No default (required)
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    max_in_flight: 256
+    topics: [] # No default (required)
+    regexp_topics: false
+    auto_replay_nacks: true
 ```
 </TabItem>
 <TabItem label="Advanced">
 ```yml
 # Advanced config fields, showing default values
-output:
+input:
   label: ""
-  redpanda:
+  legacy_redpanda_migrator_offsets:
     seed_brokers: [] # No default (required)
     client_id: benthos
     tls:
@@ -44,26 +45,29 @@ output:
     metadata_max_age: 5m
     request_timeout_overhead: 10s
     conn_idle_timeout: 20s
-    topic: "" # No default (required)
-    key: "" # No default (optional)
-    partition: ${! meta("partition") } # No default (optional)
-    metadata:
-      include_prefixes: []
-      include_patterns: []
-    timestamp_ms: ${! timestamp_unix_milli() } # No default (optional)
-    max_in_flight: 256
-    partitioner: "" # No default (optional)
-    idempotent_write: true
-    compression: "" # No default (optional)
-    allow_auto_topic_creation: true
-    timeout: 10s
-    max_message_bytes: 1MiB
-    broker_write_max_bytes: 100MiB
+    topics: [] # No default (required)
+    regexp_topics: false
+    rack_id: ""
+    poll_interval: 15s
+    auto_replay_nacks: true
 ```
 </TabItem>
 </Tabs>
 
-Writes a batch of messages to Kafka brokers and waits for acknowledgement before propagating it back to the input.
+This input reads consumer group updates via the `OffsetFetch` API and should be used in combination with the `legacy_redpanda_migrator_offsets` output.
+
+## Metadata
+
+This input adds the following metadata fields to each message:
+
+```text
+- kafka_offset_topic
+- kafka_offset_group
+- kafka_offset_partition
+- kafka_offset_commit_timestamp
+- kafka_offset_metadata
+- kafka_is_high_watermark
+```
 
 
 ## Fields
@@ -451,207 +455,62 @@ The rough amount of time to allow connections to idle before they are closed.
 
 *Default*: `"20s"`
 
-### `topic`
+### `topics`
 
-A topic to write messages to.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-### `key`
-
-An optional key to populate for each message.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-### `partition`
-
-An optional explicit partition to set for each message. This field is only relevant when the `partitioner` is set to `manual`. The provided interpolation string must be a valid integer.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-partition: ${! meta("partition") }
-```
-
-### `metadata`
-
-Determine which (if any) metadata values should be added to messages as headers.
-
-
-*Type*: `object`
-
-
-### `metadata.include_prefixes`
-
-Provide a list of explicit metadata key prefixes to match against.
+A list of topics to consume from. Multiple comma separated topics can be listed in a single element. When a `consumer_group` is specified partitions are automatically distributed across consumers of a topic, otherwise all partitions are consumed.
 
 
 *Type*: `array`
 
-*Default*: `[]`
 
 ```yml
 # Examples
 
-include_prefixes:
-  - foo_
-  - bar_
+topics:
+  - foo
+  - bar
 
-include_prefixes:
-  - kafka_
+topics:
+  - things.*
 
-include_prefixes:
-  - content-
+topics:
+  - foo,bar
 ```
 
-### `metadata.include_patterns`
+### `regexp_topics`
 
-Provide a list of explicit metadata key regular expression (re2) patterns to match against.
+Whether listed topics should be interpreted as regular expression patterns for matching multiple topics.
 
 
-*Type*: `array`
+*Type*: `bool`
 
-*Default*: `[]`
+*Default*: `false`
 
-```yml
-# Examples
+### `rack_id`
 
-include_patterns:
-  - .*
-
-include_patterns:
-  - _timestamp_unix$
-```
-
-### `timestamp_ms`
-
-An optional timestamp to set for each message expressed in milliseconds. When left empty, the current timestamp is used.
-This field supports interpolation functions.
+A rack specifies where the client is physically located and changes fetch requests to consume from the closest replica as opposed to the leader replica.
 
 
 *Type*: `string`
 
+*Default*: `""`
 
-```yml
-# Examples
+### `poll_interval`
 
-timestamp_ms: ${! timestamp_unix_milli() }
-
-timestamp_ms: ${! metadata("kafka_timestamp_ms") }
-```
-
-### `max_in_flight`
-
-The maximum number of batches to be sending in parallel at any given time.
-
-
-*Type*: `int`
-
-*Default*: `256`
-
-### `partitioner`
-
-Override the default murmur2 hashing partitioner.
+Duration between OffsetFetch polling attempts.
 
 
 *Type*: `string`
 
+*Default*: `"15s"`
 
+### `auto_replay_nacks`
 
-| Option | Summary |
-| ------ | ------- |
-| `least_backup` | Chooses the least backed up partition (the partition with the fewest amount of buffered records). Partitions are selected per batch. |
-| `manual` | Manually select a partition for each message, requires the field `partition` to be specified. |
-| `murmur2_hash` | Kafka's default hash algorithm that uses a 32-bit murmur2 hash of the key to compute which partition the record will be on. |
-| `round_robin` | Round-robin's messages through all available partitions. This algorithm has lower throughput and causes higher CPU load on brokers, but can be useful if you want to ensure an even distribution of records to partitions. |
-
-
-### `idempotent_write`
-
-Enable the idempotent write producer option. This requires the `IDEMPOTENT_WRITE` permission on `CLUSTER` and can be disabled if this permission is not available.
+Whether messages that are rejected (nacked) at the output level should be automatically replayed indefinitely, eventually resulting in back pressure if the cause of the rejections is persistent. If set to `false` these messages will instead be deleted. Disabling auto replays can greatly improve memory efficiency of high throughput streams as the original shape of the data can be discarded immediately upon consumption and mutation.
 
 
 *Type*: `bool`
 
 *Default*: `true`
-
-### `compression`
-
-Optionally set an explicit compression type. The default preference is to use snappy when the broker supports it, and fall back to none if not.
-
-
-*Type*: `string`
-
-
-Options:
-`lz4`
-, `snappy`
-, `gzip`
-, `none`
-, `zstd`
-.
-
-### `allow_auto_topic_creation`
-
-Enables topics to be auto created if they do not exist when fetching their metadata.
-
-
-*Type*: `bool`
-
-*Default*: `true`
-
-### `timeout`
-
-The maximum period of time to wait for message sends before abandoning the request and retrying
-
-
-*Type*: `string`
-
-*Default*: `"10s"`
-
-### `max_message_bytes`
-
-The maximum space in bytes than an individual message may take, messages larger than this value will be rejected. This field corresponds to Kafka's `max.message.bytes`.
-
-
-*Type*: `string`
-
-*Default*: `"1MiB"`
-
-```yml
-# Examples
-
-max_message_bytes: 100MB
-
-max_message_bytes: 50mib
-```
-
-### `broker_write_max_bytes`
-
-The upper bound for the number of bytes written to a broker connection in a single write. This field corresponds to Kafka's `socket.request.max.bytes`.
-
-
-*Type*: `string`
-
-*Default*: `"100MiB"`
-
-```yml
-# Examples
-
-broker_write_max_bytes: 128MB
-
-broker_write_max_bytes: 50mib
-```
 
 

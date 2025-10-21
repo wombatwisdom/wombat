@@ -61,6 +61,7 @@ input:
     topic_lag_refresh_period: 5s
     max_yield_batch_bytes: 32KB
     auto_replay_nacks: true
+    timely_nacks_maximum_wait: "" # No default (optional)
 ```
 </TabItem>
 </Tabs>
@@ -479,7 +480,7 @@ An external ID to provide when assuming a role.
 
 ### `metadata_max_age`
 
-The maximum age of metadata before it is refreshed.
+The maximum age of metadata before it is refreshed. This interval also controls how frequently regex topic patterns are re-evaluated to discover new matching topics.
 
 
 *Type*: `string`
@@ -543,7 +544,7 @@ topics:
 
 ### `regexp_topics`
 
-Whether listed topics should be interpreted as regular expression patterns for matching multiple topics. When topics are specified with explicit partitions this field must remain set to `false`.
+Whether listed topics should be interpreted as regular expression patterns for matching multiple topics. When enabled, the client will periodically refresh the list of matching topics based on the `metadata_max_age` interval. When topics are specified with explicit partitions this field must remain set to `false`.
 
 
 *Type*: `bool`
@@ -716,5 +717,13 @@ Whether messages that are rejected (nacked) at the output level should be automa
 *Type*: `bool`
 
 *Default*: `true`
+
+### `timely_nacks_maximum_wait`
+
+EXPERIMENTAL: Specify a maximum period of time in which each message can be consumed and awaiting either acknowledgement or rejection before rejection is instead forced. This can be useful for avoiding situations where certain downstream components can result in blocked confirmation of delivery that exceeds SLAs.
+
+
+*Type*: `string`
+
 
 

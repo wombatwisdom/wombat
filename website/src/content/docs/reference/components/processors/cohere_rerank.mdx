@@ -1,0 +1,135 @@
+---
+title: cohere_rerank
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Generates vector embeddings to represent input text, using the Cohere API.
+
+Introduced in version 4.37.0.
+
+```yml
+# Config fields, showing default values
+label: ""
+cohere_rerank:
+  base_url: https://api.cohere.com
+  api_key: "" # No default (required)
+  model: rerank-v3.5 # No default (required)
+  query: "" # No default (required)
+  documents: "" # No default (required)
+  top_n: "0"
+  max_tokens_per_doc: 4096
+```
+
+This processor sends document strings to the Cohere API, which reranks them based on the relevance to the query.
+
+To learn more about reranking, see the [Cohere API documentation](https://docs.cohere.com/docs/rerank-2).
+
+The output of this processor is an array of objects, each containing a "document" field with the original document content, a "relevance_score" field indicating how relevant it is to the query, and an index field that refers to the document's position within the input documents array. The objects are ordered by their relevance score (highest first).
+
+		
+
+## Examples
+
+<Tabs>
+<TabItem label="Rerank some documents based on a query">
+Rerank some documents based on a query
+
+```yaml
+input:
+  generate:
+    interval: 1s
+    mapping: |
+      root = {
+        "query": fake("sentence"),
+        "docs": [fake("paragraph"), fake("paragraph"), fake("paragraph")],
+      }
+pipeline:
+  processors:
+  - cohere_rerank:
+      model: rerank-v3.5
+      api_key: "${COHERE_API_KEY}"
+      query: "${!this.query}"
+      documents: "root = this.docs"
+output:
+  stdout: {}
+```
+
+</TabItem>
+</Tabs>
+
+## Fields
+
+### `base_url`
+
+The base URL to use for API requests.
+
+
+*Type*: `string`
+
+*Default*: `"https://api.cohere.com"`
+
+### `api_key`
+
+The API key for the Cohere API.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+
+### `model`
+
+The name of the Cohere model to use.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+model: rerank-v3.5
+```
+
+### `query`
+
+The search query
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `documents`
+
+A list of texts that will be compared to the query. For optimal performance Cohere recommends against sending more than 1000 documents in a single request. NOTE: structured data should be formatted as YAML for best performance.
+
+
+*Type*: `string`
+
+
+### `top_n`
+
+The number of documents to return, if 0 all documents are returned.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+*Default*: `"0"`
+
+### `max_tokens_per_doc`
+
+Long documents will be automatically truncated to the specified number of tokens.
+
+
+*Type*: `int`
+
+*Default*: `4096`
+
+

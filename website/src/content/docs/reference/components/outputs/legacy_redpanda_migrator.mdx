@@ -1,11 +1,14 @@
 ---
-title: redpanda_migrator_offsets
+title: legacy_redpanda_migrator
 kind: output
 ---
 import { Aside } from '@astrojs/starlight/components';
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-Redpanda Migrator consumer group offsets output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
+<Aside type="caution" title="Deprecated">
+	This component is deprecated and will be removed in the next major version release. Please consider moving onto alternative components.
+</Aside>
+A Redpanda Migrator output using the [Franz Kafka client library](https://github.com/twmb/franz-go).
 
 Introduced in version 4.37.0.
 
@@ -16,14 +19,15 @@ Introduced in version 4.37.0.
 # Common config fields, showing default values
 output:
   label: ""
-  redpanda_migrator_offsets:
+  legacy_redpanda_migrator:
     seed_brokers: [] # No default (required)
-    offset_topic: ${! @kafka_offset_topic }
-    offset_group: ${! @kafka_offset_group }
-    offset_partition: ${! @kafka_offset_partition }
-    offset_commit_timestamp: ${! @kafka_offset_commit_timestamp }
-    offset_metadata: ${! @kafka_offset_metadata }
-    is_high_watermark: ${! @kafka_is_high_watermark }
+    topic: "" # No default (required)
+    key: "" # No default (optional)
+    partition: ${! meta("partition") } # No default (optional)
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    max_in_flight: 256
 ```
 </TabItem>
 <TabItem label="Advanced">
@@ -31,7 +35,7 @@ output:
 # Advanced config fields, showing default values
 output:
   label: ""
-  redpanda_migrator_offsets:
+  legacy_redpanda_migrator:
     seed_brokers: [] # No default (required)
     client_id: benthos
     tls:
@@ -45,26 +49,47 @@ output:
     metadata_max_age: 5m
     request_timeout_overhead: 10s
     conn_idle_timeout: 20s
-    offset_topic: ${! @kafka_offset_topic }
-    offset_topic_prefix: ""
-    offset_group: ${! @kafka_offset_group }
-    offset_partition: ${! @kafka_offset_partition }
-    offset_commit_timestamp: ${! @kafka_offset_commit_timestamp }
-    offset_metadata: ${! @kafka_offset_metadata }
-    is_high_watermark: ${! @kafka_is_high_watermark }
+    topic: "" # No default (required)
+    key: "" # No default (optional)
+    partition: ${! meta("partition") } # No default (optional)
+    metadata:
+      include_prefixes: []
+      include_patterns: []
+    timestamp_ms: ${! timestamp_unix_milli() } # No default (optional)
+    topic_prefix: ""
+    max_in_flight: 256
+    input_resource: redpanda_migrator_input
+    replication_factor_override: true
+    replication_factor: 3
+    translate_schema_ids: false
+    is_serverless: false
+    schema_registry_output_resource: schema_registry_output
+    partitioner: "" # No default (optional)
+    idempotent_write: true
+    compression: "" # No default (optional)
+    allow_auto_topic_creation: true
     timeout: 10s
     max_message_bytes: 1MiB
     broker_write_max_bytes: 100MiB
-    max_retries: 0
-    backoff:
-      initial_interval: 1s
-      max_interval: 5s
-      max_elapsed_time: 30s
 ```
 </TabItem>
 </Tabs>
 
-This output should be used in combination with the `redpanda_migrator_offsets` input
+Writes a batch of messages to a Kafka broker and waits for acknowledgement before propagating it back to the input.
+
+This output should be used in combination with a `legacy_redpanda_migrator` input identified by the label specified in
+`input_resource` which it can query for topic and ACL configurations. Once connected, the output will attempt to
+create all topics which the input consumes from along with their ACLs.
+
+If the configured broker does not contain the current message topic, this output attempts to create it along with its
+ACLs.
+
+ACL migration adheres to the following principles:
+
+- `ALLOW WRITE` ACLs for topics are not migrated
+- `ALLOW ALL` ACLs for topics are downgraded to `ALLOW READ`
+- Only topic ACLs are migrated, group ACLs are not migrated
+
 
 ## Fields
 
@@ -426,7 +451,7 @@ An external ID to provide when assuming a role.
 
 ### `metadata_max_age`
 
-The maximum age of metadata before it is refreshed.
+The maximum age of metadata before it is refreshed. This interval also controls how frequently regex topic patterns are re-evaluated to discover new matching topics.
 
 
 *Type*: `string`
@@ -451,19 +476,109 @@ The rough amount of time to allow connections to idle before they are closed.
 
 *Default*: `"20s"`
 
-### `offset_topic`
+### `topic`
 
-Kafka offset topic.
+A topic to write messages to.
 This field supports interpolation functions.
 
 
 *Type*: `string`
 
-*Default*: `"${! @kafka_offset_topic }"`
 
-### `offset_topic_prefix`
+### `key`
 
-Kafka offset topic prefix.
+An optional key to populate for each message.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `partition`
+
+An optional explicit partition to set for each message. This field is only relevant when the `partitioner` is set to `manual`. The provided interpolation string must be a valid integer.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+partition: ${! meta("partition") }
+```
+
+### `metadata`
+
+Determine which (if any) metadata values should be added to messages as headers.
+
+
+*Type*: `object`
+
+
+### `metadata.include_prefixes`
+
+Provide a list of explicit metadata key prefixes to match against.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+```yml
+# Examples
+
+include_prefixes:
+  - foo_
+  - bar_
+
+include_prefixes:
+  - kafka_
+
+include_prefixes:
+  - content-
+```
+
+### `metadata.include_patterns`
+
+Provide a list of explicit metadata key regular expression (re2) patterns to match against.
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+```yml
+# Examples
+
+include_patterns:
+  - .*
+
+include_patterns:
+  - _timestamp_unix$
+```
+
+### `timestamp_ms`
+
+An optional timestamp to set for each message expressed in milliseconds. When left empty, the current timestamp is used.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+timestamp_ms: ${! timestamp_unix_milli() }
+
+timestamp_ms: ${! metadata("kafka_timestamp_ms") }
+```
+
+### `topic_prefix`
+
+The topic prefix.
 This field supports interpolation functions.
 
 
@@ -471,55 +586,119 @@ This field supports interpolation functions.
 
 *Default*: `""`
 
-### `offset_group`
+### `max_in_flight`
 
-Kafka offset group.
-This field supports interpolation functions.
+The maximum number of batches to be sending in parallel at any given time.
 
 
-*Type*: `string`
+*Type*: `int`
 
-*Default*: `"${! @kafka_offset_group }"`
+*Default*: `256`
 
-### `offset_partition`
+### `input_resource`
 
-Kafka offset partition.
-This field supports interpolation functions.
+The label of the legacy_redpanda_migrator input from which to read the configurations for topics and ACLs which need to be created.
 
 
 *Type*: `string`
 
-*Default*: `"${! @kafka_offset_partition }"`
+*Default*: `"redpanda_migrator_input"`
 
-### `offset_commit_timestamp`
+### `replication_factor_override`
 
-Kafka offset commit timestamp.
-This field supports interpolation functions.
+Use the specified replication factor when creating topics.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `replication_factor`
+
+Replication factor for created topics. This is only used when `replication_factor_override` is set to `true`.
+
+
+*Type*: `int`
+
+*Default*: `3`
+
+### `translate_schema_ids`
+
+Translate schema IDs.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `is_serverless`
+
+Set this to `true` when using Serverless clusters in Redpanda Cloud.
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `schema_registry_output_resource`
+
+The label of the schema_registry output to use for fetching schema IDs.
 
 
 *Type*: `string`
 
-*Default*: `"${! @kafka_offset_commit_timestamp }"`
+*Default*: `"schema_registry_output"`
 
-### `offset_metadata`
+### `partitioner`
 
-Kafka offset metadata value.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-*Default*: `"${! @kafka_offset_metadata }"`
-
-### `is_high_watermark`
-
-Indicates if the update represents the high watermark of the Kafka topic partition.
-This field supports interpolation functions.
+Override the default murmur2 hashing partitioner.
 
 
 *Type*: `string`
 
-*Default*: `"${! @kafka_is_high_watermark }"`
+
+
+| Option | Summary |
+| ------ | ------- |
+| `least_backup` | Chooses the least backed up partition (the partition with the fewest amount of buffered records). Partitions are selected per batch. |
+| `manual` | Manually select a partition for each message, requires the field `partition` to be specified. |
+| `murmur2_hash` | Kafka's default hash algorithm that uses a 32-bit murmur2 hash of the key to compute which partition the record will be on. |
+| `round_robin` | Round-robin's messages through all available partitions. This algorithm has lower throughput and causes higher CPU load on brokers, but can be useful if you want to ensure an even distribution of records to partitions. |
+
+
+### `idempotent_write`
+
+Enable the idempotent write producer option. This requires the `IDEMPOTENT_WRITE` permission on `CLUSTER` and can be disabled if this permission is not available.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `compression`
+
+Optionally set an explicit compression type. The default preference is to use snappy when the broker supports it, and fall back to none if not.
+
+
+*Type*: `string`
+
+
+Options:
+`lz4`
+, `snappy`
+, `gzip`
+, `none`
+, `zstd`
+.
+
+### `allow_auto_topic_creation`
+
+Enables topics to be auto created if they do not exist when fetching their metadata.
+
+
+*Type*: `bool`
+
+*Default*: `true`
 
 ### `timeout`
 
@@ -563,49 +742,5 @@ broker_write_max_bytes: 128MB
 
 broker_write_max_bytes: 50mib
 ```
-
-### `max_retries`
-
-The maximum number of retries before giving up on the request. If set to zero there is no discrete limit.
-
-
-*Type*: `int`
-
-*Default*: `0`
-
-### `backoff`
-
-Control time intervals between retry attempts.
-
-
-*Type*: `object`
-
-
-### `backoff.initial_interval`
-
-The initial period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"1s"`
-
-### `backoff.max_interval`
-
-The maximum period to wait between retry attempts.
-
-
-*Type*: `string`
-
-*Default*: `"5s"`
-
-### `backoff.max_elapsed_time`
-
-The maximum period to wait before retry attempts are abandoned. If zero then no limit is used.
-
-
-*Type*: `string`
-
-*Default*: `"30s"`
 
 

@@ -1,0 +1,253 @@
+---
+title: ollama_embeddings
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Generates vector embeddings from text, using the Ollama API.
+
+Introduced in version 4.32.0.
+
+
+<Tabs>
+<TabItem label="Common">
+```yml
+# Common config fields, showing default values
+label: ""
+ollama_embeddings:
+  model: nomic-embed-text # No default (required)
+  text: "" # No default (optional)
+  runner:
+    context_size: 0 # No default (optional)
+    batch_size: 0 # No default (optional)
+  server_address: http://127.0.0.1:11434 # No default (optional)
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
+label: ""
+ollama_embeddings:
+  model: nomic-embed-text # No default (required)
+  text: "" # No default (optional)
+  runner:
+    context_size: 0 # No default (optional)
+    batch_size: 0 # No default (optional)
+    gpu_layers: 0 # No default (optional)
+    threads: 0 # No default (optional)
+    use_mmap: false # No default (optional)
+  server_address: http://127.0.0.1:11434 # No default (optional)
+  cache_directory: /opt/cache/connect/ollama # No default (optional)
+  download_url: "" # No default (optional)
+```
+</TabItem>
+</Tabs>
+
+This processor sends text to your chosen Ollama large language model (LLM) and creates vector embeddings, using the Ollama API. Vector embeddings are long arrays of numbers that represent values or objects, in this case text. 
+
+By default, the processor starts and runs a locally installed Ollama server. Alternatively, to use an already running Ollama server, add your server details to the `server_address` field. You can [download and install Ollama from the Ollama website](https://ollama.com/download).
+
+For more information, see the [Ollama documentation](https://github.com/ollama/ollama/tree/main/docs).
+
+## Examples
+
+<Tabs>
+<TabItem label="Store embedding vectors in Qdrant">
+Compute embeddings for some generated data and store it within xrefs:component:outputs/qdrant.adoc[Qdrant]
+
+```yaml
+input:
+  generate:
+    interval: 1s
+    mapping: |
+      root = {"text": fake("paragraph")}
+pipeline:
+  processors:
+  - ollama_embeddings:
+      model: snowflake-artic-embed
+      text: "${!this.text}"
+output:
+  qdrant:
+    grpc_host: localhost:6334
+    collection_name: "example_collection"
+    id: "root = uuid_v4()"
+    vector_mapping: "root = this"
+
+```
+
+</TabItem>
+<TabItem label="Store embedding vectors in CyborgDB">
+Compute embeddings for some generated data and store it within xrefs:component:outputs/cyborgdb.adoc[CyborgDB]
+
+```yaml
+input:
+  generate:
+    interval: 1s
+    mapping: |
+      root = {"text": fake("paragraph")}
+pipeline:
+  processors:
+  - ollama_embeddings:
+      model: snowflake-artic-embed
+      text: "${!this.text}"
+output:
+  cyborgdb:
+    host: "${CYBORGDB_HOST}"
+    api_key: "${CYBORGDB_API_KEY}"
+    index_key: "${CYBORGDB_INDEX_KEY}"
+    index_name: "my_encrypted_index"
+    operation: "upsert"
+    id: "root = uuid_v4()"
+    vector_mapping: "root = this"
+
+```
+
+</TabItem>
+<TabItem label="Store embedding vectors in Clickhouse">
+Compute embeddings for some generated data and store it within [Clickhouse](https://clickhouse.com/)
+
+```yaml
+input:
+  generate:
+    interval: 1s
+    mapping: |
+      root = {"text": fake("paragraph")}
+pipeline:
+  processors:
+  - branch:
+      processors:
+      - ollama_embeddings:
+          model: snowflake-artic-embed
+          text: "${!this.text}"
+      result_map: |
+        root.embeddings = this
+output:
+  sql_insert:
+    driver: clickhouse
+    dsn: "clickhouse://localhost:9000"
+    table: searchable_text
+    columns: ["id", "text", "vector"]
+    args_mapping: "root = [uuid_v4(), this.text, this.embeddings]"
+
+```
+
+</TabItem>
+</Tabs>
+
+## Fields
+
+### `model`
+
+The name of the Ollama LLM to use. For a full list of models, see the [Ollama website](https://ollama.com/models).
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+model: nomic-embed-text
+
+model: mxbai-embed-large
+
+model: snowflake-artic-embed
+
+model: all-minilm
+```
+
+### `text`
+
+The text you want to create vector embeddings for. By default, the processor submits the entire payload as a string.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `runner`
+
+Options for the model runner that are used when the model is first loaded into memory.
+
+
+*Type*: `object`
+
+
+### `runner.context_size`
+
+Sets the size of the context window used to generate the next token. Using a larger context window uses more memory and takes longer to processor.
+
+
+*Type*: `int`
+
+
+### `runner.batch_size`
+
+The maximum number of requests to process in parallel.
+
+
+*Type*: `int`
+
+
+### `runner.gpu_layers`
+
+This option allows offloading some layers to the GPU for computation. This generally results in increased performance. By default, the runtime decides the number of layers dynamically.
+
+
+*Type*: `int`
+
+
+### `runner.threads`
+
+Set the number of threads to use during generation. For optimal performance, it is recommended to set this value to the number of physical CPU cores your system has. By default, the runtime decides the optimal number of threads.
+
+
+*Type*: `int`
+
+
+### `runner.use_mmap`
+
+Map the model into memory. This is only support on unix systems and allows loading only the necessary parts of the model as needed.
+
+
+*Type*: `bool`
+
+
+### `server_address`
+
+The address of the Ollama server to use. Leave the field blank and the processor starts and runs a local Ollama server or specify the address of your own local or remote server.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+server_address: http://127.0.0.1:11434
+```
+
+### `cache_directory`
+
+If `server_address` is not set - the directory to download the ollama binary and use as a model cache.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+cache_directory: /opt/cache/connect/ollama
+```
+
+### `download_url`
+
+If `server_address` is not set - the URL to download the ollama binary from. Defaults to the offical Ollama GitHub release for this platform.
+
+
+*Type*: `string`
+
+
+
