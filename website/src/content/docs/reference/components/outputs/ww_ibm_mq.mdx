@@ -1,0 +1,324 @@
+---
+title: ww_ibm_mq
+kind: output
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Pushes messages to IBM MQ queues.
+
+```yml
+# Config fields, showing default values
+output:
+  label: ""
+  ww_ibm_mq:
+    queue_manager_name: QM1 # No default (required)
+    queue_name: ""
+    queue_expr: ${! meta("target_queue") } # No default (optional)
+    channel_name: DEV.APP.SVRCONN # No default (required)
+    connection_name: localhost(1414) # No default (required)
+    user_id: ""
+    password: ""
+    application_name: wombat
+    num_threads: 1
+    write_timeout: 30s
+    metadata:
+      patterns: []
+      invert: false
+    tls:
+      enabled: false
+      cipher_spec: ""
+      key_repository: ""
+      key_repository_password: ""
+      certificate_label: ""
+      ssl_peer_name: ""
+      fips_required: false
+```
+
+Pushes messages to IBM MQ queues.
+
+Uses IBM MQ output component found in [wombatwisdom/components](https://github.com/wombatwisdom/components).
+
+## Build Requirements
+
+This component requires IBM MQ client libraries. Build with the `mqclient` build tag:
+
+```bash
+go build -tags mqclient
+```
+
+### Example: Basic configuration
+
+```yaml
+output:
+  ww_ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+```
+
+### Example: With dynamic queue routing
+
+```yaml
+output:
+  ww_ibm_mq:
+    queue_manager_name: QM1
+    queue_expr: '${! meta("target_queue") }'
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+```
+
+### Example: With TLS/SSL
+
+```yaml
+output:
+  ww_ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: secure-mq.example.com(1414)
+    tls:
+      enabled: true
+      cipher_spec: TLS_RSA_WITH_AES_256_CBC_SHA256
+      key_repository: /opt/mqm/ssl/key
+```
+
+
+## Fields
+
+### `queue_manager_name`
+
+The IBM MQ Queue Manager name to connect to
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+queue_manager_name: QM1
+```
+
+### `queue_name`
+
+The IBM MQ queue name to write messages to
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+queue_name: DEV.QUEUE.1
+```
+
+### `queue_expr`
+
+An expression to dynamically determine the queue name based on message content. If set, this overrides the static queue_name for each message.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+queue_expr: ${! meta("target_queue") }
+```
+
+### `channel_name`
+
+The IBM MQ channel name for client connections
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+channel_name: DEV.APP.SVRCONN
+```
+
+### `connection_name`
+
+The IBM MQ connection name in the format hostname(port)
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+connection_name: localhost(1414)
+```
+
+### `user_id`
+
+Optional: The IBM MQ user ID for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `password`
+
+Optional: The IBM MQ user password for authentication
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `application_name`
+
+Optional: Application name for MQ connection identification
+
+
+*Type*: `string`
+
+*Default*: `"wombat"`
+
+### `num_threads`
+
+Number of parallel queue connections to use
+
+
+*Type*: `int`
+
+*Default*: `1`
+
+### `write_timeout`
+
+Timeout for write operations
+
+
+*Type*: `string`
+
+*Default*: `"30s"`
+
+### `metadata`
+
+Metadata configuration for filtering message headers
+
+
+*Type*: `object`
+
+
+### `metadata.patterns`
+
+Patterns to match metadata fields
+
+
+*Type*: `array`
+
+*Default*: `[]`
+
+### `metadata.invert`
+
+If true, exclude matching patterns; if false, include only matching patterns
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `tls`
+
+TLS/SSL configuration for secure connections
+
+
+*Type*: `object`
+
+
+### `tls.enabled`
+
+Enable TLS encryption for the connection
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `tls.cipher_spec`
+
+The cipher specification to use for TLS
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+cipher_spec: TLS_RSA_WITH_AES_256_CBC_SHA256
+```
+
+### `tls.key_repository`
+
+Path to the key repository containing certificates (without file extension)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+key_repository: /opt/mqm/ssl/key
+```
+
+### `tls.key_repository_password`
+
+Password for the key repository
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.certificate_label`
+
+Certificate label to use from the key repository
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.ssl_peer_name`
+
+Peer name for SSL/TLS validation
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.fips_required`
+
+Require FIPS 140-2 compliant algorithms
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+

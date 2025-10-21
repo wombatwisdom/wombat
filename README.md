@@ -77,6 +77,79 @@ docker run --rm -p 4195:4195 ghcr.io/wombatwisdom/wombat \
   -s "output.kafka.topic=wombat_topic"
 ```
 
+## Building with Optional Components
+
+### IBM MQ Support
+
+Wombat includes optional IBM MQ support through the `ww_ibm_mq` input and output components. Since IBM MQ requires proprietary client libraries, this feature is disabled by default and uses stub implementations for broader compatibility.
+
+#### Setting up IBM MQ Client Libraries
+
+To build and test with actual IBM MQ support, you need the IBM MQ client libraries:
+
+1. **Download the IBM MQ redistributable client:**
+   - Visit [IBM Fix Central](https://www.ibm.com/support/fixcentral/) and search for "IBM MQ redistributable client"
+   - Or download directly: [9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz](https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz)
+
+2. **Extract to a local directory:**
+   ```bash
+   mkdir -p ~/mqclient
+   tar -xzf 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz -C ~/mqclient/
+   ```
+
+3. **Set environment variables:**
+   ```bash
+   export MQ_HOME="$HOME/mqclient"
+   export CGO_ENABLED=1
+   export CGO_CFLAGS="-I${MQ_HOME}/inc"
+   export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
+   ```
+
+#### Building with IBM MQ
+
+**Default build (without IBM MQ):**
+```bash
+go build ./cmd/wombat
+```
+
+**With IBM MQ support:**
+```bash
+# Ensure environment variables are set (see above)
+go build -tags mqclient ./cmd/wombat
+```
+
+#### Testing IBM MQ Components
+
+Run tests with the mqclient tag and proper CGO flags:
+
+```bash
+# Unit tests
+go test -tags mqclient ./public/components/wombatwisdom/ibmmq
+
+# Integration tests (requires IBM MQ container)
+go test -tags mqclient -run TestIBMMQIntegration ./public/components/wombatwisdom/ibmmq
+```
+
+#### IDE Configuration (JetBrains GoLand)
+
+To work with IBM MQ components in GoLand:
+
+1. **For Run/Debug Configurations:**
+   - Go to `Run` → `Edit Configurations...`
+   - In "Go tool arguments" add: `-tags mqclient`
+   - In "Environment variables" add:
+     ```
+     CGO_ENABLED=1
+     CGO_CFLAGS=-I/home/your-user/mqclient/inc
+     CGO_LDFLAGS=-L/home/your-user/mqclient/lib64 -Wl,-rpath=/home/your-user/mqclient/lib64
+     ```
+
+2. **For global build tags:**
+   - Go to `File` → `Settings` → `Go` → `Build Tags & Vendoring`
+   - Add `mqclient` to the "Build tags" field
+
+Without the `mqclient` tag, the IBM MQ component files will appear grayed out in the IDE, and the components will use stub implementations.
+
 ## Honorable Mentions
 I can't in all good faith take credit for the enormous amount of work that went into this project. Most of that is on Ash
 and the rest of the community behind the old Benthos project. I'm just a guy who forked it and made it worse.

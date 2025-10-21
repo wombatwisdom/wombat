@@ -1,0 +1,311 @@
+---
+title: ww_ibm_mq
+kind: input
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Connects to IBM MQ queue managers and consumes messages from specified queues.
+
+```yml
+# Config fields, showing default values
+input:
+  label: ""
+  ww_ibm_mq:
+    queue_manager_name: QM1 # No default (required)
+    queue_name: DEV.QUEUE.1 # No default (required)
+    channel_name: DEV.APP.SVRCONN # No default (required)
+    connection_name: localhost(1414) # No default (required)
+    user_id: ""
+    password: ""
+    application_name: wombat
+    num_workers: 1
+    batch_size: 1
+    poll_interval: 1s
+    num_threads: 1
+    wait_time: 5s
+    batch_count: 1
+    tls:
+      enabled: false
+      cipher_spec: ""
+      key_repository: ""
+      key_repository_password: ""
+      certificate_label: ""
+      ssl_peer_name: ""
+      fips_required: false
+```
+
+Connects to IBM MQ queue managers and consumes messages from specified queues.
+
+Uses IBM MQ input component found in [wombatwisdom/components](https://github.com/wombatwisdom/components).
+
+## Build Requirements
+
+This component requires IBM MQ client libraries. Build with the `mqclient` build tag:
+
+```bash
+go build -tags mqclient
+```
+
+## Delivery Guarantees
+
+By default, this input disables auto acknowledgment to ensure at-least-once delivery semantics. Messages are acknowledged only after successful processing by the output.
+
+If message loss is acceptable, you can set `enable_auto_ack: true` for at-most-once delivery.
+
+### Example: At-least-once delivery
+
+```yaml
+input:
+  ww_ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+    enable_auto_ack: false  # Messages acknowledged after processing
+```
+
+### Example: At-most-once delivery
+
+```yaml
+input:
+  ww_ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+    enable_auto_ack: true  # Messages acknowledged immediately
+```
+
+
+## Fields
+
+### `queue_manager_name`
+
+The IBM MQ Queue Manager name to connect to
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+queue_manager_name: QM1
+```
+
+### `queue_name`
+
+The IBM MQ queue name to read messages from
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+queue_name: DEV.QUEUE.1
+```
+
+### `channel_name`
+
+The IBM MQ channel name for client connections
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+channel_name: DEV.APP.SVRCONN
+```
+
+### `connection_name`
+
+The IBM MQ connection name in the format hostname(port)
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+connection_name: localhost(1414)
+```
+
+### `user_id`
+
+Optional: The IBM MQ user ID for authentication
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `password`
+
+Optional: The IBM MQ user password for authentication
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `application_name`
+
+Optional: Application name for MQ connection identification
+
+
+*Type*: `string`
+
+*Default*: `"wombat"`
+
+### `num_workers`
+
+Number of parallel workers for processing messages
+
+
+*Type*: `int`
+
+*Default*: `1`
+
+### `batch_size`
+
+Maximum number of messages to batch together
+
+
+*Type*: `int`
+
+*Default*: `1`
+
+### `poll_interval`
+
+Poll interval when queue is empty
+
+
+*Type*: `string`
+
+*Default*: `"1s"`
+
+### `num_threads`
+
+Number of threads for message processing
+
+
+*Type*: `int`
+
+*Default*: `1`
+
+### `wait_time`
+
+Maximum time to wait for messages
+
+
+*Type*: `string`
+
+*Default*: `"5s"`
+
+### `batch_count`
+
+Number of batches to process
+
+
+*Type*: `int`
+
+*Default*: `1`
+
+### `tls`
+
+TLS/SSL configuration for secure connections
+
+
+*Type*: `object`
+
+
+### `tls.enabled`
+
+Enable TLS encryption for the connection
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+### `tls.cipher_spec`
+
+The cipher specification to use for TLS
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+cipher_spec: TLS_RSA_WITH_AES_128_CBC_SHA256
+```
+
+### `tls.key_repository`
+
+Path to the key repository containing certificates (without file extension)
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+```yml
+# Examples
+
+key_repository: /opt/mqm/ssl/key
+```
+
+### `tls.key_repository_password`
+
+Password for the key repository
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.certificate_label`
+
+Certificate label to use from the key repository
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.ssl_peer_name`
+
+Peer name for SSL/TLS validation
+
+
+*Type*: `string`
+
+*Default*: `""`
+
+### `tls.fips_required`
+
+Require FIPS 140-2 compliant algorithms
+
+
+*Type*: `bool`
+
+*Default*: `false`
+
+
