@@ -30,6 +30,7 @@ output:
   schema_registry:
     url: "" # No default (required)
     subject: "" # No default (required)
+    subject_compatibility_level: "" # No default (optional)
     backfill_dependencies: true
     translate_ids: false
     normalize: true
@@ -82,6 +83,7 @@ output:
     - schema_registry:
         url: http://localhost:8082
         subject: ${! @schema_registry_subject }
+        subject_compatibility_level: ${! @schema_registry_subject_compatibility_level }
     - switch:
         cases:
           - check: '@fallback_error == "request returned status: 422"'
@@ -112,6 +114,15 @@ The base URL of the schema registry service.
 ### `subject`
 
 Subject.
+This field supports interpolation functions.
+
+
+*Type*: `string`
+
+
+### `subject_compatibility_level`
+
+The compatibility level for the subject. Can be one of BACKWARD, BACKWARD_TRANSITIVE, FORWARD, FORWARD_TRANSITIVE, FULL, FULL_TRANSITIVE, NONE.
 This field supports interpolation functions.
 
 
