@@ -50,7 +50,7 @@ connection_name: localhost(1414)
 		require.NoError(t, err)
 
 		// Verify queue expression exists
-		assert.True(t, parsedConf.Contains(fldQueueExpr))
+		assert.True(t, parsedConf.Contains(fldQueueName))
 
 		// Create output to verify expression parsing
 		mgr := service.MockResources()
@@ -184,22 +184,6 @@ queue_manager_name: QM1
 `
 		_, err := spec.ParseYAML(conf, nil)
 		require.Error(t, err)
-	})
-
-	t.Run("missing both queue_name and queue_expr", func(t *testing.T) {
-		conf := `
-queue_manager_name: QM1
-channel_name: DEV.APP.SVRCONN
-connection_name: localhost(1414)
-`
-		parsedConf, err := spec.ParseYAML(conf, nil)
-		require.NoError(t, err) // Parse succeeds
-
-		// But creating output should fail
-		mgr := service.MockResources()
-		_, _, _, err = newOutput(parsedConf, mgr)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "either queue_name or queue_expr must be specified")
 	})
 
 	t.Run("default values", func(t *testing.T) {

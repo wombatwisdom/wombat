@@ -14,7 +14,6 @@ import (
 
 const (
 	fldOutputQueueName  = "queue_name"
-	fldQueueExpr        = "queue_expr"
 	fldOutputNumThreads = "num_threads"
 	fldWriteTimeout     = "write_timeout"
 	fldMetadata         = "metadata"
@@ -80,14 +79,11 @@ output:
 		Field(service.NewStringField(fldQueueManagerName).
 			Description("The IBM MQ Queue Manager name to connect to").
 			Example("QM1")).
-		Field(service.NewStringField(fldOutputQueueName).
+		Field(service.NewInterpolatedStringField(fldOutputQueueName).
 			Description("The IBM MQ queue name to write messages to").
 			Example("DEV.QUEUE.1").
-			Default("")).
-		Field(service.NewInterpolatedStringField(fldQueueExpr).
-			Description("An expression to dynamically determine the queue name based on message content. If set, this overrides the static queue_name for each message.").
 			Example(`${! meta("target_queue") }`).
-			Optional()).
+			Default("")).
 		Field(service.NewStringField(fldChannelName).
 			Description("The IBM MQ channel name for client connections").
 			Example("DEV.APP.SVRCONN")).
@@ -163,7 +159,7 @@ output:
 
 type output struct {
 	outputConfig *ibmmq.OutputConfig
-	queueExpr    *service.InterpolatedString
+	queueExpr    spec.Expression
 	output       *ibmmq.Output
 	logger       *service.Logger
 	mgr          *service.Resources
@@ -180,20 +176,9 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		return nil, bp, 0, fmt.Errorf("failed to get queue_manager_name: %w", err)
 	}
 
-	queueName, _ := conf.FieldString(fldOutputQueueName)
-
-	// Get dynamic queue expression if provided
-	var queueExpr *service.InterpolatedString
-	if conf.Contains(fldQueueExpr) {
-		queueExpr, err = conf.FieldInterpolatedString(fldQueueExpr)
-		if err != nil {
-			return nil, bp, 0, fmt.Errorf("failed to parse queue_expr: %w", err)
-		}
-	}
-
-	// Validate that we have either queue_name or queue_expr
-	if queueName == "" && queueExpr == nil {
-		return nil, bp, 0, fmt.Errorf("either queue_name or queue_expr must be specified")
+	queueName, err := conf.FieldInterpolatedString(fldOutputQueueName)
+	if err != nil {
+		return nil, bp, 0, fmt.Errorf("failed to get queue_name: %w", err)
 	}
 
 	channelName, err := conf.FieldString(fldChannelName)
@@ -283,14 +268,13 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 			Password:         password,
 			ApplicationName:  applicationName,
 		},
-		QueueName:  queueName,
+		QueueExpr:  wombatwisdom.NewInterpolatedExpression(queueName),
 		NumThreads: numThreads,
 		Metadata:   metaConfig,
 	}
 
 	o := &output{
 		outputConfig: outputConfig,
-		queueExpr:    queueExpr,
 		logger:       mgr.Logger(),
 		mgr:          mgr,
 		writeTimeout: writeTimeout,

@@ -68,10 +68,10 @@ func TestIBMMQIntegration(t *testing.T) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		// Create output config
+		// Create output config with interpolated queue_name
 		outputConf := fmt.Sprintf(`
 queue_manager_name: QM1
-queue_name: DEV.QUEUE.1
+queue_name: 'DEV.QUEUE.${! json("queue_num") }'
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
@@ -114,9 +114,13 @@ enable_auto_ack: false
 		require.NoError(t, err)
 		defer input.Close(ctx)
 
-		// Send a test message
+		// Send a test message with queue_num in JSON structure
 		testMessage := service.NewMessage([]byte("Hello IBM MQ!"))
 		testMessage.MetaSetMut("test_id", "123")
+		testMessage.SetStructured(map[string]interface{}{
+			"queue_num": 1,
+			"content":   "Hello IBM MQ!",
+		})
 
 		batch := service.MessageBatch{testMessage}
 		err = output.WriteBatch(ctx, batch)
@@ -131,11 +135,11 @@ enable_auto_ack: false
 		require.NotNil(t, receivedBatch)
 		require.Len(t, receivedBatch, 1)
 
-		// Verify message content
+		// Verify message content - it should be the JSON structure
 		receivedMsg := receivedBatch[0]
 		content, err := receivedMsg.AsBytes()
 		require.NoError(t, err)
-		assert.Equal(t, "Hello IBM MQ!", string(content))
+		assert.JSONEq(t, `{"content":"Hello IBM MQ!","queue_num":1}`, string(content))
 
 		// Acknowledge the message
 		err = ackFunc(ctx, nil)
