@@ -263,4 +263,339 @@ enable_auto_ack: true
 
 		assert.GreaterOrEqual(t, messagesRead, 5, "Should have read all 5 messages")
 	})
+
+	t.Run("batch_size_exact_match", func(t *testing.T) {
+		connectionString, _ := startIBMMQContainer(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		mgr := service.MockResources()
+
+		// Create output
+		outputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+`, connectionString)
+		outputSpec := outputConfig()
+		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
+		require.NoError(t, err)
+
+		output, bp, maxInFlight, err := newOutput(parsedOutputConf, mgr)
+		require.NoError(t, err)
+		assert.Equal(t, 1, bp.Count)
+		assert.Equal(t, 1, maxInFlight)
+
+		err = output.Connect(ctx)
+		require.NoError(t, err)
+		defer output.Close(ctx)
+
+		// Send exactly 5 messages
+		batchSize := 5
+		for i := 0; i < batchSize; i++ {
+			msg := service.NewMessage([]byte(fmt.Sprintf("batch_test_message_%d", i)))
+			batch := service.MessageBatch{msg}
+			err = output.WriteBatch(ctx, batch)
+			require.NoError(t, err)
+		}
+
+		// Create input with batch_size = 5
+		inputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+batch_size: %d
+wait_time: 1s
+enable_auto_ack: true
+`, connectionString, batchSize)
+
+		inputSpec := inputConfig()
+		parsedInputConf, err := inputSpec.ParseYAML(inputConf, nil)
+		require.NoError(t, err)
+
+		input, err := newInput(parsedInputConf, mgr)
+		require.NoError(t, err)
+
+		err = input.Connect(ctx)
+		require.NoError(t, err)
+		defer input.Close(ctx)
+
+		// Read batch - should get exactly 5 messages
+		readCtx, readCancel := context.WithTimeout(ctx, 3*time.Second)
+		receivedBatch, _, err := input.ReadBatch(readCtx)
+		readCancel()
+
+		require.NoError(t, err)
+		assert.Equal(t, batchSize, len(receivedBatch), "Should receive exact batch size")
+
+		// Verify message contents
+		for i, msg := range receivedBatch {
+			expectedContent := fmt.Sprintf("batch_test_message_%d", i)
+			content, err := msg.AsBytes()
+			require.NoError(t, err)
+			actualContent := string(content)
+			assert.Equal(t, expectedContent, actualContent, "Message %d content mismatch", i)
+		}
+	})
+
+	t.Run("batch_wait_timeout", func(t *testing.T) {
+		connectionString, _ := startIBMMQContainer(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		mgr := service.MockResources()
+
+		// Create output
+		outputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+`, connectionString)
+		outputSpec := outputConfig()
+		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
+		require.NoError(t, err)
+
+		output, _, _, err := newOutput(parsedOutputConf, mgr)
+		require.NoError(t, err)
+
+		err = output.Connect(ctx)
+		require.NoError(t, err)
+		defer output.Close(ctx)
+
+		// Send only 3 messages (less than batch_size)
+		for i := 0; i < 3; i++ {
+			msg := service.NewMessage([]byte(fmt.Sprintf("timeout_test_message_%d", i)))
+			batch := service.MessageBatch{msg}
+			err = output.WriteBatch(ctx, batch)
+			require.NoError(t, err)
+		}
+
+		// Create input with batch_size = 5, wait_time = 2s
+		inputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+batch_size: 5
+wait_time: 2s
+enable_auto_ack: true
+`, connectionString)
+
+		inputSpec := inputConfig()
+		parsedInputConf, err := inputSpec.ParseYAML(inputConf, nil)
+		require.NoError(t, err)
+
+		input, err := newInput(parsedInputConf, mgr)
+		require.NoError(t, err)
+
+		err = input.Connect(ctx)
+		require.NoError(t, err)
+		defer input.Close(ctx)
+
+		// Read batch - should wait for wait_time trying to fill to batch_size, then return partial batch
+		startTime := time.Now()
+		readCtx, readCancel := context.WithTimeout(ctx, 5*time.Second)
+		receivedBatch, _, err := input.ReadBatch(readCtx)
+		readCancel()
+		elapsed := time.Since(startTime)
+
+		// Should get partial batch without error
+		require.NoError(t, err, "Should successfully read partial batch")
+		assert.Equal(t, 3, len(receivedBatch), "Should receive partial batch of 3 messages")
+
+		// Check that it waited approximately the wait_time before returning partial batch
+		assert.GreaterOrEqual(t, elapsed, 2*time.Second, "Should wait at least wait_time")
+		assert.LessOrEqual(t, elapsed, 3*time.Second, "Should not wait much longer than wait_time")
+
+		// Verify message contents
+		for i, msg := range receivedBatch {
+			expectedContent := fmt.Sprintf("timeout_test_message_%d", i)
+			content, err := msg.AsBytes()
+			require.NoError(t, err)
+			actualContent := string(content)
+			assert.Equal(t, expectedContent, actualContent, "Message %d content mismatch", i)
+		}
+	})
+
+	t.Run("multiple_complete_batches", func(t *testing.T) {
+		connectionString, _ := startIBMMQContainer(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		mgr := service.MockResources()
+
+		// Create output
+		outputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+`, connectionString)
+		outputSpec := outputConfig()
+		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
+		require.NoError(t, err)
+
+		output, _, _, err := newOutput(parsedOutputConf, mgr)
+		require.NoError(t, err)
+
+		err = output.Connect(ctx)
+		require.NoError(t, err)
+		defer output.Close(ctx)
+
+		// Send 10 messages
+		totalMessages := 10
+		for i := 0; i < totalMessages; i++ {
+			msg := service.NewMessage([]byte(fmt.Sprintf("multi_batch_message_%d", i)))
+			batch := service.MessageBatch{msg}
+			err = output.WriteBatch(ctx, batch)
+			require.NoError(t, err)
+		}
+
+		// Create input with batch_size = 3
+		batchSize := 3
+		inputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+batch_size: %d
+wait_time: 1s
+enable_auto_ack: true
+`, connectionString, batchSize)
+
+		inputSpec := inputConfig()
+		parsedInputConf, err := inputSpec.ParseYAML(inputConf, nil)
+		require.NoError(t, err)
+
+		input, err := newInput(parsedInputConf, mgr)
+		require.NoError(t, err)
+
+		err = input.Connect(ctx)
+		require.NoError(t, err)
+		defer input.Close(ctx)
+
+		// Read multiple batches
+		totalRead := 0
+		batchCount := 0
+		expectedBatches := 4 // 3 complete batches of 3 + 1 partial batch of 1
+
+		for totalRead < totalMessages && batchCount < expectedBatches {
+			readCtx, readCancel := context.WithTimeout(ctx, 3*time.Second)
+			receivedBatch, _, err := input.ReadBatch(readCtx)
+			readCancel()
+
+			if err != nil {
+				break
+			}
+
+			batchCount++
+			totalRead += len(receivedBatch)
+
+			// First 3 batches should be complete (size = 3)
+			if batchCount <= 3 {
+				assert.Equal(t, batchSize, len(receivedBatch),
+					"Batch %d should be complete with %d messages", batchCount, batchSize)
+			} else {
+				// Last batch should be partial (size = 1)
+				assert.Equal(t, 1, len(receivedBatch),
+					"Last batch should contain remaining message")
+			}
+		}
+
+		assert.Equal(t, totalMessages, totalRead, "Should read all %d messages", totalMessages)
+		assert.Equal(t, expectedBatches, batchCount, "Should have %d batches", expectedBatches)
+	})
+
+	t.Run("batch_size_one_behaves_as_single_message", func(t *testing.T) {
+		connectionString, _ := startIBMMQContainer(t)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		mgr := service.MockResources()
+
+		// Create output
+		outputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+`, connectionString)
+		outputSpec := outputConfig()
+		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
+		require.NoError(t, err)
+
+		output, _, _, err := newOutput(parsedOutputConf, mgr)
+		require.NoError(t, err)
+
+		err = output.Connect(ctx)
+		require.NoError(t, err)
+		defer output.Close(ctx)
+
+		// Send 3 messages
+		for i := 0; i < 3; i++ {
+			msg := service.NewMessage([]byte(fmt.Sprintf("single_test_message_%d", i)))
+			batch := service.MessageBatch{msg}
+			err = output.WriteBatch(ctx, batch)
+			require.NoError(t, err)
+		}
+
+		// Create input with batch_size = 1 (default)
+		inputConf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: %s
+user_id: app
+password: passw0rd
+enable_auto_ack: true
+`, connectionString)
+
+		inputSpec := inputConfig()
+		parsedInputConf, err := inputSpec.ParseYAML(inputConf, nil)
+		require.NoError(t, err)
+
+		input, err := newInput(parsedInputConf, mgr)
+		require.NoError(t, err)
+
+		err = input.Connect(ctx)
+		require.NoError(t, err)
+		defer input.Close(ctx)
+
+		// Read messages one by one
+		for i := 0; i < 3; i++ {
+			readCtx, readCancel := context.WithTimeout(ctx, 2*time.Second)
+			receivedBatch, _, err := input.ReadBatch(readCtx)
+			readCancel()
+
+			require.NoError(t, err)
+			assert.Equal(t, 1, len(receivedBatch), "Batch size 1 should return single message")
+
+			expectedContent := fmt.Sprintf("single_test_message_%d", i)
+			content, err := receivedBatch[0].AsBytes()
+			require.NoError(t, err)
+			actualContent := string(content)
+			assert.Equal(t, expectedContent, actualContent, "Message %d content mismatch", i)
+		}
+	})
 }

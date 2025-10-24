@@ -1,6 +1,7 @@
 package ibmmq
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -196,7 +197,94 @@ connection_name: localhost(1414)
 		// Check input defaults
 		i := inputObj.(*input)
 		assert.Equal(t, "wombat", i.inputConfig.ApplicationName)
-		assert.Equal(t, 1, i.inputConfig.NumWorkers)
 		assert.Equal(t, 1, i.inputConfig.BatchSize)
+		assert.Equal(t, "5s", i.inputConfig.BatchWaitTime)
+	})
+
+	t.Run("config with batching parameters and policy", func(t *testing.T) {
+		conf := `
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: localhost(1414)
+batch_size: 25
+wait_time: 30s
+`
+		parsedConf, err := spec.ParseYAML(conf, nil)
+		require.NoError(t, err)
+
+		// Create input and verify batch configuration
+		mgr := service.MockResources()
+		inputObj, err := newInput(parsedConf, mgr)
+		require.NoError(t, err)
+		require.NotNil(t, inputObj)
+
+		// Check that BatchSize is properly configured
+		i := inputObj.(*input)
+		assert.Equal(t, 25, i.inputConfig.BatchSize)
+		assert.Equal(t, "30s", i.inputConfig.BatchWaitTime)
+
+		// Verify BatchPolicy reflects batch_size
+		bp := service.BatchPolicy{Count: 1}
+		batchSize, _ := parsedConf.FieldInt(fldBatchSize)
+		if batchSize <= 0 {
+			batchSize = 1
+		}
+		bp.Count = batchSize
+		assert.Equal(t, 25, bp.Count)
+	})
+
+	t.Run("batch_wait_time duration parsing", func(t *testing.T) {
+		testCases := []struct {
+			waitTime     string
+			expectedTime string
+		}{
+			{"100ms", "100ms"},
+			{"1s", "1s"},
+			{"5m", "5m0s"},
+			{"1h30m", "1h30m0s"},
+		}
+
+		for _, tc := range testCases {
+			conf := fmt.Sprintf(`
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: localhost(1414)
+wait_time: %s
+`, tc.waitTime)
+			parsedConf, err := spec.ParseYAML(conf, nil)
+			require.NoError(t, err)
+
+			mgr := service.MockResources()
+			inputObj, err := newInput(parsedConf, mgr)
+			require.NoError(t, err)
+
+			i := inputObj.(*input)
+			assert.Equal(t, tc.expectedTime, i.inputConfig.BatchWaitTime,
+				"Expected wait_time %s to be parsed as %s", tc.waitTime, tc.expectedTime)
+		}
+	})
+
+	t.Run("large batch_size configuration", func(t *testing.T) {
+		conf := `
+queue_manager_name: QM1
+queue_name: DEV.QUEUE.1
+channel_name: DEV.APP.SVRCONN
+connection_name: localhost(1414)
+batch_size: 1000
+wait_time: 1m
+`
+		parsedConf, err := spec.ParseYAML(conf, nil)
+		require.NoError(t, err)
+
+		mgr := service.MockResources()
+		inputObj, err := newInput(parsedConf, mgr)
+		require.NoError(t, err)
+		require.NotNil(t, inputObj)
+
+		i := inputObj.(*input)
+		assert.Equal(t, 1000, i.inputConfig.BatchSize)
+		assert.Equal(t, "1m0s", i.inputConfig.BatchWaitTime)
 	})
 }

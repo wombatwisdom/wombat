@@ -268,9 +268,8 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 			Password:         password,
 			ApplicationName:  applicationName,
 		},
-		QueueExpr:  wombatwisdom.NewInterpolatedExpression(queueName),
-		NumThreads: numThreads,
-		Metadata:   metaConfig,
+		QueueExpr: wombatwisdom.NewInterpolatedExpression(queueName),
+		Metadata:  metaConfig,
 	}
 
 	o := &output{

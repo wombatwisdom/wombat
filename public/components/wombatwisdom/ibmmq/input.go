@@ -275,13 +275,9 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			Password:         password,
 			ApplicationName:  applicationName,
 		},
-		QueueName:    queueName,
-		NumWorkers:   numWorkers,
-		BatchSize:    batchSize,
-		PollInterval: pollInterval.String(),
-		NumThreads:   numThreads,
-		WaitTime:     waitTime.String(),
-		BatchCount:   batchCount,
+		QueueName:     queueName,
+		BatchSize:     batchSize,
+		BatchWaitTime: waitTime.String(),
 	}
 
 	bp.Count = batchSize
@@ -328,7 +324,7 @@ func (i *input) ReadBatch(closeAtLeisureCtx context.Context) (service.MessageBat
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
-	
+
 	// Return the actual ack function for at-least-once delivery
 	return batch, func(closeNowCtx context.Context, err error) error { return cb(closeNowCtx, err) }, nil
 }

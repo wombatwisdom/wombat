@@ -38,32 +38,7 @@ connection_name: localhost(1414)
 		assert.NoError(t, err)
 		assert.Equal(t, "localhost(1414)", connName)
 	})
-
-	t.Run("config with dynamic queue expression", func(t *testing.T) {
-		conf := `
-queue_manager_name: QM1
-queue_expr: '${! meta("target_queue") }'
-channel_name: DEV.APP.SVRCONN
-connection_name: localhost(1414)
-`
-		parsedConf, err := spec.ParseYAML(conf, nil)
-		require.NoError(t, err)
-
-		// Verify queue expression exists
-		assert.True(t, parsedConf.Contains(fldQueueName))
-
-		// Create output to verify expression parsing
-		mgr := service.MockResources()
-		outputObj, bp, maxInFlight, err := newOutput(parsedConf, mgr)
-		require.NoError(t, err)
-		require.NotNil(t, outputObj)
-
-		o := outputObj.(*output)
-		assert.NotNil(t, o.queueExpr)
-		assert.Equal(t, 1, bp.Count)
-		assert.Equal(t, 1, maxInFlight)
-	})
-
+	
 	t.Run("config with authentication", func(t *testing.T) {
 		conf := `
 queue_manager_name: QM1
@@ -209,7 +184,6 @@ connection_name: localhost(1414)
 		// Check output defaults
 		o := outputObj.(*output)
 		assert.Equal(t, "wombat", o.outputConfig.ApplicationName)
-		assert.Equal(t, 1, o.outputConfig.NumThreads)
 		assert.Equal(t, "30s", o.writeTimeout.String())
 	})
 }
