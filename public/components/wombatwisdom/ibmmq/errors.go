@@ -15,8 +15,7 @@ func errorAdapter(err error) error {
 	case errors.Is(err, spec.ErrNotConnected):
 		return service.ErrNotConnected
 	case errors.Is(err, spec.ErrNoData):
-		// MQTT is a persistent connection, no data is temporary
-		// This shouldn't normally happen, but if it does, treat as temporary
+		// MQTT is a persistent connection
 		return nil // nil -> continue processing. service.ErrNoData -> stop processing
 	case errors.Is(err, spec.ErrAlreadyConnected):
 		// Already connected is not an error for Benthos
