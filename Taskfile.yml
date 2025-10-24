@@ -30,8 +30,8 @@ tasks:
   setup:
     desc: Setup development environment
     cmds:
-      - go install github.com/goreleaser/goreleaser@latest
-      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+      - go install github.com/goreleaser/goreleaser/v2@latest
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.5.0
 
   godir:
     cmd: which go

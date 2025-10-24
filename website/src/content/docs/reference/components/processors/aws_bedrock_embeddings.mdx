@@ -1,0 +1,197 @@
+---
+title: aws_bedrock_embeddings
+kind: processor
+---
+import { Aside } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Computes vector embeddings on text, using the AWS Bedrock API.
+
+Introduced in version 4.37.0.
+
+
+<Tabs>
+<TabItem label="Common">
+```yml
+# Common config fields, showing default values
+label: ""
+aws_bedrock_embeddings:
+  model: amazon.titan-embed-text-v1 # No default (required)
+  text: "" # No default (optional)
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
+label: ""
+aws_bedrock_embeddings:
+  region: "" # No default (optional)
+  endpoint: "" # No default (optional)
+  credentials:
+    profile: "" # No default (optional)
+    id: "" # No default (optional)
+    secret: "" # No default (optional)
+    token: "" # No default (optional)
+    from_ec2_role: false # No default (optional)
+    role: "" # No default (optional)
+    role_external_id: "" # No default (optional)
+  model: amazon.titan-embed-text-v1 # No default (required)
+  text: "" # No default (optional)
+```
+</TabItem>
+</Tabs>
+
+This processor sends text to your chosen large language model (LLM) and computes vector embeddings, using the AWS Bedrock API.
+For more information, see the [AWS Bedrock documentation](https://docs.aws.amazon.com/bedrock/latest/userguide).
+
+## Examples
+
+<Tabs>
+<TabItem label="Store embedding vectors in Clickhouse">
+Compute embeddings for some generated data and store it within [Clickhouse](https://clickhouse.com/)
+
+```yaml
+input:
+  generate:
+    interval: 1s
+    mapping: |
+      root = {"text": fake("paragraph")}
+pipeline:
+  processors:
+  - branch:
+      request_map: |
+        root = this.text
+      processors:
+      - aws_bedrock_embeddings:
+          model: amazon.titan-embed-text-v1
+      result_map: |
+        root.embeddings = this
+output:
+  sql_insert:
+    driver: clickhouse
+    dsn: "clickhouse://localhost:9000"
+    table: searchable_text
+    columns: ["id", "text", "vector"]
+    args_mapping: "root = [uuid_v4(), this.text, this.embeddings]"
+
+```
+
+</TabItem>
+</Tabs>
+
+## Fields
+
+### `region`
+
+The AWS region to target.
+
+
+*Type*: `string`
+
+
+### `endpoint`
+
+Allows you to specify a custom endpoint for the AWS API.
+
+
+*Type*: `string`
+
+
+### `credentials`
+
+Optional manual configuration of AWS credentials to use. More information can be found in xref:guides:cloud/aws.adoc[].
+
+
+*Type*: `object`
+
+
+### `credentials.profile`
+
+A profile from `~/.aws/credentials` to use.
+
+
+*Type*: `string`
+
+
+### `credentials.id`
+
+The ID of credentials to use.
+
+
+*Type*: `string`
+
+
+### `credentials.secret`
+
+The secret for the credentials being used.
+<Aside type="caution" title="Sensitive Information">
+	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
+</Aside>
+
+
+
+*Type*: `string`
+
+
+### `credentials.token`
+
+The token for the credentials being used, required when using short term credentials.
+
+
+*Type*: `string`
+
+
+### `credentials.from_ec2_role`
+
+Use the credentials of a host EC2 machine configured to assume [an IAM role associated with the instance](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_switch-role-ec2.html).
+
+
+*Type*: `bool`
+
+Requires version 4.2.0 or newer
+
+### `credentials.role`
+
+A role ARN to assume.
+
+
+*Type*: `string`
+
+
+### `credentials.role_external_id`
+
+An external ID to provide when assuming a role.
+
+
+*Type*: `string`
+
+
+### `model`
+
+The model ID to use. For a full list see the [AWS Bedrock documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/model-ids.html).
+
+
+*Type*: `string`
+
+
+```yml
+# Examples
+
+model: amazon.titan-embed-text-v1
+
+model: amazon.titan-embed-text-v2:0
+
+model: cohere.embed-english-v3
+
+model: cohere.embed-multilingual-v3
+```
+
+### `text`
+
+The prompt you want to generate a response for. By default, the processor submits the entire payload as a string.
+
+
+*Type*: `string`
+
+
+

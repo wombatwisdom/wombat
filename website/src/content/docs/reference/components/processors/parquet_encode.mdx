@@ -16,7 +16,8 @@ Introduced in version 4.4.0.
 # Common config fields, showing default values
 label: ""
 parquet_encode:
-  schema: [] # No default (required)
+  schema: [] # No default (optional)
+  schema_metadata: ""
   default_compression: uncompressed
 ```
 </TabItem>
@@ -25,7 +26,8 @@ parquet_encode:
 # Advanced config fields, showing default values
 label: ""
 parquet_encode:
-  schema: [] # No default (required)
+  schema: [] # No default (optional)
+  schema_metadata: ""
   default_compression: uncompressed
   default_encoding: DELTA_LENGTH_BYTE_ARRAY
 ```
@@ -142,6 +144,15 @@ fields:
   - name: bar
     type: BYTE_ARRAY
 ```
+
+### `schema_metadata`
+
+Optionally specify a metadata field containing a schema definition to use for encoding instead of a statically defined schema. For batches of messages, the first message's schema will be applied to all subsequent messages of the batch.
+
+
+*Type*: `string`
+
+*Default*: `""`
 
 ### `default_compression`
 
