@@ -109,7 +109,7 @@ To build and test with actual IBM MQ support, you need the IBM MQ client librari
 
 **Without IBM MQ client (stub implementation):**
 ```bash
-go build ./...
+task build
 ```
 This is the default build mode and doesn't require any IBM MQ libraries.
 
@@ -121,7 +121,7 @@ export CGO_CFLAGS="-I${MQ_HOME}/inc"
 export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
 
 # Build with mqclient tag
-go build -tags mqclient ./...
+task build:mq
 ```
 
 #### Testing IBM MQ Components
