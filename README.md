@@ -99,56 +99,42 @@ To build and test with actual IBM MQ support, you need the IBM MQ client librari
 
 3. **Set environment variables:**
    ```bash
-   export MQ_HOME="$HOME/mqclient"
+   export MQ_HOME="$HOME/where-you-stored-the-mq-lib"
    export CGO_ENABLED=1
    export CGO_CFLAGS="-I${MQ_HOME}/inc"
    export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
    ```
 
-#### Building with IBM MQ
+### Building with IBM MQ support
 
-**Default build (without IBM MQ):**
+**Without IBM MQ client (stub implementation):**
 ```bash
-go build ./cmd/wombat
+go build ./...
 ```
+This is the default build mode and doesn't require any IBM MQ libraries.
 
-**With IBM MQ support:**
+**With IBM MQ client support:**
 ```bash
-# Ensure environment variables are set (see above)
-go build -tags mqclient ./cmd/wombat
+# Ensure environment variables are set (see setup instructions above)
+export CGO_ENABLED=1
+export CGO_CFLAGS="-I${MQ_HOME}/inc"
+export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
+
+# Build with mqclient tag
+go build -tags mqclient ./...
 ```
 
 #### Testing IBM MQ Components
 
-Run tests with the mqclient tag and proper CGO flags:
-
 ```bash
-# Unit tests
-go test -tags mqclient ./public/components/wombatwisdom/ibmmq
+# Ensure MQ libraries are set up (see above)
+export CGO_ENABLED=1
+export CGO_CFLAGS="-I${MQ_HOME}/inc"
+export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
 
-# Integration tests (requires IBM MQ container)
-go test -tags mqclient -run TestIBMMQIntegration ./public/components/wombatwisdom/ibmmq
+# Run tests with mqclient tag
+task test:all
 ```
-
-#### IDE Configuration (JetBrains GoLand)
-
-To work with IBM MQ components in GoLand:
-
-1. **For Run/Debug Configurations:**
-   - Go to `Run` → `Edit Configurations...`
-   - In "Go tool arguments" add: `-tags mqclient`
-   - In "Environment variables" add:
-     ```
-     CGO_ENABLED=1
-     CGO_CFLAGS=-I/home/your-user/mqclient/inc
-     CGO_LDFLAGS=-L/home/your-user/mqclient/lib64 -Wl,-rpath=/home/your-user/mqclient/lib64
-     ```
-
-2. **For global build tags:**
-   - Go to `File` → `Settings` → `Go` → `Build Tags & Vendoring`
-   - Add `mqclient` to the "Build tags" field
-
-Without the `mqclient` tag, the IBM MQ component files will appear grayed out in the IDE, and the components will use stub implementations.
 
 ## Honorable Mentions
 I can't in all good faith take credit for the enormous amount of work that went into this project. Most of that is on Ash
