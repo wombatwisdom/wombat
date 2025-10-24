@@ -1,5 +1,5 @@
 ---
-title: ww_ibm_mq
+title: ibm_mq
 kind: input
 ---
 import { Aside } from '@astrojs/starlight/components';
@@ -11,7 +11,7 @@ Connects to IBM MQ queue managers and consumes messages from specified queues.
 # Config fields, showing default values
 input:
   label: ""
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1 # No default (required)
     queue_name: DEV.QUEUE.1 # No default (required)
     channel_name: DEV.APP.SVRCONN # No default (required)
@@ -57,7 +57,7 @@ If message loss is acceptable, you can set `enable_auto_ack: true` for at-most-o
 
 ```yaml
 input:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN
@@ -69,7 +69,7 @@ input:
 
 ```yaml
 input:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN

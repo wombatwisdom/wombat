@@ -81,7 +81,7 @@ docker run --rm -p 4195:4195 ghcr.io/wombatwisdom/wombat \
 
 ### IBM MQ Support
 
-Wombat includes optional IBM MQ support through the `ww_ibm_mq` input and output components. Since IBM MQ requires proprietary client libraries, this feature is disabled by default and uses stub implementations for broader compatibility.
+Wombat includes optional IBM MQ support through the `ibm_mq` input and output components. Since IBM MQ requires proprietary client libraries, this feature is disabled by default and uses stub implementations for broader compatibility.
 
 #### Setting up IBM MQ Client Libraries
 

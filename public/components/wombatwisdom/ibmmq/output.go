@@ -43,7 +43,7 @@ go build -tags mqclient
 
 ` + "```yaml" + `
 output:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN
@@ -54,7 +54,7 @@ output:
 
 ` + "```yaml" + `
 output:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_expr: '${! meta("target_queue") }'
     channel_name: DEV.APP.SVRCONN
@@ -65,7 +65,7 @@ output:
 
 ` + "```yaml" + `
 output:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN

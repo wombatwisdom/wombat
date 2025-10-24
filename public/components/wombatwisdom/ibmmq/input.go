@@ -65,7 +65,7 @@ If message loss is acceptable, you can set ` + "`enable_auto_ack: true`" + ` for
 
 ` + "```yaml" + `
 input:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN
@@ -77,7 +77,7 @@ input:
 
 ` + "```yaml" + `
 input:
-  ww_ibm_mq:
+  ibm_mq:
     queue_manager_name: QM1
     queue_name: DEV.QUEUE.1
     channel_name: DEV.APP.SVRCONN
