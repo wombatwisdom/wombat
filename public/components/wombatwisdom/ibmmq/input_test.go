@@ -129,40 +129,14 @@ queue_manager_name: QM1
 queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: localhost(1414)
-num_workers: 4
 batch_size: 10
-poll_interval: 5s
-num_threads: 2
-wait_time: 10s
-batch_count: 5
-enable_auto_ack: true
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
 
-		numWorkers, err := parsedConf.FieldInt(fldNumWorkers)
-		assert.NoError(t, err)
-		assert.Equal(t, 4, numWorkers)
-
 		batchSize, err := parsedConf.FieldInt(fldBatchSize)
 		assert.NoError(t, err)
 		assert.Equal(t, 10, batchSize)
-
-		pollInterval, err := parsedConf.FieldDuration(fldPollInterval)
-		assert.NoError(t, err)
-		assert.Equal(t, "5s", pollInterval.String())
-
-		numThreads, err := parsedConf.FieldInt(fldNumThreads)
-		assert.NoError(t, err)
-		assert.Equal(t, 2, numThreads)
-
-		waitTime, err := parsedConf.FieldDuration(fldWaitTime)
-		assert.NoError(t, err)
-		assert.Equal(t, "10s", waitTime.String())
-
-		batchCount, err := parsedConf.FieldInt(fldBatchCount)
-		assert.NoError(t, err)
-		assert.Equal(t, 5, batchCount)
 
 		assert.NoError(t, err)
 	})
@@ -200,7 +174,7 @@ connection_name: localhost(1414)
 		i := inputObj.(*input)
 		assert.Equal(t, "wombat", i.inputConfig.ApplicationName)
 		assert.Equal(t, 1, i.inputConfig.BatchSize)
-		assert.Equal(t, "5s", i.inputConfig.BatchWaitTime)
+		assert.Equal(t, "100ms", i.inputConfig.BatchWaitTime)
 	})
 
 	t.Run("config with batching parameters and policy", func(t *testing.T) {
@@ -210,7 +184,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: localhost(1414)
 batch_size: 25
-wait_time: 30s
+batch_wait_time: 30s
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
@@ -253,7 +227,7 @@ queue_manager_name: QM1
 queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: localhost(1414)
-wait_time: %s
+batch_wait_time: %s
 `, tc.waitTime)
 			parsedConf, err := spec.ParseYAML(conf, nil)
 			require.NoError(t, err)
@@ -264,7 +238,7 @@ wait_time: %s
 
 			i := inputObj.(*input)
 			assert.Equal(t, tc.expectedTime, i.inputConfig.BatchWaitTime,
-				"Expected wait_time %s to be parsed as %s", tc.waitTime, tc.expectedTime)
+				"Expected batch_wait_time %s to be parsed as %s", tc.waitTime, tc.expectedTime)
 		}
 	})
 
@@ -275,7 +249,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: localhost(1414)
 batch_size: 1000
-wait_time: 1m
+batch_wait_time: 1m
 `
 		parsedConf, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)

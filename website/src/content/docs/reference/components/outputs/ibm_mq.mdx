@@ -7,8 +7,25 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Pushes messages to IBM MQ queues.
 
+
+<Tabs>
+<TabItem label="Common">
 ```yml
-# Config fields, showing default values
+# Common config fields, showing default values
+output:
+  label: ""
+  ibm_mq:
+    queue_manager_name: QM1 # No default (required)
+    queue_name: ""
+    channel_name: DEV.APP.SVRCONN # No default (required)
+    connection_name: localhost(1414) # No default (required)
+    user_id: ""
+    password: ""
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
 output:
   label: ""
   ibm_mq:
@@ -19,8 +36,9 @@ output:
     user_id: ""
     password: ""
     application_name: wombat
-    num_threads: 1
-    write_timeout: 30s
+    format: MQSTR
+    ccsid: "1208"
+    encoding: "546"
     metadata:
       patterns: []
       invert: false
@@ -33,6 +51,8 @@ output:
       ssl_peer_name: ""
       fips_required: false
 ```
+</TabItem>
+</Tabs>
 
 Pushes messages to IBM MQ queues.
 
@@ -63,7 +83,7 @@ output:
 output:
   ibm_mq:
     queue_manager_name: QM1
-    queue_expr: '${! meta("target_queue") }'
+    queue_name: 'DEV.QUEUE.${! json("queue_num") }'
     channel_name: DEV.APP.SVRCONN
     connection_name: localhost(1414)
 ```
@@ -83,12 +103,38 @@ output:
       key_repository: /opt/mqm/ssl/key
 ```
 
+### Example: With metadata filtering
+
+Filter which metadata fields are sent as message properties to IBM MQ. Use patterns with wildcards to match field names.
+
+```yaml
+output:
+  ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+    metadata:
+      patterns:
+        - "app_*"      # Include all fields starting with 'app_'
+        - "user_id"    # Include the 'user_id' field
+        - "request_*"  # Include all fields starting with 'request_'
+      invert: false    # Include only matching patterns (set to true to exclude them instead)
+```
+
+In this example, only metadata fields matching the patterns will be sent to IBM MQ. For instance:
+- `app_version: 1.0.0` → Included (matches app_*)
+- `user_id: john.doe` → Included (exact match)
+- `internal_trace_id: xyz` → Excluded (doesn't match any pattern)
+
+Set `invert: true` to reverse the logic and exclude matching patterns instead.
+
 
 ## Fields
 
 ### `queue_manager_name`
 
-The IBM MQ Queue Manager name to connect to
+The queue manager name to connect to
 
 
 *Type*: `string`
@@ -102,7 +148,7 @@ queue_manager_name: QM1
 
 ### `queue_name`
 
-The IBM MQ queue name to write messages to
+The queue name to write messages to
 This field supports interpolation functions.
 
 
@@ -120,7 +166,7 @@ queue_name: ${! meta("target_queue") }
 
 ### `channel_name`
 
-The IBM MQ channel name for client connections
+The channel name for client connections
 
 
 *Type*: `string`
@@ -134,7 +180,7 @@ channel_name: DEV.APP.SVRCONN
 
 ### `connection_name`
 
-The IBM MQ connection name in the format hostname(port)
+The connection name in the format hostname(port)
 
 
 *Type*: `string`
@@ -148,7 +194,7 @@ connection_name: localhost(1414)
 
 ### `user_id`
 
-Optional: The IBM MQ user ID for authentication
+Optional: The user ID for authentication
 
 
 *Type*: `string`
@@ -157,7 +203,7 @@ Optional: The IBM MQ user ID for authentication
 
 ### `password`
 
-Optional: The IBM MQ user password for authentication
+Optional: The user password for authentication
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -177,23 +223,32 @@ Optional: Application name for MQ connection identification
 
 *Default*: `"wombat"`
 
-### `num_threads`
+### `format`
 
-Number of parallel queue connections to use
-
-
-*Type*: `int`
-
-*Default*: `1`
-
-### `write_timeout`
-
-Timeout for write operations
+The format of the message data (e.g., 'MQSTR' for string, 'MQHRF2' for RFH2 headers)
 
 
 *Type*: `string`
 
-*Default*: `"30s"`
+*Default*: `"MQSTR"`
+
+### `ccsid`
+
+The Coded Character Set Identifier for the message. Common values: '1208' (UTF-8), '819' (ISO-8859-1)
+
+
+*Type*: `string`
+
+*Default*: `"1208"`
+
+### `encoding`
+
+The encoding of numeric data in the message. Common values: '546' (Linux/Windows little-endian), '273' (big-endian)
+
+
+*Type*: `string`
+
+*Default*: `"546"`
 
 ### `metadata`
 

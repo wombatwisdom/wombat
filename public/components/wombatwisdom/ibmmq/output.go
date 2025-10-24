@@ -3,8 +3,6 @@ package ibmmq
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"github.com/redpanda-data/benthos/v4/public/service"
 	ibmmq "github.com/wombatwisdom/components/bundles/ibm-mq"
 	"github.com/wombatwisdom/components/framework/spec"
@@ -13,12 +11,13 @@ import (
 )
 
 const (
-	fldOutputQueueName  = "queue_name"
-	fldOutputNumThreads = "num_threads"
-	fldWriteTimeout     = "write_timeout"
-	fldMetadata         = "metadata"
-	fldMetaPatterns     = "patterns"
-	fldMetaInvert       = "invert"
+	fldOutputQueueName = "queue_name"
+	fldMetadata        = "metadata"
+	fldMetaPatterns    = "patterns"
+	fldMetaInvert      = "invert"
+	fldFormat          = "format"
+	fldCcsid           = "ccsid"
+	fldEncoding        = "encoding"
 )
 
 func outputConfig() *service.ConfigSpec {
@@ -56,7 +55,7 @@ output:
 output:
   ibm_mq:
     queue_manager_name: QM1
-    queue_expr: '${! meta("target_queue") }'
+    queue_name: 'DEV.QUEUE.${! json("queue_num") }'
     channel_name: DEV.APP.SVRCONN
     connection_name: localhost(1414)
 ` + "```" + `
@@ -75,42 +74,76 @@ output:
       cipher_spec: TLS_RSA_WITH_AES_256_CBC_SHA256
       key_repository: /opt/mqm/ssl/key
 ` + "```" + `
+
+### Example: With metadata filtering
+
+Filter which metadata fields are sent as message properties to IBM MQ. Use patterns with wildcards to match field names.
+
+` + "```yaml" + `
+output:
+  ibm_mq:
+    queue_manager_name: QM1
+    queue_name: DEV.QUEUE.1
+    channel_name: DEV.APP.SVRCONN
+    connection_name: localhost(1414)
+    metadata:
+      patterns:
+        - "app_*"      # Include all fields starting with 'app_'
+        - "user_id"    # Include the 'user_id' field
+        - "request_*"  # Include all fields starting with 'request_'
+      invert: false    # Include only matching patterns (set to true to exclude them instead)
+` + "```" + `
+
+In this example, only metadata fields matching the patterns will be sent to IBM MQ. For instance:
+- ` + "`app_version: 1.0.0`" + ` → Included (matches app_*)
+- ` + "`user_id: john.doe`" + ` → Included (exact match)
+- ` + "`internal_trace_id: xyz`" + ` → Excluded (doesn't match any pattern)
+
+Set ` + "`invert: true`" + ` to reverse the logic and exclude matching patterns instead.
 `).
 		Field(service.NewStringField(fldQueueManagerName).
-			Description("The IBM MQ Queue Manager name to connect to").
+			Description("The queue manager name to connect to").
 			Example("QM1")).
 		Field(service.NewInterpolatedStringField(fldOutputQueueName).
-			Description("The IBM MQ queue name to write messages to").
+			Description("The queue name to write messages to").
 			Example("DEV.QUEUE.1").
 			Example(`${! meta("target_queue") }`).
 			Default("")).
 		Field(service.NewStringField(fldChannelName).
-			Description("The IBM MQ channel name for client connections").
+			Description("The channel name for client connections").
 			Example("DEV.APP.SVRCONN")).
 		Field(service.NewStringField(fldConnectionName).
-			Description("The IBM MQ connection name in the format hostname(port)").
+			Description("The connection name in the format hostname(port)").
 			Example("localhost(1414)")).
 		Field(service.NewStringField(fldUserId).
-			Description("Optional: The IBM MQ user ID for authentication").
+			Description("Optional: The user ID for authentication").
 			Default("").
 			Optional()).
 		Field(service.NewStringField(fldPassword).
-			Description("Optional: The IBM MQ user password for authentication").
+			Description("Optional: The user password for authentication").
 			Default("").
 			Optional().
 			Secret()).
 		Field(service.NewStringField(fldApplicationName).
 			Description("Optional: Application name for MQ connection identification").
 			Default("wombat").
-			Optional()).
-		Field(service.NewIntField(fldOutputNumThreads).
-			Description("Number of parallel queue connections to use").
-			Default(1).
-			Optional()).
-		Field(service.NewDurationField(fldWriteTimeout).
-			Description("Timeout for write operations").
-			Default("30s").
-			Optional()).
+			Optional().
+			Advanced()).
+		Field(service.NewStringField(fldFormat).
+			Description("The format of the message data (e.g., 'MQSTR' for string, 'MQHRF2' for RFH2 headers)").
+			Default("MQSTR").
+			Optional().
+			Advanced()).
+		Field(service.NewStringField(fldCcsid).
+			Description("The Coded Character Set Identifier for the message. Common values: '1208' (UTF-8), '819' (ISO-8859-1)").
+			Default("1208").
+			Optional().
+			Advanced()).
+		Field(service.NewStringField(fldEncoding).
+			Description("The encoding of numeric data in the message. Common values: '546' (Linux/Windows little-endian), '273' (big-endian)").
+			Default("546").
+			Optional().
+			Advanced()).
 		Field(service.NewObjectField(fldMetadata,
 			service.NewStringListField(fldMetaPatterns).
 				Description("Patterns to match metadata fields").
@@ -121,7 +154,7 @@ output:
 				Default(false).
 				Optional(),
 		).Description("Metadata configuration for filtering message headers").
-			Optional()).
+			Optional().Advanced()).
 		Field(service.NewObjectField(fldTLS,
 			service.NewBoolField(fldTLSEnabled).
 				Description("Enable TLS encryption for the connection").
@@ -154,7 +187,7 @@ output:
 				Default(false).
 				Optional(),
 		).Description("TLS/SSL configuration for secure connections").
-			Optional())
+			Optional().Advanced())
 }
 
 type output struct {
@@ -163,7 +196,6 @@ type output struct {
 	output       *ibmmq.Output
 	logger       *service.Logger
 	mgr          *service.Resources
-	writeTimeout time.Duration
 	compCtx      *wombatwisdom.ComponentContext
 	compCancel   context.CancelFunc
 }
@@ -196,16 +228,6 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	applicationName, _ := conf.FieldString(fldApplicationName)
 	if applicationName == "" {
 		applicationName = "wombat"
-	}
-
-	numThreads, _ := conf.FieldInt(fldOutputNumThreads)
-	if numThreads <= 0 {
-		numThreads = 1
-	}
-
-	writeTimeout, _ := conf.FieldDuration(fldWriteTimeout)
-	if writeTimeout <= 0 {
-		writeTimeout = 30 * time.Second
 	}
 
 	// Extract metadata configuration if present
@@ -258,6 +280,22 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		}
 	}
 
+	// Get the new format fields with defaults
+	format, _ := conf.FieldString(fldFormat)
+	if format == "" {
+		format = "MQSTR"
+	}
+
+	ccsid, _ := conf.FieldString(fldCcsid)
+	if ccsid == "" {
+		ccsid = "1208"
+	}
+
+	encoding, _ := conf.FieldString(fldEncoding)
+	if encoding == "" {
+		encoding = "546"
+	}
+
 	// Create the IBM MQ output configuration
 	outputConfig := &ibmmq.OutputConfig{
 		CommonMQConfig: ibmmq.CommonMQConfig{
@@ -270,13 +308,15 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 		},
 		QueueExpr: wombatwisdom.NewInterpolatedExpression(queueName),
 		Metadata:  metaConfig,
+		Format:    format,
+		Ccsid:     ccsid,
+		Encoding:  encoding,
 	}
 
 	o := &output{
 		outputConfig: outputConfig,
 		logger:       mgr.Logger(),
 		mgr:          mgr,
-		writeTimeout: writeTimeout,
 	}
 
 	env := wombatwisdom.NewEnvironment(o.logger)

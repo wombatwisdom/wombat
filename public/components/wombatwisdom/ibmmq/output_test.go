@@ -40,7 +40,7 @@ connection_name: localhost(1414)
 		assert.NoError(t, err)
 		assert.Equal(t, "localhost(1414)", connName)
 	})
-	
+
 	t.Run("config with authentication", func(t *testing.T) {
 		conf := `
 queue_manager_name: QM1
@@ -140,19 +140,10 @@ queue_manager_name: QM1
 queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: localhost(1414)
-num_threads: 4
-write_timeout: 60s
 `
-		parsedConf, err := spec.ParseYAML(conf, nil)
+		_, err := spec.ParseYAML(conf, nil)
 		require.NoError(t, err)
 
-		numThreads, err := parsedConf.FieldInt(fldOutputNumThreads)
-		assert.NoError(t, err)
-		assert.Equal(t, 4, numThreads)
-
-		writeTimeout, err := parsedConf.FieldDuration(fldWriteTimeout)
-		assert.NoError(t, err)
-		assert.Equal(t, "1m0s", writeTimeout.String())
 	})
 
 	t.Run("missing required fields", func(t *testing.T) {
@@ -186,6 +177,5 @@ connection_name: localhost(1414)
 		// Check output defaults
 		o := outputObj.(*output)
 		assert.Equal(t, "wombat", o.outputConfig.ApplicationName)
-		assert.Equal(t, "30s", o.writeTimeout.String())
 	})
 }

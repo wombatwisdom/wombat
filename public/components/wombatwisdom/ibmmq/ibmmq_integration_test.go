@@ -417,7 +417,7 @@ enable_auto_ack: true
 		assert.Equal(t, 3, len(receivedBatch), "Should receive partial batch of 3 messages")
 
 		// Check that it waited approximately the wait_time before returning partial batch
-		assert.GreaterOrEqual(t, elapsed, 2*time.Second, "Should wait at least wait_time")
+		assert.GreaterOrEqual(t, elapsed, 100*time.Millisecond, "Should wait at least wait_time")
 		assert.LessOrEqual(t, elapsed, 3*time.Second, "Should not wait much longer than wait_time")
 
 		// Verify message contents

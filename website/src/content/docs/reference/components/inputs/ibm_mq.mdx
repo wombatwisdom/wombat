@@ -7,8 +7,25 @@ import { Tabs, TabItem } from '@astrojs/starlight/components';
 
 Connects to IBM MQ queue managers and consumes messages from specified queues.
 
+
+<Tabs>
+<TabItem label="Common">
 ```yml
-# Config fields, showing default values
+# Common config fields, showing default values
+input:
+  label: ""
+  ibm_mq:
+    queue_manager_name: QM1 # No default (required)
+    queue_name: DEV.QUEUE.1 # No default (required)
+    channel_name: DEV.APP.SVRCONN # No default (required)
+    connection_name: localhost(1414) # No default (required)
+    user_id: ""
+    password: ""
+```
+</TabItem>
+<TabItem label="Advanced">
+```yml
+# Advanced config fields, showing default values
 input:
   label: ""
   ibm_mq:
@@ -19,12 +36,8 @@ input:
     user_id: ""
     password: ""
     application_name: wombat
-    num_workers: 1
     batch_size: 1
-    poll_interval: 1s
-    num_threads: 1
-    wait_time: 5s
-    batch_count: 1
+    batch_wait_time: 100ms
     tls:
       enabled: false
       cipher_spec: ""
@@ -34,6 +47,8 @@ input:
       ssl_peer_name: ""
       fips_required: false
 ```
+</TabItem>
+</Tabs>
 
 Connects to IBM MQ queue managers and consumes messages from specified queues.
 
@@ -47,42 +62,12 @@ This component requires IBM MQ client libraries. Build with the `mqclient` build
 go build -tags mqclient
 ```
 
-## Delivery Guarantees
-
-By default, this input disables auto acknowledgment to ensure at-least-once delivery semantics. Messages are acknowledged only after successful processing by the output.
-
-If message loss is acceptable, you can set `enable_auto_ack: true` for at-most-once delivery.
-
-### Example: At-least-once delivery
-
-```yaml
-input:
-  ibm_mq:
-    queue_manager_name: QM1
-    queue_name: DEV.QUEUE.1
-    channel_name: DEV.APP.SVRCONN
-    connection_name: localhost(1414)
-    enable_auto_ack: false  # Messages acknowledged after processing
-```
-
-### Example: At-most-once delivery
-
-```yaml
-input:
-  ibm_mq:
-    queue_manager_name: QM1
-    queue_name: DEV.QUEUE.1
-    channel_name: DEV.APP.SVRCONN
-    connection_name: localhost(1414)
-    enable_auto_ack: true  # Messages acknowledged immediately
-```
-
 
 ## Fields
 
 ### `queue_manager_name`
 
-The IBM MQ Queue Manager name to connect to
+The queue manager to connect to
 
 
 *Type*: `string`
@@ -96,7 +81,7 @@ queue_manager_name: QM1
 
 ### `queue_name`
 
-The IBM MQ queue name to read messages from
+The queue name to read messages from
 
 
 *Type*: `string`
@@ -110,7 +95,7 @@ queue_name: DEV.QUEUE.1
 
 ### `channel_name`
 
-The IBM MQ channel name for client connections
+The channel name for client connections
 
 
 *Type*: `string`
@@ -124,7 +109,7 @@ channel_name: DEV.APP.SVRCONN
 
 ### `connection_name`
 
-The IBM MQ connection name in the format hostname(port)
+The connection name in the format hostname(port)
 
 
 *Type*: `string`
@@ -138,7 +123,7 @@ connection_name: localhost(1414)
 
 ### `user_id`
 
-Optional: The IBM MQ user ID for authentication
+Optional: The user ID for authentication
 
 
 *Type*: `string`
@@ -147,7 +132,7 @@ Optional: The IBM MQ user ID for authentication
 
 ### `password`
 
-Optional: The IBM MQ user password for authentication
+Optional: The user password for authentication
 <Aside type="caution" title="Sensitive Information">
 	This field contains sensitive information that usually shouldn't be added to a config directly, read our secrets page for more info.
 </Aside>
@@ -167,15 +152,6 @@ Optional: Application name for MQ connection identification
 
 *Default*: `"wombat"`
 
-### `num_workers`
-
-Number of parallel workers for processing messages
-
-
-*Type*: `int`
-
-*Default*: `1`
-
 ### `batch_size`
 
 Maximum number of messages to batch together
@@ -185,41 +161,14 @@ Maximum number of messages to batch together
 
 *Default*: `1`
 
-### `poll_interval`
+### `batch_wait_time`
 
-Poll interval when queue is empty
-
-
-*Type*: `string`
-
-*Default*: `"1s"`
-
-### `num_threads`
-
-Number of threads for message processing
-
-
-*Type*: `int`
-
-*Default*: `1`
-
-### `wait_time`
-
-Maximum time to wait for messages
+Maximum time to wait for a complete batch before returning partial batch
 
 
 *Type*: `string`
 
-*Default*: `"5s"`
-
-### `batch_count`
-
-Number of batches to process
-
-
-*Type*: `int`
-
-*Default*: `1`
+*Default*: `"100ms"`
 
 ### `tls`
 

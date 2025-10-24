@@ -21,12 +21,8 @@ const (
 	fldUserId           = "user_id"
 	fldPassword         = "password"
 	fldApplicationName  = "application_name"
-	fldNumWorkers       = "num_workers"
 	fldBatchSize        = "batch_size"
-	fldPollInterval     = "poll_interval"
-	fldNumThreads       = "num_threads"
-	fldWaitTime         = "wait_time"
-	fldBatchCount       = "batch_count"
+	fldBatchWaitTime    = "batch_wait_time"
 	fldTLS              = "tls"
 	fldTLSEnabled       = "enabled"
 	fldTLSCipherSpec    = "cipher_spec"
@@ -54,86 +50,43 @@ This component requires IBM MQ client libraries. Build with the ` + "`mqclient`"
 ` + "```bash" + `
 go build -tags mqclient
 ` + "```" + `
-
-## Delivery Guarantees
-
-By default, this input disables auto acknowledgment to ensure at-least-once delivery semantics. Messages are acknowledged only after successful processing by the output.
-
-If message loss is acceptable, you can set ` + "`enable_auto_ack: true`" + ` for at-most-once delivery.
-
-### Example: At-least-once delivery
-
-` + "```yaml" + `
-input:
-  ibm_mq:
-    queue_manager_name: QM1
-    queue_name: DEV.QUEUE.1
-    channel_name: DEV.APP.SVRCONN
-    connection_name: localhost(1414)
-    enable_auto_ack: false  # Messages acknowledged after processing
-` + "```" + `
-
-### Example: At-most-once delivery
-
-` + "```yaml" + `
-input:
-  ibm_mq:
-    queue_manager_name: QM1
-    queue_name: DEV.QUEUE.1
-    channel_name: DEV.APP.SVRCONN
-    connection_name: localhost(1414)
-    enable_auto_ack: true  # Messages acknowledged immediately
-` + "```" + `
 `).
 		Field(service.NewStringField(fldQueueManagerName).
-			Description("The IBM MQ Queue Manager name to connect to").
+			Description("The queue manager to connect to").
 			Example("QM1")).
 		Field(service.NewStringField(fldQueueName).
-			Description("The IBM MQ queue name to read messages from").
+			Description("The queue name to read messages from").
 			Example("DEV.QUEUE.1")).
 		Field(service.NewStringField(fldChannelName).
-			Description("The IBM MQ channel name for client connections").
+			Description("The channel name for client connections").
 			Example("DEV.APP.SVRCONN")).
 		Field(service.NewStringField(fldConnectionName).
-			Description("The IBM MQ connection name in the format hostname(port)").
+			Description("The connection name in the format hostname(port)").
 			Example("localhost(1414)")).
 		Field(service.NewStringField(fldUserId).
-			Description("Optional: The IBM MQ user ID for authentication").
+			Description("Optional: The user ID for authentication").
 			Default("").
 			Optional()).
 		Field(service.NewStringField(fldPassword).
-			Description("Optional: The IBM MQ user password for authentication").
+			Description("Optional: The user password for authentication").
 			Default("").
 			Optional().
 			Secret()).
 		Field(service.NewStringField(fldApplicationName).
 			Description("Optional: Application name for MQ connection identification").
 			Default("wombat").
-			Optional()).
-		Field(service.NewIntField(fldNumWorkers).
-			Description("Number of parallel workers for processing messages").
-			Default(1).
-			Optional()).
+			Optional().
+			Advanced()).
 		Field(service.NewIntField(fldBatchSize).
 			Description("Maximum number of messages to batch together").
 			Default(1).
-			Optional()).
-		Field(service.NewDurationField(fldPollInterval).
-			Description("Poll interval when queue is empty").
-			Default("1s").
-			Optional()).
-		Field(service.NewIntField(fldNumThreads).
-			Description("Number of threads for message processing").
-			Default(1).
-			Optional()).
-		Field(service.NewDurationField(fldWaitTime).
-			Description("Maximum time to wait for messages").
-			Default("5s").
-			Optional()).
-		Field(service.NewIntField(fldBatchCount).
-			Description("Number of batches to process").
-			Default(1).
-			Optional()).
+			Optional().
+			Advanced()).
+		Field(service.NewDurationField(fldBatchWaitTime).
+			Description("Maximum time to wait for a complete batch before returning partial batch").
+			Default("100ms").
+			Optional().
+			Advanced()).
 		Field(service.NewObjectField(fldTLS,
 			service.NewBoolField(fldTLSEnabled).
 				Description("Enable TLS encryption for the connection").
@@ -166,7 +119,7 @@ input:
 				Default(false).
 				Optional(),
 		).Description("TLS/SSL configuration for secure connections").
-			Optional())
+			Optional().Advanced())
 }
 
 type input struct {
@@ -209,34 +162,14 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		applicationName = "wombat"
 	}
 
-	numWorkers, _ := conf.FieldInt(fldNumWorkers)
-	if numWorkers <= 0 {
-		numWorkers = 1
-	}
-
 	batchSize, _ := conf.FieldInt(fldBatchSize)
 	if batchSize <= 0 {
 		batchSize = 1
 	}
 
-	pollInterval, _ := conf.FieldDuration(fldPollInterval)
-	if pollInterval <= 0 {
-		pollInterval = time.Second
-	}
-
-	numThreads, _ := conf.FieldInt(fldNumThreads)
-	if numThreads <= 0 {
-		numThreads = 1
-	}
-
-	waitTime, _ := conf.FieldDuration(fldWaitTime)
-	if waitTime <= 0 {
-		waitTime = 5 * time.Second
-	}
-
-	batchCount, _ := conf.FieldInt(fldBatchCount)
-	if batchCount <= 0 {
-		batchCount = 1
+	batchWaitTime, _ := conf.FieldDuration(fldBatchWaitTime)
+	if batchWaitTime <= 0 {
+		batchWaitTime = 100 * time.Millisecond
 	}
 
 	// Extract TLS configuration if present
@@ -277,7 +210,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 		},
 		QueueName:     queueName,
 		BatchSize:     batchSize,
-		BatchWaitTime: waitTime.String(),
+		BatchWaitTime: batchWaitTime.String(),
 	}
 
 	bp.Count = batchSize
