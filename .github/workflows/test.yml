@@ -55,6 +55,9 @@ jobs:
 
     - name: Test
       run: task test:all
+      env:
+        CGO_CFLAGS: "-I${{ runner.temp }}/mqclient/inc"
+        CGO_LDFLAGS: "-L${{ runner.temp }}/mqclient/lib64 -Wl,-rpath=${{ runner.temp }}/mqclient/lib64"
 
 # TODO: enable this once we figure out it takes ages to run
 #  golangci-lint:
