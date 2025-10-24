@@ -46,6 +46,12 @@ tasks:
       - deps
     cmd: go build {{.GO_FLAGS}} -tags "{{.TAGS}}" -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}}{{.GOEXE}} ./cmd/{{.APP_NAME}}/*.go
 
+  build:mq:
+    desc: Build with IBM MQ support (requires MQ libraries)
+    deps:
+      - deps
+    cmd: CGO_ENABLED=1 go build {{.GO_FLAGS}} -tags mqclient -ldflags "{{.LD_FLAGS}} {{.VER_FLAGS}}" -o {{.TARGET_BIN}}/{{.APP_NAME}}-mq{{.GOEXE}} ./cmd/{{.APP_NAME}}/*.go
+
   tools:
     desc: Build the tools
     deps:
@@ -157,6 +163,15 @@ tasks:
     cmds:
       - 'go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...'
 
+  test:all:
+    desc: Run all tests including IBM MQ (requires MQ libraries)
+    deps:
+      - build
+    cmds:
+      - |
+        echo "Running all tests including IBM MQ..."
+        CGO_ENABLED=1 go test {{.GO_FLAGS}} -tags mqclient -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...
+
   test:unit:
     desc: Run the unit tests
     deps:
@@ -164,6 +179,12 @@ tasks:
     cmds:
       - 'go test {{.GO_FLAGS}} -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...'
 
+  test:unit:all:
+    desc: Run unit tests including IBM MQ
+    deps:
+      - build
+    cmds:
+      - 'CGO_ENABLED=1 go test {{.GO_FLAGS}} -tags mqclient -ldflags "{{.LD_FLAGS}}" -timeout 3m ./...'
 
   test:race:
     desc: Run tests with race detector
@@ -180,6 +201,15 @@ tasks:
       - go tool cover -html=coverage.out -o coverage.html
       - echo "Coverage report generated at coverage.html"
 
+  test:coverage:all:
+    desc: Run tests with coverage including IBM MQ
+    deps:
+      - build
+    cmds:
+      - CGO_ENABLED=1 go test {{.GO_FLAGS}} -tags mqclient -ldflags "{{.LD_FLAGS}}" -timeout 3m -coverprofile=coverage.out -covermode=atomic ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+
   test:integration:
     desc: Run integration tests
     cmds:
@@ -189,6 +219,12 @@ tasks:
       - go test -tags integration -v -run TestSplunkIntegration ./internal/impl/splunk/
       - go test -tags integration -v -run TestIntegrationZMQn ./internal/impl/zeromq/
       - go test -tags integration -v -run TestIntegrationNatsPullConsumer ./public/components/nats/
+
+  test:integration:all:
+    desc: Run all integration tests including IBM MQ
+    cmds:
+      - task: test:integration
+      - CGO_ENABLED=1 go test -tags "integration mqclient" -v -run 'TestIntegration' ./public/components/wombatwisdom/ibmmq/
 
   clean:
     cmds:
