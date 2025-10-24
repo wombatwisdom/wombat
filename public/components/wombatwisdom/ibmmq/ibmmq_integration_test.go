@@ -25,7 +25,7 @@ func startIBMMQContainer(t *testing.T) (string, func()) {
 			"LICENSE":         "accept",
 			"MQ_QMGR_NAME":    "QM1",
 			"MQ_DEV":          "true",     // Enable developer defaults
-			"MQ_APP_PASSWORD": "passw0rd", // ggignore: generic-password
+			"MQ_APP_PASSWORD": "passw0rd", // #nosec G101 - testcontainer default credential
 		},
 		WaitingFor: wait.ForLog("Started web server").WithStartupTimeout(2 * time.Minute),
 	}
@@ -75,7 +75,7 @@ queue_name: 'DEV.QUEUE.${! json("queue_num") }'
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 
 		outputSpec := outputConfig()
@@ -98,7 +98,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 enable_auto_ack: false
 `, connectionString)
 
@@ -157,7 +157,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 metadata:
   patterns:
     - "app_*"
@@ -198,7 +198,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 
 		outputSpec := outputConfig()
@@ -231,7 +231,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 batch_size: 3
 enable_auto_ack: true
 `, connectionString)
@@ -279,7 +279,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 		outputSpec := outputConfig()
 		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
@@ -310,7 +310,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 batch_size: %d
 wait_time: 1s
 enable_auto_ack: true
@@ -360,7 +360,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 		outputSpec := outputConfig()
 		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
@@ -388,7 +388,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 batch_size: 5
 wait_time: 2s
 enable_auto_ack: true
@@ -445,7 +445,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 		outputSpec := outputConfig()
 		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
@@ -475,7 +475,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 batch_size: %d
 wait_time: 1s
 enable_auto_ack: true
@@ -539,7 +539,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 `, connectionString)
 		outputSpec := outputConfig()
 		parsedOutputConf, err := outputSpec.ParseYAML(outputConf, nil)
@@ -567,7 +567,7 @@ queue_name: DEV.QUEUE.1
 channel_name: DEV.APP.SVRCONN
 connection_name: %s
 user_id: app
-password: passw0rd # ggignore: generic-password
+password: passw0rd
 enable_auto_ack: true
 `, connectionString)
 
