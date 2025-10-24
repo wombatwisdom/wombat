@@ -1,3 +1,5 @@
+//go:build mqclient
+
 package ibmmq
 
 import (
