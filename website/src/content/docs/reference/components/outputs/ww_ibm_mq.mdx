@@ -14,7 +14,6 @@ output:
   ww_ibm_mq:
     queue_manager_name: QM1 # No default (required)
     queue_name: ""
-    queue_expr: ${! meta("target_queue") } # No default (optional)
     channel_name: DEV.APP.SVRCONN # No default (required)
     connection_name: localhost(1414) # No default (required)
     user_id: ""
@@ -104,6 +103,7 @@ queue_manager_name: QM1
 ### `queue_name`
 
 The IBM MQ queue name to write messages to
+This field supports interpolation functions.
 
 
 *Type*: `string`
@@ -114,21 +114,8 @@ The IBM MQ queue name to write messages to
 # Examples
 
 queue_name: DEV.QUEUE.1
-```
 
-### `queue_expr`
-
-An expression to dynamically determine the queue name based on message content. If set, this overrides the static queue_name for each message.
-This field supports interpolation functions.
-
-
-*Type*: `string`
-
-
-```yml
-# Examples
-
-queue_expr: ${! meta("target_queue") }
+queue_name: ${! meta("target_queue") }
 ```
 
 ### `channel_name`
