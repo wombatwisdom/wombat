@@ -39,13 +39,13 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 			Description("Timeout for write operations").
 			Default("5s")).
 		Field(service.NewDurationField("connect_timeout").
-			Description("Connection timeout").
+			Description("Connection timeout limits how long the client will wait when trying to open a connection to an MQTT server before timing out. A duration of 0 never times out. Defaults to 5 seconds. Currently only operational on TCP/TLS connections.").
 			Default("5s")).
 		Field(service.NewBoolField(fldConnectRetry).
-			Description("Connect retry").
+			Description("Connect retry sets whether the MQTT client will automatically retry the connection in the event of a failure. Defaults to true.").
 			Default(true)).
 		Field(service.NewDurationField(fldConnectRetryInterval).
-			Description("Connection retry interval").
+			Description("Connection retry interval sets the time that will be waited between connection attempts when initially connecting if connect_retry is set to true.").
 			Default("1s")).
 		Field(service.NewDurationField("keepalive").
 			Description("Keep alive interval").
