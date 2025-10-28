@@ -37,8 +37,27 @@ jobs:
     - name: License Check
       run: task check:license
 
+    - name: Cache IBM MQ Client
+      id: cache-mq
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/mqclient
+        key: ${{ runner.os }}-ibm-mq-9.4.1.0
+
+    - name: Download and setup IBM MQ Client
+      if: steps.cache-mq.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ${{ runner.temp }}/mqclient
+        cd ${{ runner.temp }}/mqclient
+        wget https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+        tar -xzf 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+        rm 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+
     - name: Test
-      run: task test
+      run: task test:all
+      env:
+        CGO_CFLAGS: "-I${{ runner.temp }}/mqclient/inc"
+        CGO_LDFLAGS: "-L${{ runner.temp }}/mqclient/lib64 -Wl,-rpath=${{ runner.temp }}/mqclient/lib64"
 
 # TODO: enable this once we figure out it takes ages to run
 #  golangci-lint:
