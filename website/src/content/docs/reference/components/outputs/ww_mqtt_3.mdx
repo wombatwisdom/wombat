@@ -22,7 +22,9 @@ output:
     qos: 0
     retained: false
     write_timeout: 5s
-    connect_timeout: 30s
+    connect_timeout: 5s
+    connect_retry: true
+    connect_retry_interval: 1s
     keepalive: 60s
     auth:
       username: ""
@@ -47,7 +49,9 @@ output:
     qos: 0
     retained: false
     write_timeout: 5s
-    connect_timeout: 30s
+    connect_timeout: 5s
+    connect_retry: true
+    connect_retry_interval: 1s
     keepalive: 60s
     auth:
       username: ""
@@ -130,12 +134,30 @@ Timeout for write operations
 
 ### `connect_timeout`
 
-Connection timeout
+Connection timeout limits how long the client will wait when trying to open a connection to an MQTT server before timing out. A duration of 0 never times out. Defaults to 5 seconds. Currently only operational on TCP/TLS connections.
 
 
 *Type*: `string`
 
-*Default*: `"30s"`
+*Default*: `"5s"`
+
+### `connect_retry`
+
+Connect retry sets whether the MQTT client will automatically retry the connection in the event of a failure. Defaults to true.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `connect_retry_interval`
+
+Connection retry interval sets the time that will be waited between connection attempts when initially connecting if connect_retry is set to true.
+
+
+*Type*: `string`
+
+*Default*: `"1s"`
 
 ### `keepalive`
 

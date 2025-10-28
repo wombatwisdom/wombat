@@ -12,22 +12,24 @@ import (
 )
 
 const (
-	fldUrls           = "urls"
-	fldClientID       = "client_id"
-	fldFilters        = "filters"
-	fldCleanSession   = "clean_session"
-	fldConnectTimeout = "connect_timeout"
-	fldKeepalive      = "keepalive"
-	fldAuth           = "auth"
-	fldTLS            = "tls"
-	fldWill           = "will"
-	fldEnableAutoAck  = "enable_auto_ack"
-	fldUsername       = "username"
-	fldPassword       = "password"
-	fldTopic          = "topic"
-	fldPayload        = "payload"
-	fldQOS            = "qos"
-	fldRetained       = "retained"
+	fldUrls                 = "urls"
+	fldClientID             = "client_id"
+	fldFilters              = "filters"
+	fldCleanSession         = "clean_session"
+	fldConnectTimeout       = "connect_timeout"
+	fldConnectRetry         = "connect_retry"
+	fldConnectRetryInterval = "connect_retry_interval"
+	fldKeepalive            = "keepalive"
+	fldAuth                 = "auth"
+	fldTLS                  = "tls"
+	fldWill                 = "will"
+	fldEnableAutoAck        = "enable_auto_ack"
+	fldUsername             = "username"
+	fldPassword             = "password"
+	fldTopic                = "topic"
+	fldPayload              = "payload"
+	fldQOS                  = "qos"
+	fldRetained             = "retained"
 )
 
 func inputConfig() *service.ConfigSpec {
@@ -89,7 +91,13 @@ input:
 			Default(true)).
 		Field(service.NewDurationField(fldConnectTimeout).
 			Description("Connection timeout").
-			Default("30s")).
+			Default("5s")).
+		Field(service.NewBoolField(fldConnectRetry).
+			Description("Connect retry").
+			Default(true)).
+		Field(service.NewDurationField(fldConnectRetryInterval).
+			Description("Connection retry interval").
+			Default("1s")).
 		Field(service.NewDurationField(fldKeepalive).
 			Description("Keep alive interval").
 			Default("60s")).
@@ -142,10 +150,28 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	if conf.Contains(fldConnectTimeout) {
 		d, err := conf.FieldDuration(fldConnectTimeout)
 		if err != nil {
-			d = 30 * time.Second
+			d = 5 * time.Second
 		}
 
 		inputConfig.ConnectTimeout = &d
+	}
+
+	if conf.Contains(fldConnectRetry) {
+		b, err := conf.FieldBool(fldConnectRetry)
+		if err != nil {
+			b = true
+		}
+
+		inputConfig.ConnectRetry = b
+	}
+
+	if conf.Contains(fldConnectRetryInterval) {
+		d, err := conf.FieldDuration(fldConnectRetryInterval)
+		if err != nil {
+			d = 1 * time.Second
+		}
+
+		inputConfig.ConnectRetryInterval = d
 	}
 
 	if conf.Contains(fldKeepalive) {

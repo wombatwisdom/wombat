@@ -40,7 +40,13 @@ Uses mqtt output component found in [wombatwisdom/components](https://github.com
 			Default("5s")).
 		Field(service.NewDurationField("connect_timeout").
 			Description("Connection timeout").
-			Default("30s")).
+			Default("5s")).
+		Field(service.NewBoolField(fldConnectRetry).
+			Description("Connect retry").
+			Default(true)).
+		Field(service.NewDurationField(fldConnectRetryInterval).
+			Description("Connection retry interval").
+			Default("1s")).
 		Field(service.NewDurationField("keepalive").
 			Description("Keep alive interval").
 			Default("60s")).
@@ -96,7 +102,17 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 
 	connectTimeout, err := conf.FieldDuration("connect_timeout")
 	if err != nil {
-		connectTimeout = 30 * time.Second
+		connectTimeout = 5 * time.Second
+	}
+
+	connectRetry, err := conf.FieldBool("connect_retry")
+	if err != nil {
+		connectRetry = true
+	}
+
+	connectRetryInterval, err := conf.FieldDuration("connect_retry_interval")
+	if err != nil {
+		connectTimeout = 1 * time.Second
 	}
 
 	keepalive, err := conf.FieldDuration("keepalive")
@@ -107,13 +123,15 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 	// Build wombatwisdom output config
 	outputConfig := mqtt.OutputConfig{
 		CommonMQTTConfig: mqtt.CommonMQTTConfig{
-			ClientId:       clientID,
-			Urls:           urls,
-			ConnectTimeout: &connectTimeout,
-			KeepAlive:      &keepalive,
-			Password:       "",
-			TLS:            nil,
-			Will:           nil,
+			ClientId:             clientID,
+			Urls:                 urls,
+			ConnectTimeout:       &connectTimeout,
+			ConnectRetry:         connectRetry,
+			ConnectRetryInterval: connectRetryInterval,
+			KeepAlive:            &keepalive,
+			Password:             "",
+			TLS:                  nil,
+			Will:                 nil,
 		},
 		TopicExpr:    wombatwisdom.NewInterpolatedExpression(topic),
 		WriteTimeout: writeTimeout,
