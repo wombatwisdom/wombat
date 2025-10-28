@@ -696,7 +696,7 @@ generate:
 			} else {
 				assert.Equal(t, 0, receivedCount,
 					"Should not receive messages with %s connect_timeout to non-existent broker", tc.connectTimeout)
-				hasConnectionError := strings.Contains(logs, "Failed to connect to output")
+				hasConnectionError := strings.Contains(logs, "Attempting to reconnect to MQTT broker")
 				assert.True(t, hasConnectionError,
 					"Logs should show connection error with %s connect_timeout", tc.connectTimeout)
 			}
