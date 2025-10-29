@@ -16,22 +16,22 @@ require (
 	github.com/nats-io/nats-server/v2 v2.12.1
 	github.com/nats-io/nats.go v1.47.0
 	github.com/nats-io/nkeys v0.4.11
-	github.com/onsi/ginkgo/v2 v2.27.1
+	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
-	github.com/redpanda-data/benthos/v4 v4.57.1
-	github.com/redpanda-data/connect/v4 v4.67.5
+	github.com/redpanda-data/benthos/v4 v4.58.0
+	github.com/redpanda-data/connect/v4 v4.68.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/snowflakedb/gosnowflake v1.17.0
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.39.0
 	github.com/testcontainers/testcontainers-go/modules/mongodb v0.39.0
-	github.com/wombatwisdom/components v0.1.2-rc1.0.20251029091935-f00dcbd7b6dc
+	github.com/wombatwisdom/components v0.1.2-rc2
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
-	go.mongodb.org/mongo-driver v1.17.4
+	go.mongodb.org/mongo-driver v1.17.6
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
-	golang.org/x/crypto v0.43.0
-	google.golang.org/api v0.252.0
+	golang.org/x/crypto v0.43.1-0.20251009181029-0b7aa0cfb07b
+	google.golang.org/api v0.254.0
 	google.golang.org/grpc v1.76.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -140,15 +140,15 @@ require (
 	github.com/aws/aws-lambda-go v1.50.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.39.4 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.2 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.31.12 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.18.16 // indirect
+	github.com/aws/aws-sdk-go-v2/config v1.31.15 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.18.19 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.20.14 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.8.14 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.9 // indirect
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.11 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.11 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.11 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.3 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/ini v1.8.4 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.51.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.51.0 // indirect
@@ -164,9 +164,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.7 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sns v1.38.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.42.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.29.6 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.38.6 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.29.8 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.38.9 // indirect
 	github.com/aws/smithy-go v1.23.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beanstalkd/go-beanstalk v0.2.0 // indirect
@@ -408,9 +408,9 @@ require (
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/tmc/langchaingo v0.1.13 // indirect
 	github.com/trinodb/trino-go-client v0.330.0 // indirect
-	github.com/twmb/franz-go v1.19.6-0.20251010052650-46982310c50d // indirect
+	github.com/twmb/franz-go v1.20.1 // indirect
 	github.com/twmb/franz-go/pkg/kadm v1.16.1 // indirect
-	github.com/twmb/franz-go/pkg/kmsg v1.11.2 // indirect
+	github.com/twmb/franz-go/pkg/kmsg v1.12.0 // indirect
 	github.com/twmb/franz-go/pkg/sr v1.5.0 // indirect
 	github.com/urfave/cli/v2 v2.27.7 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
@@ -449,7 +449,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.8.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 // indirect
@@ -465,7 +464,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20251002232023-7c0ddcbb5797 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251002232023-7c0ddcbb5797 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251022142026-3a174f9686a8 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
