@@ -99,13 +99,11 @@ To build and test with actual IBM MQ support, you need the IBM MQ client librari
 
 3. **Set environment variables for building:**
    ```bash
-   export MQ_HOME="$HOME/mqclient"
+   export MQ_HOME="$HOME/where-you-stored-the-mq-lib"
    export CGO_ENABLED=1
    export CGO_CFLAGS="-I${MQ_HOME}/inc"
    export CGO_LDFLAGS="-L${MQ_HOME}/lib64"
    ```
-
-   Note: We don't set RPATH during development builds. This makes binaries portable.
 
 ### Building with IBM MQ Support
 
@@ -165,12 +163,6 @@ If you download a prebuilt `wombat-mqclient` binary from our releases, you'll ne
    echo 'export LD_LIBRARY_PATH=/opt/mqm/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
    source ~/.bashrc
    ```
-
-**Alternative:** Use IBM's `setmqenv` script if you have a full MQ installation:
-```bash
-. /opt/mqm/bin/setmqenv -s
-./wombat -c config.yaml
-```
 
 ## Honorable Mentions
 I can't in all good faith take credit for the enormous amount of work that went into this project. Most of that is on Ash
