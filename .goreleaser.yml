@@ -39,6 +39,9 @@ builds:
     binary: wombat
     env:
       - CGO_ENABLED=1
+      - CGO_CFLAGS={{ if index .Env "CGO_CFLAGS" }}{{ .Env.CGO_CFLAGS }}{{ else }}-I/opt/mqm/inc{{ end }}
+      - CGO_LDFLAGS={{ if index .Env "CGO_LDFLAGS" }}{{ .Env.CGO_LDFLAGS }}{{ else }}-L/opt/mqm/lib64{{ end }}
+      - CGO_LDFLAGS_ALLOW={{ if index .Env "CGO_LDFLAGS_ALLOW" }}{{ .Env.CGO_LDFLAGS_ALLOW }}{{ else }}-Wl,-rpath.*{{ end }}
     flags:
       - -tags=mqclient
     ldflags:

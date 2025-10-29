@@ -68,10 +68,29 @@ jobs:
         
         echo "name=Release $TAG" >> $GITHUB_OUTPUT
 
+    - name: Cache IBM MQ Client
+      id: cache-mq
+      uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/mqclient
+        key: ${{ runner.os }}-ibm-mq-9.4.1.0
+
+    - name: Download and setup IBM MQ Client
+      if: steps.cache-mq.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p ${{ runner.temp }}/mqclient
+        cd ${{ runner.temp }}/mqclient
+        wget https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+        tar -xzf 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+        rm 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+
     - name: Run pre-release checks
       run: |
         task check
-        task test
+        task test:all
+      env:
+        CGO_CFLAGS: "-I${{ runner.temp }}/mqclient/inc"
+        CGO_LDFLAGS: "-L${{ runner.temp }}/mqclient/lib64"
 
     - name: Free up disk space and setup temp dirs
       run: |
@@ -93,6 +112,9 @@ jobs:
         GOTMPDIR: /mnt/tmp
         GOCACHE: /mnt/gocache
         GORELEASER_CURRENT_TAG: ${{ steps.release_info.outputs.tag }} # override tag b/c git does not offer a tag sort to make "v1.0.6" come out on top when "v1.0.6-rc1" is present on the same commit. Goreleaser fixes this, but only in paid version
+        CGO_CFLAGS: "-I${{ runner.temp }}/mqclient/inc"
+        CGO_LDFLAGS: "-L${{ runner.temp }}/mqclient/lib64"
+        CGO_LDFLAGS_ALLOW: "-Wl,-rpath.*"
   docker:
     name: Build the wombat image
     runs-on: ubuntu-latest
