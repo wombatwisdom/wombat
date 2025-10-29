@@ -12,22 +12,24 @@ import (
 )
 
 const (
-	fldUrls           = "urls"
-	fldClientID       = "client_id"
-	fldFilters        = "filters"
-	fldCleanSession   = "clean_session"
-	fldConnectTimeout = "connect_timeout"
-	fldKeepalive      = "keepalive"
-	fldAuth           = "auth"
-	fldTLS            = "tls"
-	fldWill           = "will"
-	fldEnableAutoAck  = "enable_auto_ack"
-	fldUsername       = "username"
-	fldPassword       = "password"
-	fldTopic          = "topic"
-	fldPayload        = "payload"
-	fldQOS            = "qos"
-	fldRetained       = "retained"
+	fldUrls                 = "urls"
+	fldClientID             = "client_id"
+	fldFilters              = "filters"
+	fldCleanSession         = "clean_session"
+	fldConnectTimeout       = "connect_timeout"
+	fldConnectRetry         = "connect_retry"
+	fldConnectRetryInterval = "connect_retry_interval"
+	fldKeepalive            = "keepalive"
+	fldAuth                 = "auth"
+	fldTLS                  = "tls"
+	fldWill                 = "will"
+	fldEnableAutoAck        = "enable_auto_ack"
+	fldUsername             = "username"
+	fldPassword             = "password"
+	fldTopic                = "topic"
+	fldPayload              = "payload"
+	fldQOS                  = "qos"
+	fldRetained             = "retained"
 )
 
 func inputConfig() *service.ConfigSpec {
@@ -85,11 +87,18 @@ input:
 			Description("Map of topic patterns to QoS levels to subscribe to.").
 			Default(map[string]interface{}{})).
 		Field(service.NewBoolField(fldCleanSession).
-			Description("Start with a clean session").
-			Default(true)).
+			Description("Start with a clean session. When set to true this will set the \"clean session\" flag in the connect message when the underlying MQTT client connects to an MQTT broker. By setting this flag, you are indicating that no messages saved by the broker for this client should be delivered. Any messages that were going to be sent by this client before disconnecting previously but didn't will not be sent upon connecting to the broker. ").
+			Default(true).
+			Advanced()).
 		Field(service.NewDurationField(fldConnectTimeout).
-			Description("Connection timeout").
-			Default("30s")).
+			Description("Connection timeout limits how long the client will wait when trying to open a connection to an MQTT server before timing out. A duration of 0 never times out. Defaults to 5 seconds. Currently only operational on TCP/TLS connections.").
+			Default("5s")).
+		Field(service.NewBoolField(fldConnectRetry).
+			Description("Connect retry sets whether the MQTT client will automatically retry the connection in the event of a failure. Defaults to true.").
+			Default(true)).
+		Field(service.NewDurationField(fldConnectRetryInterval).
+			Description("Connection retry interval sets the time that will be waited between connection attempts when initially connecting if connect_retry is set to true.").
+			Default("1s")).
 		Field(service.NewDurationField(fldKeepalive).
 			Description("Keep alive interval").
 			Default("60s")).
@@ -142,10 +151,28 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 	if conf.Contains(fldConnectTimeout) {
 		d, err := conf.FieldDuration(fldConnectTimeout)
 		if err != nil {
-			d = 30 * time.Second
+			d = 5 * time.Second
 		}
 
 		inputConfig.ConnectTimeout = &d
+	}
+
+	if conf.Contains(fldConnectRetry) {
+		b, err := conf.FieldBool(fldConnectRetry)
+		if err != nil {
+			b = true
+		}
+
+		inputConfig.ConnectRetry = b
+	}
+
+	if conf.Contains(fldConnectRetryInterval) {
+		d, err := conf.FieldDuration(fldConnectRetryInterval)
+		if err != nil {
+			d = 1 * time.Second
+		}
+
+		inputConfig.ConnectRetryInterval = d
 	}
 
 	if conf.Contains(fldKeepalive) {

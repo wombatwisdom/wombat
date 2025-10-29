@@ -19,8 +19,9 @@ input:
       - tcp://localhost:1883
     client_id: ""
     filters: {}
-    clean_session: true
-    connect_timeout: 30s
+    connect_timeout: 5s
+    connect_retry: true
+    connect_retry_interval: 1s
     keepalive: 60s
     auth:
       username: ""
@@ -43,7 +44,9 @@ input:
     client_id: ""
     filters: {}
     clean_session: true
-    connect_timeout: 30s
+    connect_timeout: 5s
+    connect_retry: true
+    connect_retry_interval: 1s
     keepalive: 60s
     auth:
       username: ""
@@ -136,7 +139,7 @@ Map of topic patterns to QoS levels to subscribe to.
 
 ### `clean_session`
 
-Start with a clean session
+Start with a clean session. When set to true this will set the "clean session" flag in the connect message when the underlying MQTT client connects to an MQTT broker. By setting this flag, you are indicating that no messages saved by the broker for this client should be delivered. Any messages that were going to be sent by this client before disconnecting previously but didn't will not be sent upon connecting to the broker.
 
 
 *Type*: `bool`
@@ -145,12 +148,30 @@ Start with a clean session
 
 ### `connect_timeout`
 
-Connection timeout
+Connection timeout limits how long the client will wait when trying to open a connection to an MQTT server before timing out. A duration of 0 never times out. Defaults to 5 seconds. Currently only operational on TCP/TLS connections.
 
 
 *Type*: `string`
 
-*Default*: `"30s"`
+*Default*: `"5s"`
+
+### `connect_retry`
+
+Connect retry sets whether the MQTT client will automatically retry the connection in the event of a failure. Defaults to true.
+
+
+*Type*: `bool`
+
+*Default*: `true`
+
+### `connect_retry_interval`
+
+Connection retry interval sets the time that will be waited between connection attempts when initially connecting if connect_retry is set to true.
+
+
+*Type*: `string`
+
+*Default*: `"1s"`
 
 ### `keepalive`
 

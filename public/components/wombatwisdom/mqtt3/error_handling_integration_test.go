@@ -178,15 +178,13 @@ output:
 			t.Logf("Log[%d]: %s", i, msg)
 		}
 
-		foundTranslatedError := false
+		foundReconnectingLog := false
 		foundRawError := false
 
 		for _, msg := range messages {
-			if strings.Contains(msg, "not connected to target source or sink") {
-				if strings.Contains(msg, "ww_mqtt_3") && strings.Contains(msg, "Failed to connect") {
-					// Could be input or output, check for both
-					foundTranslatedError = true
-				}
+			if strings.Contains(msg, "Attempting to reconnect to MQTT broker") {
+				// Could be input or output, check for both
+				foundReconnectingLog = true
 			}
 			// Check for raw network errors that shouldn't appear
 			if strings.Contains(msg, "network Error") && strings.Contains(msg, "connection reset by peer") {
@@ -195,7 +193,7 @@ output:
 		}
 
 		// Since both input and output use the same error translation, we expect to see the translated error
-		assert.True(t, foundTranslatedError, "Should see translated error message 'not connected to target source or sink' - our error translation is working")
+		assert.True(t, foundReconnectingLog, "Should see reconnecting log message 'Attempting to reconnect'")
 		assert.False(t, foundRawError, "Should NOT see raw network error 'connection reset by peer' - error should be translated")
 	})
 
