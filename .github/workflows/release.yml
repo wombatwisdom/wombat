@@ -75,6 +75,7 @@ jobs:
       env:
         CGO_CFLAGS: "-I${{ runner.temp }}/mqclient/inc"
         CGO_LDFLAGS: "-L${{ runner.temp }}/mqclient/lib64"
+        LD_LIBRARY_PATH: "${{ runner.temp }}/mqclient/lib64"
 
     - name: Free up disk space and setup temp dirs
       run: |
