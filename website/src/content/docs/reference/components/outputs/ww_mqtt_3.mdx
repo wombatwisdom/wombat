@@ -47,6 +47,7 @@ output:
     client_id: ""
     topic: "" # No default (required)
     qos: 0
+    clean_session: true
     retained: false
     write_timeout: 5s
     connect_timeout: 5s
@@ -113,6 +114,15 @@ Quality of Service level (0, 1, or 2)
 *Type*: `int`
 
 *Default*: `0`
+
+### `clean_session`
+
+Start with a clean session. When set to true this will set the "clean session" flag in the connect message when the underlying MQTT client connects to an MQTT broker. By setting this flag, you are indicating that no messages saved by the broker for this client should be delivered. Any messages that were going to be sent by this client before disconnecting previously but didn't will not be sent upon connecting to the broker.
+
+
+*Type*: `bool`
+
+*Default*: `true`
 
 ### `retained`
 

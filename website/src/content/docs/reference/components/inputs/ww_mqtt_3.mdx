@@ -19,7 +19,6 @@ input:
       - tcp://localhost:1883
     client_id: ""
     filters: {}
-    clean_session: true
     connect_timeout: 5s
     connect_retry: true
     connect_retry_interval: 1s
@@ -140,7 +139,7 @@ Map of topic patterns to QoS levels to subscribe to.
 
 ### `clean_session`
 
-Start with a clean session
+Start with a clean session. When set to true this will set the "clean session" flag in the connect message when the underlying MQTT client connects to an MQTT broker. By setting this flag, you are indicating that no messages saved by the broker for this client should be delivered. Any messages that were going to be sent by this client before disconnecting previously but didn't will not be sent upon connecting to the broker.
 
 
 *Type*: `bool`

@@ -87,8 +87,9 @@ input:
 			Description("Map of topic patterns to QoS levels to subscribe to.").
 			Default(map[string]interface{}{})).
 		Field(service.NewBoolField(fldCleanSession).
-			Description("Start with a clean session").
-			Default(true)).
+			Description("Start with a clean session. When set to true this will set the \"clean session\" flag in the connect message when the underlying MQTT client connects to an MQTT broker. By setting this flag, you are indicating that no messages saved by the broker for this client should be delivered. Any messages that were going to be sent by this client before disconnecting previously but didn't will not be sent upon connecting to the broker. ").
+			Default(true).
+			Advanced()).
 		Field(service.NewDurationField(fldConnectTimeout).
 			Description("Connection timeout limits how long the client will wait when trying to open a connection to an MQTT server before timing out. A duration of 0 never times out. Defaults to 5 seconds. Currently only operational on TCP/TLS connections.").
 			Default("5s")).
