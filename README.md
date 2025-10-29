@@ -97,15 +97,15 @@ To build and test with actual IBM MQ support, you need the IBM MQ client librari
    tar -xzf 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz -C ~/mqclient/
    ```
 
-3. **Set environment variables:**
+3. **Set environment variables for building:**
    ```bash
    export MQ_HOME="$HOME/where-you-stored-the-mq-lib"
    export CGO_ENABLED=1
    export CGO_CFLAGS="-I${MQ_HOME}/inc"
-   export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
+   export CGO_LDFLAGS="-L${MQ_HOME}/lib64"
    ```
 
-### Building with IBM MQ support
+### Building with IBM MQ Support
 
 **Without IBM MQ client (stub implementation):**
 ```bash
@@ -115,10 +115,11 @@ This is the default build mode and doesn't require any IBM MQ libraries.
 
 **With IBM MQ client support:**
 ```bash
-# Ensure environment variables are set (see setup instructions above)
+# Set environment variables (see setup instructions above)
+export MQ_HOME="$HOME/mqclient"
 export CGO_ENABLED=1
 export CGO_CFLAGS="-I${MQ_HOME}/inc"
-export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
+export CGO_LDFLAGS="-L${MQ_HOME}/lib64"
 
 # Build with mqclient tag
 task build:mq
@@ -127,14 +128,41 @@ task build:mq
 #### Testing IBM MQ Components
 
 ```bash
-# Ensure MQ libraries are set up (see above)
+# Set environment variables
+export MQ_HOME="$HOME/mqclient"
 export CGO_ENABLED=1
 export CGO_CFLAGS="-I${MQ_HOME}/inc"
-export CGO_LDFLAGS="-L${MQ_HOME}/lib64 -Wl,-rpath=${MQ_HOME}/lib64"
+export CGO_LDFLAGS="-L${MQ_HOME}/lib64"
 
-# Run tests with mqclient tag
+# Run all tests including IBM MQ
 task test:all
 ```
+
+### Running Prebuilt IBM MQ Binaries
+
+If you download a prebuilt `wombat-mqclient` binary from our releases, you'll need to:
+
+1. **Install the IBM MQ client libraries on your system:**
+   ```bash
+   # Download the redistributable client
+   wget https://public.dhe.ibm.com/ibmdl/export/pub/software/websphere/messaging/mqdev/redist/9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz
+
+   # Extract to a permanent location (e.g., /opt/mqm)
+   sudo mkdir -p /opt/mqm
+   sudo tar -xzf 9.4.1.0-IBM-MQC-Redist-LinuxX64.tar.gz -C /opt/mqm
+   ```
+
+2. **Set LD_LIBRARY_PATH when running:**
+   ```bash
+   export LD_LIBRARY_PATH=/opt/mqm/lib64
+   ./wombat -c config.yaml
+   ```
+
+   Or add to your shell profile for permanent setup:
+   ```bash
+   echo 'export LD_LIBRARY_PATH=/opt/mqm/lib64:$LD_LIBRARY_PATH' >> ~/.bashrc
+   source ~/.bashrc
+   ```
 
 ## Honorable Mentions
 I can't in all good faith take credit for the enormous amount of work that went into this project. Most of that is on Ash
