@@ -16,22 +16,22 @@ require (
 	github.com/nats-io/nats-server/v2 v2.12.1
 	github.com/nats-io/nats.go v1.47.0
 	github.com/nats-io/nkeys v0.4.11
-	github.com/onsi/ginkgo/v2 v2.27.1
+	github.com/onsi/ginkgo/v2 v2.27.2
 	github.com/onsi/gomega v1.38.2
-	github.com/redpanda-data/benthos/v4 v4.57.1
-	github.com/redpanda-data/connect/v4 v4.67.5
+	github.com/redpanda-data/benthos/v4 v4.60.0
+	github.com/redpanda-data/connect/v4 v4.69.0
 	github.com/sirupsen/logrus v1.9.3
-	github.com/snowflakedb/gosnowflake v1.17.0
+	github.com/snowflakedb/gosnowflake v1.17.1
 	github.com/stretchr/testify v1.11.1
-	github.com/testcontainers/testcontainers-go v0.39.0
-	github.com/testcontainers/testcontainers-go/modules/mongodb v0.39.0
+	github.com/testcontainers/testcontainers-go v0.40.0
+	github.com/testcontainers/testcontainers-go/modules/mongodb v0.40.0
 	github.com/wombatwisdom/components v0.1.2-rc2
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78
-	go.mongodb.org/mongo-driver v1.17.4
+	go.mongodb.org/mongo-driver v1.17.6
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/trace v1.38.0
-	golang.org/x/crypto v0.43.0
-	google.golang.org/api v0.252.0
+	golang.org/x/crypto v0.43.1-0.20251009181029-0b7aa0cfb07b
+	google.golang.org/api v0.255.0
 	google.golang.org/grpc v1.76.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -40,6 +40,7 @@ require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
 	buf.build/gen/go/bufbuild/reflect/connectrpc/go v1.19.1-20240117202343-bf8f65e8876c.2 // indirect
 	buf.build/gen/go/bufbuild/reflect/protocolbuffers/go v1.36.10-20240117202343-bf8f65e8876c.1 // indirect
+	buf.build/go/hyperpb v0.1.3 // indirect
 	cloud.google.com/go/aiplatform v1.104.0 // indirect
 	cloud.google.com/go/pubsub/v2 v2.1.0 // indirect
 	cloud.google.com/go/vertexai v0.15.0 // indirect
@@ -57,11 +58,11 @@ require (
 	github.com/ibm-messaging/mq-golang/v5 v5.6.5 // indirect
 	github.com/jcmturner/goidentity/v6 v6.0.1 // indirect
 	github.com/microsoft/go-mssqldb v1.9.3 // indirect
-	github.com/ollama/ollama v0.12.5 // indirect
 	github.com/questdb/go-questdb-client/v4 v4.0.0 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sashabaranov/go-openai v1.41.2 // indirect
 	github.com/theparanoids/crypki v1.20.9 // indirect
+	github.com/timandy/routine v1.1.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.38.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
@@ -210,7 +211,7 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
-	github.com/docker/docker v28.4.0+incompatible // indirect
+	github.com/docker/docker v28.5.1+incompatible // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/dop251/goja v0.0.0-20250630131328-58d95d85e994 // indirect
@@ -408,9 +409,9 @@ require (
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/tmc/langchaingo v0.1.13 // indirect
 	github.com/trinodb/trino-go-client v0.330.0 // indirect
-	github.com/twmb/franz-go v1.19.6-0.20251010052650-46982310c50d // indirect
+	github.com/twmb/franz-go v1.20.3 // indirect
 	github.com/twmb/franz-go/pkg/kadm v1.16.1 // indirect
-	github.com/twmb/franz-go/pkg/kmsg v1.11.2 // indirect
+	github.com/twmb/franz-go/pkg/kmsg v1.12.0 // indirect
 	github.com/twmb/franz-go/pkg/sr v1.5.0 // indirect
 	github.com/urfave/cli/v2 v2.27.7 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
@@ -449,7 +450,6 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.38.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.8.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	go.uber.org/automaxprocs v1.6.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20251002181428-27f1f14c8bb9 // indirect
@@ -465,7 +465,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/genproto v0.0.0-20251002232023-7c0ddcbb5797 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251002232023-7c0ddcbb5797 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251002232023-7c0ddcbb5797 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
