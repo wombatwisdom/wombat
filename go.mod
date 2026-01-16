@@ -51,7 +51,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cohere-ai/cohere-go/v2 v2.15.3 // indirect
 	github.com/cyborginc/cyborgdb-go v0.12.0 // indirect
-	github.com/expr-lang/expr v1.17.4 // indirect
+	github.com/expr-lang/expr v1.17.7 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/ibm-messaging/mq-golang/v5 v5.6.5 // indirect
