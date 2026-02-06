@@ -305,6 +305,7 @@ func newOutput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batc
 			UserId:           userId,
 			Password:         password,
 			ApplicationName:  applicationName,
+			TLS:              tlsConfig,
 		},
 		QueueExpr: wombatwisdom.NewInterpolatedExpression(queueName),
 		Metadata:  metaConfig,

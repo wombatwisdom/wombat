@@ -207,6 +207,7 @@ func newInput(conf *service.ParsedConfig, mgr *service.Resources) (service.Batch
 			UserId:           userId,
 			Password:         password,
 			ApplicationName:  applicationName,
+			TLS:              tlsConfig,
 		},
 		QueueName:     queueName,
 		BatchSize:     batchSize,
