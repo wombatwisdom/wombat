@@ -15,7 +15,7 @@ jobs:
     steps:
 
     - name: Check Out Repo
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
 
     - name: Free up some disk space on ubuntu
       if: ${{ runner.os == 'Linux' }}
